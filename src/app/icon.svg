@@ -1,0 +1,18 @@
+<svg viewBox="-13.11 -7.98 152 152" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Viral Shorts IA">
+  <!--
+    Símbolo oficial — traço vindo de D:\Downloads\PLAY.svg, sem redesenho.
+    Mantém a transformação de origem (translate + scale negativo no Y) porque
+    normalizar as coordenadas na mão só arriscaria deformar a curva.
+
+    A viewBox quadrada saiu do bounding box medido no navegador
+    (x 1,00 · y 0,17 · 123,78 × 135,70) centralizado em 152 com respiro —
+    favicon precisa de margem pra não encostar na borda da aba.
+  -->
+  <g transform="translate(0,136) scale(0.1,-0.1)" fill="#f74211" stroke="none">
+    <path d="M135 1343 c-72 -37 -124 -114 -125 -184 0 -20 11 -55 25 -80 95 -167
+125 -264 125 -404 0 -141 -24 -219 -126 -405 -28 -51 -30 -95 -9 -148 34 -80
+108 -127 190 -120 45 4 92 28 371 188 175 101 380 218 454 261 143 81 179 116
+202 190 9 32 8 46 -6 84 -26 68 -57 98 -154 152 -48 27 -240 137 -427 245
+-187 107 -359 205 -382 217 -48 24 -95 26 -138 4z"/>
+  </g>
+</svg>

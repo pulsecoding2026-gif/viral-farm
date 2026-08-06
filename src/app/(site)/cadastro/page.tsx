@@ -1,0 +1,32 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { AcessoLayout } from "../acesso-layout";
+import { FormularioAcesso } from "../formulario-acesso";
+
+export const metadata: Metadata = {
+  title: "Criar conta",
+  description:
+    "Crie sua conta no Viral Farm e transforme seu material bruto em roteiro.",
+};
+
+export default function CadastroPage() {
+  return (
+    <AcessoLayout
+      titulo="Criar conta"
+      subtitulo="Comece analisando um vídeo que você já gravou."
+      rodape={
+        <>
+          Já tem conta?{" "}
+          <Link
+            href="/entrar"
+            className="font-medium text-orange-400 transition hover:text-orange-300"
+          >
+            Entrar
+          </Link>
+        </>
+      }
+    >
+      <FormularioAcesso modo="cadastro" />
+    </AcessoLayout>
+  );
+}
