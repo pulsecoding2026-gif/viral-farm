@@ -37,12 +37,23 @@ const SAIDA = path.join(process.cwd(), "public", "formatos");
  * diferencia um preset do outro. E como cada formato ancora numa altura
  * diferente, o resto vira fundo vazio em quantidades desiguais.
  *
- * Recortando ~800x420 em volta da âncora e escalando pra 400, o texto chega
- * a ~30px na miniatura — dá pra ver peso, caixa, contorno e cor de destaque.
+ * Recortamos a LARGURA INTEIRA e só uma faixa da altura. Tentei 800px de
+ * largura pra ganhar tamanho de texto e o Kinetic Typography saiu cortado
+ * dos dois lados: em corpo 126 a estimativa de largura por caractere erra o
+ * suficiente pra estourar. Numa miniatura, texto cortado é pior do que
+ * texto menor — então a largura acompanha o quadro e nada é aparado.
  */
-const RECORTE_L = 800;
-const RECORTE_A = 420;
+const RECORTE_L = 1080;
+const RECORTE_A = 460;
 const LARGURA = 400;
+
+/**
+ * Onde amostrar o frame, como fração do clipe.
+ *
+ * Meio, não fim: presets com poucos caracteres por linha quebram a frase em
+ * dois blocos, e no fim a miniatura pegaria só o resto ("30 dias").
+ */
+const MOMENTO = 0.5;
 
 /**
  * Canto superior esquerdo do recorte, centrado na âncora da legenda.
@@ -53,22 +64,14 @@ const LARGURA = 400;
  * legenda encostada na borda da miniatura.
  */
 function ancora(f: Formato): { x: number; y: number } {
-  const l = f.legenda;
-  const esquerda = Math.round((l.margemLateralPct / 100) * 1080);
-  const direita = Math.round(
-    ((l.margemLateralPct + (l.safeAreaDireitaPct ?? 0)) / 100) * 1080,
-  );
-  const centroX = esquerda + (1080 - esquerda - direita) / 2;
-  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(l.posicao ?? "");
+  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(f.legenda.posicao ?? "");
   const centroY = ((pct ? Number(pct[1]) : 52) / 100) * 1920;
 
-  // Clamp: sem isto um preset ancorado bem no rodapé pediria recorte fora
-  // do quadro e o ffmpeg recusaria.
-  const limite = (v: number, max: number) => Math.max(0, Math.min(v, max));
-  return {
-    x: Math.round(limite(centroX - RECORTE_L / 2, 1080 - RECORTE_L)),
-    y: Math.round(limite(centroY - RECORTE_A / 2, 1920 - RECORTE_A)),
-  };
+  // Clamp: sem isto um preset ancorado no rodapé pediria recorte fora do
+  // quadro e o ffmpeg recusaria.
+  const y = Math.max(0, Math.min(centroY - RECORTE_A / 2, 1920 - RECORTE_A));
+  // x sempre 0: a largura do recorte é a do quadro.
+  return { x: 0, y: Math.round(y) };
 }
 
 function palavras(): Palavra[] {
@@ -121,12 +124,10 @@ async function main() {
 
     const { x, y } = ancora(f);
 
-    // 70% do corte: a legenda já apareceu inteira e o karaokê já acendeu
-    // as palavras — no começo o destaque ainda não pintou.
     await run(
       bin.ffmpeg(),
       [
-        "-ss", (DUR * 0.7).toFixed(2),
+        "-ss", (DUR * MOMENTO).toFixed(2),
         "-i", path.join(tmp, `${f.id}.mp4`),
         "-frames:v", "1",
         "-vf",
