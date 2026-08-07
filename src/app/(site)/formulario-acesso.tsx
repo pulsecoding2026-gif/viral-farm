@@ -1,69 +1,81 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useActionState, useState } from "react";
 import {
   Eye,
   EyeSlash,
   WarningCircle,
   GoogleLogo,
-  ArrowRight,
+  EnvelopeSimple,
+  CircleNotch,
 } from "@phosphor-icons/react/dist/ssr";
+import {
+  entrar,
+  cadastrar,
+  entrarComGoogle,
+  type EstadoAcesso,
+} from "./acoes-acesso";
 
 /**
- * Formulário de entrar e criar conta.
+ * Formulário de entrar e criar conta — ligado no Supabase de verdade.
  *
- * NÃO autentica nada — não existe backend de sessão ainda. Os campos validam
- * de verdade (formato, tamanho, confirmação), mas o envio devolve um aviso
- * explícito de que falta conectar o Supabase.
- *
- * Foi decisão consciente não simular login: um formulário que "entra" sem
- * verificar credencial faria qualquer pessoa achar que tem conta, e esconderia
- * exatamente o trabalho que ainda falta. Quando o Supabase entrar, é trocar o
- * corpo de `enviar()` por signInWithPassword / signUp.
+ * A validação de formato continua no cliente (resposta imediata), mas a
+ * decisão é sempre da Server Action: credencial não passa por JS de cliente
+ * e o erro que aparece é o que o servidor devolveu, traduzido.
  */
 export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
   const cadastro = modo === "cadastro";
 
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
+  const [estado, agir, enviando] = useActionState<EstadoAcesso, FormData>(
+    cadastro ? cadastrar : entrar,
+    null,
+  );
+  const [estadoGoogle, agirGoogle, enviandoGoogle] = useActionState<
+    EstadoAcesso,
+    FormData
+  >(entrarComGoogle, null);
+
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
-  const [aceite, setAceite] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const [naoConectado, setNaoConectado] = useState(false);
-
   const senhaCurta = cadastro && senha.length > 0 && senha.length < 8;
-
-  function enviar(e: React.FormEvent) {
-    e.preventDefault();
-    setErro(null);
-
-    if (cadastro && senha.length < 8) {
-      setErro("A senha precisa de pelo menos 8 caracteres.");
-      return;
-    }
-    if (cadastro && !aceite) {
-      setErro("É preciso aceitar os termos para criar a conta.");
-      return;
-    }
-
-    setNaoConectado(true);
-  }
+  const erro = estado?.erro ?? estadoGoogle?.erro;
 
   const campo =
     "w-full rounded-xl border border-zinc-700 bg-zinc-950/60 px-4 py-2.5 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-orange-600 focus:ring-4 focus:ring-orange-600/15";
 
+  // Cadastro feito, falta o clique no e-mail: o formulário já cumpriu o
+  // papel — mostrar só a instrução evita a pessoa reenviar sem querer.
+  if (estado?.confirmarEmail) {
+    return (
+      <div className="rounded-xl border border-emerald-900/50 bg-emerald-950/20 p-4">
+        <p className="flex items-start gap-2.5 text-sm leading-relaxed text-emerald-200/90">
+          <EnvelopeSimple
+            size={17}
+            weight="fill"
+            className="mt-0.5 shrink-0 text-emerald-500"
+          />
+          <span>
+            <b className="font-semibold">Conta criada!</b> Enviamos um link de
+            confirmação pro seu e-mail. Clique nele e você cai direto no
+            painel.
+          </span>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setNaoConectado(true)}
-        className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-white/[0.04] active:scale-[0.99]"
-      >
-        <GoogleLogo size={17} weight="bold" />
-        {cadastro ? "Criar conta com Google" : "Entrar com Google"}
-      </button>
+      <form action={agirGoogle}>
+        <button
+          type="submit"
+          disabled={enviandoGoogle}
+          className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-zinc-700 px-4 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-white/[0.04] active:scale-[0.99] disabled:opacity-60"
+        >
+          <GoogleLogo size={17} weight="bold" />
+          {cadastro ? "Criar conta com Google" : "Entrar com Google"}
+        </button>
+      </form>
 
       <div className="my-5 flex items-center gap-3">
         <span className="h-px flex-1 bg-zinc-800" />
@@ -73,7 +85,7 @@ export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
         <span className="h-px flex-1 bg-zinc-800" />
       </div>
 
-      <form onSubmit={enviar} className="space-y-3.5">
+      <form action={agir} className="space-y-3.5">
         {cadastro && (
           <div>
             <label
@@ -84,8 +96,7 @@ export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
             </label>
             <input
               id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              name="nome"
               required
               autoComplete="name"
               placeholder="Seu nome"
@@ -103,9 +114,8 @@ export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
           </label>
           <input
             id="email"
+            name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
             placeholder="voce@exemplo.com"
@@ -114,23 +124,16 @@ export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
         </div>
 
         <div>
-          <div className="mb-1.5 flex items-baseline justify-between gap-3">
-            <label htmlFor="senha" className="text-sm font-medium text-zinc-300">
-              Senha
-            </label>
-            {!cadastro && (
-              <button
-                type="button"
-                onClick={() => setNaoConectado(true)}
-                className="text-xs text-zinc-500 transition hover:text-orange-400"
-              >
-                Esqueci minha senha
-              </button>
-            )}
-          </div>
+          <label
+            htmlFor="senha"
+            className="mb-1.5 block text-sm font-medium text-zinc-300"
+          >
+            Senha
+          </label>
           <div className="relative">
             <input
               id="senha"
+              name="senha"
               type={mostrarSenha ? "text" : "password"}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
@@ -160,8 +163,7 @@ export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
           <label className="flex cursor-pointer items-start gap-2.5 pt-1">
             <input
               type="checkbox"
-              checked={aceite}
-              onChange={(e) => setAceite(e.target.checked)}
+              name="aceite"
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-600 bg-zinc-950 accent-orange-600"
             />
             <span className="text-xs leading-relaxed text-zinc-500">
@@ -182,32 +184,21 @@ export function FormularioAcesso({ modo }: { modo: "entrar" | "cadastro" }) {
           </div>
         )}
 
-        {/*
-          O aviso honesto. Trocar por autenticação de verdade quando o
-          Supabase estiver configurado.
-        */}
-        {naoConectado && (
-          <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-3.5">
-            <p className="text-xs leading-relaxed text-amber-200/90">
-              <b className="font-semibold">Login ainda não está ligado.</b> A
-              tela está pronta, mas falta conectar o Supabase — sem isso não há
-              onde guardar conta nem sessão.
-            </p>
-            <Link
-              href="/painel"
-              className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-orange-400 transition hover:text-orange-300"
-            >
-              Ver o painel mesmo assim
-              <ArrowRight size={12} weight="bold" />
-            </Link>
-          </div>
-        )}
-
         <button
           type="submit"
-          className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.99]"
+          disabled={enviando}
+          className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.99] disabled:opacity-60"
         >
-          {cadastro ? "Criar conta" : "Entrar"}
+          {enviando && (
+            <CircleNotch size={16} weight="bold" className="animate-spin" />
+          )}
+          {enviando
+            ? cadastro
+              ? "Criando conta…"
+              : "Entrando…"
+            : cadastro
+              ? "Criar conta"
+              : "Entrar"}
         </button>
       </form>
     </>

@@ -25,6 +25,10 @@ import {
 } from "@/lib/modulos";
 import { icone } from "./icones";
 import { Logo, Simbolo } from "../logo";
+import { sair } from "../(site)/acoes-acesso";
+
+/** Quem está logado — vem do layout do painel, que valida a sessão. */
+type Usuario = { nome: string; email: string };
 
 /** Preferência de lateral recolhida, lembrada entre visitas. */
 const CHAVE_RECOLHIDA = "vsi:lateral-recolhida";
@@ -191,9 +195,11 @@ const ITENS_CONTA = [
 ];
 
 function AreaConta({
+  usuario,
   recolhida,
   aoNavegar,
 }: {
+  usuario: Usuario;
   recolhida?: boolean;
   aoNavegar?: () => void;
 }) {
@@ -252,14 +258,16 @@ function AreaConta({
               {rotulo}
             </Link>
           ))}
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2.5 border-t border-zinc-800 px-3 py-2.5 text-left text-[13px] text-zinc-400 transition hover:bg-white/5"
-          >
-            <SignOut size={16} className="text-zinc-500" />
-            Sair
-          </button>
+          <form action={sair}>
+            <button
+              type="submit"
+              role="menuitem"
+              className="flex w-full items-center gap-2.5 border-t border-zinc-800 px-3 py-2.5 text-left text-[13px] text-zinc-400 transition hover:bg-white/5"
+            >
+              <SignOut size={16} className="text-zinc-500" />
+              Sair
+            </button>
+          </form>
         </div>
       )}
 
@@ -268,7 +276,7 @@ function AreaConta({
         onClick={() => setAberto((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={aberto}
-        title={recolhida ? "Abraão · conta" : undefined}
+        title={recolhida ? `${usuario.nome} · conta` : undefined}
         className={
           "flex w-full items-center gap-2.5 rounded-lg transition " +
           (recolhida ? "justify-center py-2" : "px-2 py-2 text-left") +
@@ -276,16 +284,16 @@ function AreaConta({
         }
       >
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-600 to-orange-800 text-[13px] font-semibold text-white">
-          A
+          {(usuario.nome[0] ?? "?").toUpperCase()}
         </span>
         {!recolhida && (
           <>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium text-zinc-200">
-                Abraão
+                {usuario.nome}
               </span>
               <span className="block truncate text-[11px] text-zinc-500">
-                Conta gratuita
+                {usuario.email}
               </span>
             </span>
             <CaretUpDown size={15} className="shrink-0 text-zinc-500" />
@@ -349,7 +357,13 @@ function Submenu() {
 
 /* ------------------------------------------------------------------ shell */
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  usuario,
+}: {
+  children: React.ReactNode;
+  usuario: Usuario;
+}) {
   const pathname = usePathname();
   const [gaveta, setGaveta] = useState(false);
   const [recolhida, setRecolhida] = useState(false);
@@ -430,7 +444,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <Lateral recolhida={recolhida} />
         </div>
 
-        <AreaConta recolhida={recolhida} />
+        <AreaConta usuario={usuario} recolhida={recolhida} />
       </aside>
 
       {/* Gaveta — mobile e tablet */}
@@ -465,7 +479,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="min-h-0 flex-1 overflow-y-auto pb-4">
               <Lateral aoNavegar={() => setGaveta(false)} />
             </div>
-            <AreaConta aoNavegar={() => setGaveta(false)} />
+            <AreaConta usuario={usuario} aoNavegar={() => setGaveta(false)} />
           </aside>
         </div>
       )}
