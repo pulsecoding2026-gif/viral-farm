@@ -1,6 +1,5 @@
 import {
   PROPORCOES,
-  duracaoDoProjeto,
   trilhaDe,
   type Enquadramento,
   type ItemVideo,
@@ -81,10 +80,43 @@ export function filtroDeEnquadramento(
   return `scale=${largura}:${altura},crop=${saida.largura}:${saida.altura}:${x}:${y}`;
 }
 
+/**
+ * Buracos entre clipes na linha do tempo.
+ *
+ * O `concat` do ffmpeg COLA um clipe no outro: ele só conhece as janelas da
+ * fonte, não a posição na linha. Então um vazio deixado ao aparar some no
+ * MP4, e o vídeo final sai mais curto que a prévia mostrou — sem que nada
+ * avise. É a divergência prévia↔render mais séria que existe aqui, porque a
+ * pessoa só descobre depois de esperar o render inteiro.
+ *
+ * Devolve o total de segundos que serão engolidos.
+ */
+export function buracosNaLinha(videos: ItemVideo[]): number {
+  const ordem = [...videos].sort((a, b) => a.inicio_s - b.inicio_s);
+  // Tolerância de um frame a 30fps: fronteira calculada em ponto flutuante
+  // quase nunca fecha exata, e avisar por 0,01s seria ruído.
+  const TOLERANCIA = 1 / 30;
+  let total = ordem.length > 0 && ordem[0].inicio_s > TOLERANCIA ? ordem[0].inicio_s : 0;
+  for (let i = 1; i < ordem.length; i++) {
+    const vao = ordem[i].inicio_s - ordem[i - 1].fim_s;
+    if (vao > TOLERANCIA) total += vao;
+  }
+  return total;
+}
+
 /** O que o projeto pede e este render ainda não entrega. */
 export function avisosDoProjeto(p: Projeto): string[] {
   const avisos: string[] = [];
   const videos = trilhaDe(p, "video").itens as ItemVideo[];
+
+  const buraco = buracosNaLinha(videos);
+  if (buraco > 0) {
+    avisos.push(
+      `Há ${buraco.toFixed(1)}s de vazio entre os clipes na linha do tempo. ` +
+        `O render cola um clipe no outro, então o vídeo final sai mais curto — ` +
+        `encoste os clipes se não era isso que você queria.`,
+    );
+  }
 
   if (videos.some((v) => v.keyframes.length > 0)) {
     avisos.push(
@@ -170,7 +202,10 @@ export function planejarRender(
     grafo: partes.join(";"),
     saidaVideo: nomeAss ? "[vout]" : "[vc]",
     saidaAudio: "[aout]",
-    duracao_s: duracaoDoProjeto(projeto),
+    // A soma das janelas da FONTE, não `duracaoDoProjeto()` (o maior fim_s).
+    // O concat cola os clipes, então buraco na linha não vira duração — usar
+    // o fim_s faria este número mentir sobre o arquivo que sai.
+    duracao_s: videos.reduce((s, v) => s + (v.fonteFim_s - v.fonteInicio_s), 0),
     avisos: avisosDoProjeto(projeto),
   };
 }

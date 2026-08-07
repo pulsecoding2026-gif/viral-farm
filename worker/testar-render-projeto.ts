@@ -161,7 +161,29 @@ async function main() {
     conferir(`${prop} concatena os dois clipes`, Math.abs(d.d - 6) < 0.4, `${d.d?.toFixed(2)}s`);
   }
 
-  console.log("\n=== 3. avisa o que ainda não faz? ===\n");
+  console.log("\n=== 3. avisa buraco na linha? ===\n");
+  {
+    const p: Projeto = projetoVazio({ corteId: "x", analiseId: "y", proxyUrl: null, duracao_s: 12 });
+    // Dois clipes com 2s de vazio entre eles: o concat cola, o vídeo sai 2s
+    // mais curto que a prévia mostrou, e nada avisava.
+    trilhaDe(p, "video").itens.push(
+      clipe({ inicio_s: 0, fim_s: 3, fonteInicio_s: 0, fonteFim_s: 3 }),
+      clipe({ inicio_s: 5, fim_s: 8, fonteInicio_s: 5, fonteFim_s: 8 }),
+    );
+    const plano = planejarRender(p, { largura: 1280, altura: 720 }, null);
+    conferir(
+      "avisa o vazio entre clipes",
+      plano.avisos.some((a) => /vazio/.test(a)),
+      plano.avisos[0] ?? "(nenhum aviso)",
+    );
+    conferir(
+      "duração declarada é a do arquivo que sai, não o maior fim_s",
+      Math.abs(plano.duracao_s - 6) < 0.01,
+      `${plano.duracao_s}s (fim_s diria 8)`,
+    );
+  }
+
+  console.log("\n=== 4. avisa o que ainda não faz? ===\n");
   {
     const p: Projeto = projetoVazio({ corteId: "x", analiseId: "y", proxyUrl: null, duracao_s: 12 });
     trilhaDe(p, "video").itens.push(
