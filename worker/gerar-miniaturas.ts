@@ -18,7 +18,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { renderizarCorte } from "./renderizar";
-import { FORMATOS } from "../src/lib/formatos";
+import { FORMATOS, type Formato } from "../src/lib/formatos";
 import type { Palavra } from "./transcritor";
 import { run, bin } from "../src/lib/proc";
 
@@ -29,8 +29,47 @@ const DESTAQUES = ["mudou", "30"];
 const DUR = 4;
 const SAIDA = path.join(process.cwd(), "public", "formatos");
 
-/** Miniatura em 2x do tamanho exibido (~135px), pra tela retina. */
-const LARGURA = 270;
+/**
+ * A miniatura é um RECORTE da faixa da legenda, não o quadro 9:16 inteiro.
+ *
+ * O quadro inteiro reduzido pra largura de card deixa a legenda com ~15px:
+ * a pessoa não consegue julgar a tipografia, que é justamente o que
+ * diferencia um preset do outro. E como cada formato ancora numa altura
+ * diferente, o resto vira fundo vazio em quantidades desiguais.
+ *
+ * Recortando ~800x420 em volta da âncora e escalando pra 400, o texto chega
+ * a ~30px na miniatura — dá pra ver peso, caixa, contorno e cor de destaque.
+ */
+const RECORTE_L = 800;
+const RECORTE_A = 420;
+const LARGURA = 400;
+
+/**
+ * Canto superior esquerdo do recorte, centrado na âncora da legenda.
+ *
+ * Espelha o cálculo do gerador (worker/legendas.ts): a legenda é centrada na
+ * ÁREA ÚTIL, não no quadro — com o rail direito ocupado, o centro visual
+ * fica à esquerda do centro real. Recortar pelo centro do quadro deixaria a
+ * legenda encostada na borda da miniatura.
+ */
+function ancora(f: Formato): { x: number; y: number } {
+  const l = f.legenda;
+  const esquerda = Math.round((l.margemLateralPct / 100) * 1080);
+  const direita = Math.round(
+    ((l.margemLateralPct + (l.safeAreaDireitaPct ?? 0)) / 100) * 1080,
+  );
+  const centroX = esquerda + (1080 - esquerda - direita) / 2;
+  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(l.posicao ?? "");
+  const centroY = ((pct ? Number(pct[1]) : 52) / 100) * 1920;
+
+  // Clamp: sem isto um preset ancorado bem no rodapé pediria recorte fora
+  // do quadro e o ffmpeg recusaria.
+  const limite = (v: number, max: number) => Math.max(0, Math.min(v, max));
+  return {
+    x: Math.round(limite(centroX - RECORTE_L / 2, 1080 - RECORTE_L)),
+    y: Math.round(limite(centroY - RECORTE_A / 2, 1920 - RECORTE_A)),
+  };
+}
 
 function palavras(): Palavra[] {
   const p = FRASE.split(" ");
@@ -80,6 +119,8 @@ async function main() {
       destaques: DESTAQUES,
     });
 
+    const { x, y } = ancora(f);
+
     // 70% do corte: a legenda já apareceu inteira e o karaokê já acendeu
     // as palavras — no começo o destaque ainda não pintou.
     await run(
@@ -88,14 +129,15 @@ async function main() {
         "-ss", (DUR * 0.7).toFixed(2),
         "-i", path.join(tmp, `${f.id}.mp4`),
         "-frames:v", "1",
-        "-vf", `scale=${LARGURA}:-2:flags=lanczos`,
+        "-vf",
+        `crop=${RECORTE_L}:${RECORTE_A}:${x}:${y},scale=${LARGURA}:-2:flags=lanczos`,
         // webp: ~4x menor que png no mesmo olho, e vira asset do repo.
         "-quality", "82",
         "-y", path.join(SAIDA, `${f.id}.webp`),
       ],
       { timeoutMs: 60_000 },
     );
-    console.log(`  ${f.id}.webp`);
+    console.log(`  ${f.id}.webp  (recorte em ${x},${y})`);
   }
 
   const arquivos = await fs.readdir(SAIDA);
