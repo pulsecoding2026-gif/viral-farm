@@ -119,13 +119,39 @@ function fatorLargura(caixa: string, fonte?: string): number {
  * quantidade caiba. O preset continua mandando na proporção entre formatos:
  * o Hormozi segue maior que o Dark Luxury, só que ambos dentro do quadro.
  */
+/**
+ * Piso de legibilidade, em pixels de um quadro 1080x1920.
+ *
+ * Legenda de short é lida em celular, em movimento, muitas vezes sem som.
+ * Abaixo disto ela existe mas não cumpre a função — e o preset que pedia
+ * "elegante e discreto" entregava 35px, que ninguém lê.
+ */
+const CORPO_MINIMO = 46;
+
 function corpoDaFonte(f: Formato): number {
   const l = f.legenda;
   const pedido = (l.tamanhoPct / 100) * ALTURA;
   const cabe =
     margens(f).util /
     (l.maxCaracteresLinha * fatorLargura(l.caixa, fontePrincipal(l.fonte)));
-  return Math.max(28, Math.round(Math.min(pedido, cabe)));
+  // O piso vence o maxCaracteresLinha do preset: quando os dois brigam,
+  // quebrar a linha mais cedo custa uma linha, encolher a fonte custa o
+  // texto inteiro. Quem paga o preço é a quantidade de caracteres, não a
+  // leitura — e caracteresPorLinha() abaixo reequilibra a quebra.
+  return Math.max(CORPO_MINIMO, Math.round(Math.min(pedido, cabe)));
+}
+
+/**
+ * Quantos caracteres REALMENTE cabem numa linha, no corpo já decidido.
+ *
+ * Não dá pra usar o `maxCaracteresLinha` do preset direto: quando o piso de
+ * legibilidade sobe a fonte, o número do preset passa a mentir, e agrupar
+ * por ele produziria blocos largos demais que estouram a área útil.
+ */
+function caracteresPorLinha(f: Formato): number {
+  const corpo = corpoDaFonte(f);
+  const porChar = corpo * fatorLargura(f.legenda.caixa, fontePrincipal(f.legenda.fonte));
+  return Math.max(8, Math.floor(margens(f).util / porChar));
 }
 
 /**
@@ -356,7 +382,10 @@ export function gerarAss(
     const karaoke = temKaraoke(l.animacao);
     const ehDestaque = fazDestaque(chavesDeDestaque(destaques));
 
-    for (const bloco of agruparPalavras(palavras, l.maxCaracteresLinha, l.maxLinhas)) {
+    // caracteresPorLinha, não l.maxCaracteresLinha: com o piso de
+    // legibilidade a fonte pode ter subido, e agrupar pelo número do preset
+    // montaria blocos largos demais pro que agora cabe.
+    for (const bloco of agruparPalavras(palavras, caracteresPorLinha(f), l.maxLinhas)) {
       const inicio = bloco[0].inicio_s - inicioCorte;
       const fim = bloco[bloco.length - 1].fim_s - inicioCorte;
       if (fim <= 0) continue;
