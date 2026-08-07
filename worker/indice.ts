@@ -84,10 +84,28 @@ async function prepararProxy(
   dir: string,
   sinal: AbortSignal,
 ): Promise<void> {
+  // Cancelamento pedido ANTES de começar: aí não há o que preparar.
   if (sinal.aborted) return;
+
+  /**
+   * O proxy roda com sinal PRÓPRIO, desligado do sinal do job.
+   *
+   * A vigilância de cancelamento aborta quando a análise sai de
+   * 'processando' — e é exatamente isso que `pararParaRevisao` faz ao
+   * entregar as propostas. Como o proxy roda depois disso (de propósito, pra
+   * não atrasar o Estúdio), ele herdava um sinal já abortado e desistia em
+   * silêncio: NENHUM proxy era gerado, e o editor ficava preso ao corte já
+   * renderizado.
+   *
+   * O teto de tempo entra no lugar da vigilância: sem ele, um encode travado
+   * seguraria o worker pra sempre num trabalho que é só acessório.
+   */
+  const proprio = new AbortController();
+  const teto = setTimeout(() => proprio.abort(), 25 * 60_000);
+
   try {
     const t0 = Date.now();
-    const arquivo = await gerarProxy(video, dir, sinal);
+    const arquivo = await gerarProxy(video, dir, proprio.signal);
     const url = await subirProxy(job.id, job.user_id, arquivo);
     await supabase().from("analises").update({ proxy_url: url }).eq("id", job.id);
     console.log(
@@ -96,6 +114,9 @@ async function prepararProxy(
   } catch (e) {
     if (e instanceof Cancelado) return;
     console.error(`[worker] ${job.id}: proxy falhou (a análise segue válida):`, e);
+  } finally {
+    // Sem isto o timer segura o processo vivo por até 25 min depois do fim.
+    clearTimeout(teto);
   }
 }
 
