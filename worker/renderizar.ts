@@ -21,6 +21,7 @@ const VERTICAL = [
 ];
 
 export type OpcoesRender = {
+  /** Id do formato (src/lib/formatos.ts) ou "sem" para nenhuma legenda. */
   estilo?: EstiloLegenda;
   /** Texto da caixa de título nos primeiros 5s. */
   tituloTela?: string;
@@ -36,7 +37,7 @@ export async function renderizarCorte(
   nome: string,
   opcoes: OpcoesRender = {},
 ): Promise<string> {
-  const { estilo = "karaoke", tituloTela, limparSilencio = false } = opcoes;
+  const { estilo = "hormozi", tituloTela, limparSilencio = false } = opcoes;
   const nomeAss = `${nome}.ass`;
   const saida = path.join(dir, `${nome}.mp4`);
 
