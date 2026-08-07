@@ -24,7 +24,7 @@ import {
 
 const PROMESSA: Record<string, string> = {
   descobrir:
-    "Veja o que está em alta e o que dá pra aproveitar no que você já gravou.",
+    "Veja o que está em alta e de onde dá pra tirar corte — live, podcast ou vídeo longo.",
   planejar: "Vire o achado em roteiro, gancho e título — escritos com IA.",
   criar: "Monte o vídeo: cortes, narração e imagens de apoio.",
   viralizar: "Publique e leia o resultado pra alimentar a próxima rodada.",

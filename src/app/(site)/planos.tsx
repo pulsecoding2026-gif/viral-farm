@@ -29,7 +29,7 @@ const PLANOS: Plano[] = [
   {
     id: "lite",
     nome: "Lite",
-    resumo: "Pra quem está começando a transformar o que já gravou.",
+    resumo: "Pra quem está começando a tirar corte de vídeo longo.",
     mensal: 59.9,
     analises: 60,
     recursos: [

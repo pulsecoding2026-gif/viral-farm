@@ -16,8 +16,8 @@ import { HeroEntrada } from "./hero-entrada";
  * saída é o argumento; o texto sozinho não era.
  */
 
-/** Formatos de gancho que o pipeline produz. Ilustrativos, não de uma análise real. */
-const ROTEIROS = [
+/** Cortes que o pipeline produz. Ilustrativos, não de uma análise real. */
+const CORTES = [
   {
     angulo: "Direto",
     gancho: "O erro que você comete nos 3 primeiros segundos",
@@ -65,18 +65,20 @@ export function ChamadaFinal() {
 
             {/*
               "Seu material parado é farm não coletado" era metáfora em cima de
-              metáfora — bonito e abstrato. Isto aponta pra uma coisa concreta
-              que a pessoa tem agora: o arquivo no celular dela.
+              metáfora — bonito e abstrato. Isto aponta pra uma coisa concreta.
+              E NÃO diz que a pessoa gravou: a maioria corta live, podcast e
+              vídeo de terceiro — quem grava o próprio material é minoria.
             */}
             <h2 className="mt-6 text-4xl leading-[1.05] font-semibold tracking-tight text-zinc-50 sm:text-6xl">
               Seu próximo viral
               <br />
-              já está{" "}
-              <span className="text-orange-500 italic">gravado.</span>
+              já{" "}
+              <span className="text-orange-500 italic">existe.</span>
             </h2>
 
             <p className="mt-5 max-w-[46ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
-              Está parado no rolo da câmera agora. Cola o link e a IA devolve{" "}
+              Numa live de três horas, num podcast, na gravação que você nunca
+              postou. Cola o link e a IA devolve{" "}
               <b className="font-semibold text-zinc-100">vários cortes 9:16</b> —
               legendados e prontos pra postar.
             </p>
@@ -115,7 +117,7 @@ export function ChamadaFinal() {
               </div>
 
               <ul className="divide-y divide-zinc-800/70">
-                {ROTEIROS.map((r, i) => (
+                {CORTES.map((r, i) => (
                   <li
                     key={r.angulo}
                     className="flex items-start gap-3.5 px-5 py-4"
@@ -145,8 +147,8 @@ export function ChamadaFinal() {
                   <Sparkle size={15} weight="fill" />
                 </span>
                 <p className="text-sm text-zinc-300">
-                  Com gancho, blocos e chamada —{" "}
-                  <b className="font-semibold text-zinc-50">prontos pra gravar</b>
+                  Cada um com gancho, legenda animada e 9:16 —{" "}
+                  <b className="font-semibold text-zinc-50">prontos pra postar</b>
                   .
                 </p>
                 <ArrowRight

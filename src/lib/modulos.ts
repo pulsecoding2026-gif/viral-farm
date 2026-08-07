@@ -73,13 +73,13 @@ export const SECOES: Secao[] = [
   {
     id: "descobrir",
     rotulo: "Descobrir",
-    descricao: "O que funciona lá fora — e o que dá pra aproveitar no que você já gravou",
+    descricao: "O que funciona lá fora — e de onde dá pra tirar o próximo corte",
     icone: "Compass",
     modulos: [
       {
         slug: "analisador",
         rotulo: "Analisador",
-        resumo: "Seu vídeo longo vira cortes 9:16 prontos pra postar",
+        resumo: "Vídeo longo vira cortes 9:16 prontos pra postar",
         icone: "MagnifyingGlass",
         cor: "from-orange-500 to-amber-600",
         pronto: true,

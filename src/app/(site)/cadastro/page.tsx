@@ -16,7 +16,7 @@ export default async function CadastroPage() {
   return (
     <AcessoLayout
       titulo="Criar conta"
-      subtitulo="Comece analisando um vídeo que você já gravou."
+      subtitulo="Cole o link de um vídeo longo e veja os cortes saírem."
       rodape={
         <>
           Já tem conta?{" "}

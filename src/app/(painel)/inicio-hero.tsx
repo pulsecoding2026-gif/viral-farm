@@ -71,8 +71,8 @@ export function InicioHero() {
         Cole o link de um vídeo
       </h2>
       <p className="mt-1 max-w-[52ch] text-sm text-white/85">
-        Seu ou uma live, um podcast, uma gravação longa. A IA acha os melhores
-        momentos e devolve cortes 9:16 com legenda animada.
+        Uma live, um podcast, uma aula, uma gravação longa. A IA acha os
+        melhores momentos e devolve cortes 9:16 com legenda animada.
       </p>
 
       <div

@@ -65,7 +65,7 @@ export function HeroEntrada({
           type="url"
           value={link}
           onChange={(e) => setLink(e.target.value)}
-          placeholder="Cole o link do seu vídeo"
+          placeholder="Cole o link de um vídeo longo"
           aria-label="Link do vídeo"
           className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
         />
@@ -74,7 +74,7 @@ export function HeroEntrada({
           className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
         >
           <MagnifyingGlass size={16} weight="bold" />
-          Gerar meus roteiros
+          Gerar meus cortes
         </button>
       </form>
 

@@ -83,8 +83,8 @@ export default function LandingPage() {
 
             <p className="mx-auto mt-5 max-w-[52ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
               <b className="font-semibold text-zinc-100">Cole um vídeo.</b> A IA
-              encontra os melhores momentos, cria roteiros e transforma uma
-              gravação em dezenas de oportunidades de viralizar.
+              encontra os melhores momentos e transforma uma live, um podcast ou
+              um vídeo longo em dezenas de oportunidades de viralizar.
             </p>
 
             {/* O campo de link é a demonstração mais barata que existe —

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s · Viral Farm",
   },
   description:
-    "Farme viralização e monetização a partir do que você já gravou. Cole o link de um vídeo longo e a IA devolve cortes verticais com legenda animada, prontos pra postar.",
+    "Farme viralização e monetização a partir de qualquer vídeo longo. Cole o link de uma live, um podcast ou uma gravação e a IA devolve cortes verticais com legenda animada, prontos pra postar.",
 };
 
 /**

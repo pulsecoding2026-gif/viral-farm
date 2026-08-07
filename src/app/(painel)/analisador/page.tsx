@@ -30,8 +30,8 @@ export default async function AnalisadorPage({
           Analisador
         </h1>
         <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-zinc-500">
-          Cole o link de um vídeo — seu ou uma live, um podcast, uma gravação
-          longa. A IA acha os melhores momentos e devolve cortes 9:16 com
+          Cole o link de um vídeo longo — uma live, um podcast, uma aula, uma
+          gravação. A IA acha os melhores momentos e devolve cortes 9:16 com
           legenda animada, prontos pra postar.
         </p>
       </header>

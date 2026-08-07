@@ -65,7 +65,7 @@ export function AcessoLayout({
 
             <p className="mt-6 flex items-center gap-2 text-[11px] text-zinc-600">
               <ShieldCheck size={13} className="shrink-0 text-emerald-600" />
-              Seu vídeo é processado e apagado. Fica só a análise.
+              O vídeo é processado e apagado. Fica só a análise.
             </p>
           </div>
         </div>
@@ -99,7 +99,7 @@ export function AcessoLayout({
             Comece a farmar
           </p>
           <p className="mt-3 max-w-[20ch] text-3xl leading-[1.1] font-semibold tracking-tight text-zinc-50">
-            O vídeo que você já gravou vira{" "}
+            Uma hora de vídeo vira{" "}
             <span className="text-orange-500 italic">vários cortes.</span>
           </p>
 

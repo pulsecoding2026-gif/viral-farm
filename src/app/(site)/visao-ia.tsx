@@ -60,7 +60,7 @@ export function VisaoIA() {
             <span className="text-blue-500 italic">A IA entrega.</span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-400">
-            Ela lê dez frames do seu vídeo — metade nos primeiros 25%, onde a
+            Ela lê dez frames do vídeo — metade nos primeiros 25%, onde a
             retenção se decide — mais o áudio transcrito com marcação de tempo.
           </p>
         </div>
