@@ -189,8 +189,10 @@ function montarProjeto(corte: CorteNaEstante): Projeto {
   const vazio = projetoVazio({
     corteId: corte.id,
     analiseId: corte.analise_id,
-    // Proxy é trabalho do worker; até ele existir a prévia usa o MP4 pronto.
-    proxyUrl: null,
+    // Com proxy, a prévia é o material ORIGINAL e dá pra esticar o clipe pra
+    // antes de onde o corte começa. Sem ele, cai no MP4 já renderizado e a
+    // edição fica presa àquela janela — o editor avisa isso na tela.
+    proxyUrl: corte.proxy_url,
     // A duração do vídeo ORIGINAL não vem na estante. O fim do corte é o
     // melhor piso conhecido e é tudo que a interface faz com este número —
     // quem sabe a duração de verdade é quem gera o proxy, e é lá que ela é
@@ -384,7 +386,21 @@ function Sessao({
         }
         // `projeto: null` é resposta normal: corte que nunca foi editado.
         if (dados.projeto) {
-          reiniciar(dados.projeto);
+          /**
+           * O proxy é REconferido a cada abertura, nunca confiado ao que foi
+           * salvo.
+           *
+           * Ele nasce depois da análise (é a última coisa que o worker faz),
+           * então um projeto criado antes dele guardou `null` — e sem esta
+           * linha guardaria pra sempre, deixando o editor preso ao corte
+           * renderizado mesmo com o material inteiro já disponível. O
+           * caminho contrário também vale: proxy apagado volta a ser null em
+           * vez de virar uma URL quebrada na prévia.
+           */
+          reiniciar({
+            ...dados.projeto,
+            fonte: { ...dados.projeto.fonte, proxyUrl: corte.proxy_url },
+          });
         } else {
           ajustarPelaDuracao.current = true;
           reiniciar(montarProjeto(corte));
@@ -582,6 +598,18 @@ function Sessao({
 
     if (!ajustarPelaDuracao.current) return;
     ajustarPelaDuracao.current = false;
+
+    /**
+     * A correção só vale quando a prévia É o corte renderizado.
+     *
+     * Com proxy, `v.duration` é o vídeo ORIGINAL inteiro — 137s onde o corte
+     * tem 18s. Aplicar aqui esticava o clipe recém-montado pro material
+     * completo, e a pessoa abria o editor com um corte que ela nunca pediu.
+     *
+     * O motivo da correção existir (a janela do banco é a PEDIDA, e o ffmpeg
+     * entrega o keyframe mais próximo) só se aplica ao arquivo do corte.
+     */
+    if (proxyUrl) return;
     // Só o projeto recém-montado é corrigido, e sem marcar mudança: abrir um
     // corte não é editá-lo, e gravar aqui encheria o banco de projetos que
     // ninguém pediu.

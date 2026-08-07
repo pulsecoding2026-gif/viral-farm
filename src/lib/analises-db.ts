@@ -183,6 +183,15 @@ export type CorteNaEstante = {
   estilo: string | null;
   url: string;
   renderizado_em: number | null;
+  /**
+   * Proxy leve do material ORIGINAL, quando existe.
+   *
+   * É o que separa "editar dentro do corte" de "editar o vídeo inteiro": com
+   * ele o editor consegue esticar um clipe pra antes de onde o corte começa,
+   * porque o material está no navegador. Sem ele, a prévia cai no MP4 já
+   * renderizado e a edição fica presa àquela janela.
+   */
+  proxy_url: string | null;
 };
 
 /**
@@ -200,7 +209,7 @@ export async function listarCortesProntos(
   const { data, error } = await sb
     .from("cortes")
     .select(
-      "id, analise_id, titulo, inicio_s, fim_s, estilo, arquivo, renderizado_em, analises(resultado, link)",
+      "id, analise_id, titulo, inicio_s, fim_s, estilo, arquivo, renderizado_em, analises(resultado, link, proxy_url)",
     )
     .eq("status", "pronto")
     .not("arquivo", "is", null)
@@ -210,7 +219,11 @@ export async function listarCortesProntos(
   if (error) throw new Error(`Não li os cortes: ${error.message}`);
 
   return (data ?? []).map((c) => {
-    const analise = c.analises as { resultado?: unknown; link?: string } | null;
+    const analise = c.analises as {
+      resultado?: unknown;
+      link?: string;
+      proxy_url?: string | null;
+    } | null;
     const resumo = analise?.resultado as { titulo?: string } | null;
     // ?v= muda a cada render: sem isso o navegador serve o MP4 velho do
     // cache depois de uma edição, no mesmo caminho e mesma URL.
@@ -231,6 +244,7 @@ export async function listarCortesProntos(
       renderizado_em: c.renderizado_em
         ? new Date(c.renderizado_em as string).getTime()
         : null,
+      proxy_url: analise?.proxy_url ?? null,
     };
   });
 }
