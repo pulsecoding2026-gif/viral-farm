@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import {
   Sparkle,
   Check,
@@ -14,83 +15,40 @@ import { FORMATOS, CATEGORIAS, acharFormato, type Formato } from "@/lib/formatos
  * A galeria de formatos — o seletor único usado tanto na nova análise quanto
  * na reedição de um corte pronto.
  *
- * A prévia mostra só o que o render REALMENTE entrega hoje: caixa, peso, cor,
- * contorno, fundo e a cor de destaque. Fonte é aproximada por família (as
- * tipografias dos presets não estão carregadas no site), e isso está escrito
- * no card — prévia que promete o que o MP4 não devolve é pior que prévia
- * nenhuma.
+ * A prévia é o RENDER REAL (public/formatos/*.webp), gerado na VPS pelo
+ * mesmo motor que monta os cortes. Antes ela era desenhada em CSS
+ * aproximando a fonte pela família genérica — e como o navegador não tem
+ * Anton, Archivo Black nem Space Grotesk, os 15 apareciam quase iguais e
+ * escolher virava chute.
  */
 
-const FRASE = ["Isso", "mudou", "TUDO", "pra", "mim"];
-/** A palavra que recebe a cor de destaque na prévia. */
-const DESTAQUE = 2;
+/*
+ * As funções que simulavam a tipografia em CSS (familia, contorno,
+ * aplicarCaixa, corDoTexto) saíram junto com a prévia falsa: com o render
+ * real como miniatura, aproximar fonte no navegador virou código morto.
+ */
 
-/** Família CSS mais próxima da tipografia do preset. */
-function familia(fonte: string): string {
-  const f = fonte.toLowerCase();
-  if (f.includes("playfair")) return "Georgia, 'Times New Roman', serif";
-  if (f.includes("jetbrains") || f.includes("mono"))
-    return "ui-monospace, 'Cascadia Code', Consolas, monospace";
-  return "ui-sans-serif, system-ui, 'Segoe UI', sans-serif";
-}
-
-/** Contorno preto do preset vira text-shadow (o stroke real é do ffmpeg). */
-function contorno(stroke: string): string | undefined {
-  const px = Number(stroke.match(/^(\d+)/)?.[1] ?? 0);
-  if (px === 0) return undefined;
-  const r = Math.max(1, Math.round(px / 3));
-  return [
-    `${-r}px ${-r}px 0 #000`,
-    `${r}px ${-r}px 0 #000`,
-    `${-r}px ${r}px 0 #000`,
-    `${r}px ${r}px 0 #000`,
-  ].join(", ");
-}
-
-function aplicarCaixa(palavra: string, caixa: string): string {
-  if (caixa.toUpperCase().includes("UPPERCASE")) return palavra.toUpperCase();
-  return palavra;
-}
-
-/** Cor legível do texto do preset (alguns declaram condição de fundo). */
-function corDoTexto(cor: string): string {
-  return cor.match(/#[0-9A-Fa-f]{6}/)?.[0] ?? "#FFFFFF";
-}
-
+/**
+ * A prévia é o RENDER REAL do formato, não uma simulação em CSS.
+ *
+ * A versão anterior desenhava a frase em HTML aproximando a tipografia pela
+ * família genérica — e o navegador não tem Anton, Archivo Black nem Space
+ * Grotesk. Os 15 apareciam quase iguais e escolher virava chute.
+ *
+ * As imagens saem de worker/gerar-miniaturas.ts, renderizadas na VPS (é lá
+ * que as fontes existem) e versionadas como asset: 31 KB pelos 15, contra
+ * um ffmpeg por visita da galeria pra produzir sempre a mesma imagem.
+ */
 function Previa({ f }: { f: Formato }) {
-  const l = f.legenda;
-  const temFundo = !l.fundo.toLowerCase().startsWith("nenhum");
-  const cor = corDoTexto(l.cor);
-  const destaque = f.destaque.cores[0] ?? cor;
-
   return (
-    <div className="flex h-20 items-center justify-center overflow-hidden rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-950 px-3">
-      <p
-        className="text-center leading-tight"
-        style={{
-          fontFamily: familia(l.fonte),
-          fontWeight: l.peso,
-          fontSize: 15,
-          color: cor,
-          textShadow: contorno(l.stroke),
-          letterSpacing: l.peso >= 800 ? "-0.02em" : undefined,
-        }}
-      >
-        {FRASE.map((p, i) => (
-          <span
-            key={i}
-            style={{
-              color: i === DESTAQUE ? destaque : undefined,
-              background: temFundo ? "rgba(0,0,0,.7)" : undefined,
-              padding: temFundo ? "1px 4px" : undefined,
-              borderRadius: temFundo ? 4 : undefined,
-            }}
-          >
-            {aplicarCaixa(p, l.caixa)}
-            {i < FRASE.length - 1 ? " " : ""}
-          </span>
-        ))}
-      </p>
+    <div className="relative h-20 overflow-hidden rounded-lg bg-zinc-950">
+      <Image
+        src={`/formatos/${f.id}.webp`}
+        alt={`Legenda do formato ${f.nome}`}
+        fill
+        sizes="(max-width: 640px) 100vw, 320px"
+        className="object-cover"
+      />
     </div>
   );
 }
@@ -160,16 +118,17 @@ export function SeletorFormatoCompacto({
                   (atual ? "bg-orange-600/15" : "hover:bg-white/[0.05]")
                 }
               >
-                <span
-                  className="flex h-7 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-900 text-[9px] leading-none"
-                  style={{
-                    fontFamily: familia(f.legenda.fonte),
-                    fontWeight: f.legenda.peso,
-                    color: corDoTexto(f.legenda.cor),
-                    textShadow: contorno(f.legenda.stroke),
-                  }}
-                >
-                  {aplicarCaixa("Aa", f.legenda.caixa)}
+                {/* Render real, pelo mesmo motivo da galeria: o "Aa" que
+                    estava aqui caía numa fonte genérica do navegador e não
+                    dizia nada sobre o formato. */}
+                <span className="relative h-8 w-14 shrink-0 overflow-hidden rounded bg-zinc-900">
+                  <Image
+                    src={`/formatos/${f.id}.webp`}
+                    alt=""
+                    fill
+                    sizes="56px"
+                    className="object-cover"
+                  />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12px] font-medium text-zinc-100">
@@ -387,8 +346,9 @@ export function SeletorFormato({
           )}
 
           <p className="mt-3 text-[10px] leading-snug text-zinc-600">
-            A prévia mostra caixa, peso, cor e contorno reais do preset. A fonte
-            é aproximada — no MP4 sai a tipografia do formato.
+            Cada prévia é um render de verdade, feito pelo mesmo motor que
+            monta os seus cortes — tipografia, contorno e cores idênticos ao
+            que sai no MP4.
           </p>
         </div>
       )}

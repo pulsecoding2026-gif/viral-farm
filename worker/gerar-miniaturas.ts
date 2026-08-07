@@ -37,13 +37,16 @@ const SAIDA = path.join(process.cwd(), "public", "formatos");
  * diferencia um preset do outro. E como cada formato ancora numa altura
  * diferente, o resto vira fundo vazio em quantidades desiguais.
  *
- * Recortamos a LARGURA INTEIRA e só uma faixa da altura. Tentei 800px de
- * largura pra ganhar tamanho de texto e o Kinetic Typography saiu cortado
- * dos dois lados: em corpo 126 a estimativa de largura por caractere erra o
- * suficiente pra estourar. Numa miniatura, texto cortado é pior do que
- * texto menor — então a largura acompanha o quadro e nada é aparado.
+ * O recorte é SIMÉTRICO em volta da âncora da legenda, não a largura inteira
+ * do quadro. A legenda é centrada na ÁREA ÚTIL (o rail do TikTok empurra o
+ * centro visual pra esquerda), então recortar 0–1080 deixava o texto à
+ * esquerda do centro do card — parecia desalinhado.
+ *
+ * 842 = 2 × 421, o maior recorte simétrico em volta da âncora que ainda cabe
+ * no quadro. Também é largo o bastante pro Kinetic Typography, que em corpo
+ * 126 estourava um recorte de 800.
  */
-const RECORTE_L = 1080;
+const RECORTE_L = 842;
 const RECORTE_A = 460;
 const LARGURA = 400;
 
@@ -64,14 +67,27 @@ const MOMENTO = 0.5;
  * legenda encostada na borda da miniatura.
  */
 function ancora(f: Formato): { x: number; y: number } {
-  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(f.legenda.posicao ?? "");
+  const l = f.legenda;
+
+  // Espelha o gerador (worker/legendas.ts): o \pos ancora no centro da ÁREA
+  // ÚTIL, não do quadro. Recortar pelo centro do quadro joga o texto pra
+  // esquerda no card.
+  const esquerda = Math.round((l.margemLateralPct / 100) * 1080);
+  const direita = Math.round(
+    ((l.margemLateralPct + (l.safeAreaDireitaPct ?? 0)) / 100) * 1080,
+  );
+  const centroX = esquerda + (1080 - esquerda - direita) / 2;
+
+  const pct = /(\d+(?:\.\d+)?)\s*%/.exec(l.posicao ?? "");
   const centroY = ((pct ? Number(pct[1]) : 52) / 100) * 1920;
 
-  // Clamp: sem isto um preset ancorado no rodapé pediria recorte fora do
-  // quadro e o ffmpeg recusaria.
-  const y = Math.max(0, Math.min(centroY - RECORTE_A / 2, 1920 - RECORTE_A));
-  // x sempre 0: a largura do recorte é a do quadro.
-  return { x: 0, y: Math.round(y) };
+  // Clamp: sem isto um preset ancorado no rodapé (ou com margem assimétrica)
+  // pediria recorte fora do quadro e o ffmpeg recusaria.
+  const limite = (v: number, max: number) => Math.max(0, Math.min(v, max));
+  return {
+    x: Math.round(limite(centroX - RECORTE_L / 2, 1080 - RECORTE_L)),
+    y: Math.round(limite(centroY - RECORTE_A / 2, 1920 - RECORTE_A)),
+  };
 }
 
 function palavras(): Palavra[] {
