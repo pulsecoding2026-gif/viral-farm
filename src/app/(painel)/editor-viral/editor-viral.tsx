@@ -32,9 +32,12 @@ import {
   type Proporcao,
   type Trilha,
 } from "@/lib/editor/projeto";
+import { useHistorico } from "@/lib/editor/historico";
 import { SeletorFormatoCompacto } from "../seletor-formato";
 import { Inspector } from "./inspector";
 import { Trilhas } from "./trilhas";
+import { useAtalhos } from "./atalhos";
+import { SafeArea, SeletorPlataforma, type Plataforma } from "./safe-area";
 
 /**
  * Editor Viral IA — a edição NÃO-DESTRUTIVA de um corte pronto.
@@ -322,9 +325,21 @@ function Sessao({
   const video = useRef<HTMLVideoElement>(null);
   const area = useRef<HTMLDivElement>(null);
 
-  const [projeto, setProjeto] = useState<Projeto | null>(null);
+  /**
+   * O documento vive num HISTÓRICO, não num useState solto.
+   *
+   * `aplicar` empilha um passo desfazível; `reiniciar` troca o documento SEM
+   * criar passo — que é o certo pra carregar da API e pra corrigir a duração
+   * na abertura. Abrir um corte não é editá-lo, e um Ctrl+Z logo depois de
+   * abrir não pode desfazer o próprio carregamento.
+   */
+  const historico = useHistorico<Projeto | null>(null);
+  const projeto = historico.estado;
+  const { aplicar, reiniciar } = historico;
+
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
+  const [plataforma, setPlataforma] = useState<Plataforma>("tiktok");
 
   const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
   const [agora, setAgora] = useState(0);
@@ -371,10 +386,10 @@ function Sessao({
         }
         // `projeto: null` é resposta normal: corte que nunca foi editado.
         if (dados.projeto) {
-          setProjeto(dados.projeto);
+          reiniciar(dados.projeto);
         } else {
           ajustarPelaDuracao.current = true;
-          setProjeto(montarProjeto(corte));
+          reiniciar(montarProjeto(corte));
         }
       } catch {
         if (vivo) setErro("Falha de rede ao abrir o projeto.");
@@ -572,20 +587,19 @@ function Sessao({
     // Só o projeto recém-montado é corrigido, e sem marcar mudança: abrir um
     // corte não é editá-lo, e gravar aqui encheria o banco de projetos que
     // ninguém pediu.
-    setProjeto((p) => {
-      if (!p) return p;
-      const clipe = clipesDeVideo(p)[0];
-      if (!clipe) return p;
-      return mapearItem(p, clipe.id, (it) =>
+    // reiniciar, não aplicar: isto corrige o documento recém-montado, não é
+    // edição de ninguém. Empilhar aqui faria o primeiro Ctrl+Z desfazer a
+    // própria abertura do corte.
+    if (!projeto) return;
+    const clipe = clipesDeVideo(projeto)[0];
+    if (!clipe) return;
+    reiniciar(
+      mapearItem(projeto, clipe.id, (it) =>
         it.tipo === "video"
-          ? {
-              ...it,
-              fim_s: real,
-              fonteFim_s: it.fonteInicio_s + real,
-            }
+          ? { ...it, fim_s: real, fonteFim_s: it.fonteInicio_s + real }
           : it,
-      );
-    });
+      ),
+    );
   }
 
   /** O quadro da prévia é medido: com aspecto só, ele estoura a coluna. */
@@ -602,11 +616,22 @@ function Sessao({
 
   /* ------------------------------------------------------------- mudanças */
 
-  /** Toda mudança passa por aqui: aplica no documento e agenda o salvamento. */
-  const mudar = useCallback((f: (p: Projeto) => Projeto) => {
-    setProjeto((p) => (p ? f(p) : p));
-    setSalvamento("pendente");
-  }, []);
+  /**
+   * Toda mudança passa por aqui: empilha no histórico e agenda o salvamento.
+   *
+   * `agrupar` colapsa chamadas seguidas num passo só. Arrastar um clipe
+   * dispara dezenas de mudanças por segundo — sem agrupar, um Ctrl+Z desfaria
+   * um pixel de arrasto, e a pessoa apertaria trinta vezes pra voltar. O
+   * rótulo carrega o id do alvo, senão arrastar dois clipes seguidos viraria
+   * um passo só.
+   */
+  const mudar = useCallback(
+    (f: (p: Projeto) => Projeto, agrupar?: string) => {
+      aplicar((p) => (p ? f(p) : p), agrupar ? { agrupar } : undefined);
+      setSalvamento("pendente");
+    },
+    [aplicar],
+  );
 
   const gravar = useCallback(
     async (p: Projeto) => {
@@ -740,6 +765,25 @@ function Sessao({
     // A metade da direita é a que está debaixo do cursor: ela segue selecionada.
     setSelecionadoId(par[1].id);
   }
+
+  /**
+   * Atalhos de editor. Registrados aqui e não em cada botão porque o teclado
+   * é o que separa "interface bonita" de ferramenta de trabalho — quem edita
+   * de verdade não vai no botão de dividir trinta vezes.
+   *
+   * O hook ignora quando o foco está num campo de texto, senão digitar "s"
+   * no conteúdo de uma legenda dividiria o clipe.
+   */
+  useAtalhos({
+    s: () => podeDividir && dividir(),
+    delete: () => podeRemover && remover(),
+    backspace: () => podeRemover && remover(),
+    space: () => alternar(),
+    "ctrl+z": () => historico.desfazer(),
+    "ctrl+shift+z": () => historico.refazer(),
+    "+": () => setPxPorSeg((v) => Math.min(240, v * 1.5)),
+    "-": () => setPxPorSeg((v) => Math.max(6, v / 1.5)),
+  });
 
   function remover() {
     if (!selecionado || !podeRemover) return;
@@ -978,8 +1022,21 @@ function Sessao({
                   }}
                   className="absolute"
                 />
+                {/* Depois do <video> e com pointer-events-none: a camada de
+                    guias informa onde a interface da rede cobre o quadro, sem
+                    roubar o clique que dá play. */}
+                <SafeArea
+                  proporcao={projeto?.proporcao ?? "9:16"}
+                  plataforma={plataforma}
+                  mostrar={plataforma !== "nenhuma"}
+                />
               </div>
             )}
+          </div>
+
+          <div className="flex shrink-0 items-center justify-center gap-2 border-t border-zinc-800/70 px-3 py-1.5">
+            <span className="text-[10px] text-zinc-600">Guias de</span>
+            <SeletorPlataforma valor={plataforma} onMudar={setPlataforma} />
           </div>
 
           <div className="flex shrink-0 flex-col items-center gap-1.5 border-t border-zinc-800/70 py-2">
