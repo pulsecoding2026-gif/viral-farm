@@ -72,10 +72,38 @@ function margens(f: Formato) {
   return { esquerda, direita, util: LARGURA - esquerda - direita };
 }
 
-/** Largura média de um caractere, como fração do corpo da fonte. */
-function fatorLargura(caixa: string): number {
-  // Caixa alta é mais larga: não tem letra com perna estreita tipo "i" ou "l".
-  return (caixa ?? "").toUpperCase().includes("UPPER") ? 0.62 : 0.52;
+/**
+ * Largura média de um caractere, como fração do corpo da fonte.
+ *
+ * Por FAMÍLIA, não só por caixa: Anton é condensada e ocupa cerca de dois
+ * terços da largura de uma Poppins no mesmo corpo. Estimar as duas igual faz
+ * o corpo encolher demais pra caber — e o Hype Challenge, que deveria gritar,
+ * saía menor que o Hormozi.
+ *
+ * Valores medidos nas fontes que instalamos (worker/vps/instalar-fontes.sh).
+ * Família fora da lista cai no genérico por caixa, que é conservador.
+ */
+const LARGURA_POR_FONTE: Record<string, number> = {
+  anton: 0.40,
+  "archivo black": 0.60,
+  archivo: 0.52,
+  montserrat: 0.58,
+  poppins: 0.58,
+  inter: 0.52,
+  "inter tight": 0.48,
+  "space grotesk": 0.53,
+  "playfair display": 0.48,
+  "ibm plex sans": 0.52,
+  "jetbrains mono": 0.60,
+};
+
+function fatorLargura(caixa: string, fonte?: string): number {
+  const familia = (fonte ?? "").toLowerCase().trim();
+  const medido = LARGURA_POR_FONTE[familia];
+  // Caixa alta some com as pernas estreitas (i, l, t), então engorda a média.
+  const alta = (caixa ?? "").toUpperCase().includes("UPPER");
+  if (medido !== undefined) return alta ? medido * 1.12 : medido;
+  return alta ? 0.62 : 0.52;
 }
 
 /**
@@ -94,7 +122,9 @@ function fatorLargura(caixa: string): number {
 function corpoDaFonte(f: Formato): number {
   const l = f.legenda;
   const pedido = (l.tamanhoPct / 100) * ALTURA;
-  const cabe = margens(f).util / (l.maxCaracteresLinha * fatorLargura(l.caixa));
+  const cabe =
+    margens(f).util /
+    (l.maxCaracteresLinha * fatorLargura(l.caixa, fontePrincipal(l.fonte)));
   return Math.max(28, Math.round(Math.min(pedido, cabe)));
 }
 
@@ -223,8 +253,9 @@ function quebrarLinhas(
   larguraUtil: number,
   corpo: number,
   caixa: string,
+  fonte: string,
 ): string {
-  const porChar = corpo * fatorLargura(caixa);
+  const porChar = corpo * fatorLargura(caixa, fonte);
   // Comprimento visível ignora as tags {\k..} e {\c..}.
   const visivel = (s: string) => s.replace(/\{[^}]*\}/g, "");
 
@@ -305,7 +336,9 @@ export function gerarAss(
         return `{\\k${duracaoCs}}${cor}${texto}`;
       });
 
-      const texto = quebrarLinhas(pedacos, m.util, corpo, l.caixa);
+      const texto = quebrarLinhas(
+        pedacos, m.util, corpo, l.caixa, fontePrincipal(l.fonte),
+      );
       linhas.push(
         `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,{\\pos(${centroX},${centroY})}${texto}`,
       );

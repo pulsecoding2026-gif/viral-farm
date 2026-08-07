@@ -12,7 +12,8 @@ set -euo pipefail
 
 echo "==> Pacotes do sistema"
 apt-get update -y
-apt-get install -y curl git ffmpeg fonts-liberation python3
+# fontconfig entra explícito: sem ele o libass não resolve família nenhuma.
+apt-get install -y curl git ffmpeg fonts-liberation fontconfig python3
 
 echo "==> Node.js 22 LTS"
 if ! command -v node >/dev/null || [[ "$(node -v)" != v22* ]]; then
@@ -28,6 +29,8 @@ chmod a+rx /usr/local/bin/yt-dlp
 echo "==> pm2"
 npm install -g pm2
 
+# Depois do clone, porque o script das fontes vive no repo.
+
 echo "==> Código"
 if [[ ! -d /opt/viral-farm ]]; then
   git clone https://github.com/pulsecoding2026-gif/viral-farm.git /opt/viral-farm
@@ -37,6 +40,12 @@ git pull
 # --no-save: o lock vem do Windows e não tem os opcionais de Linux; deixar o
 # npm reescrevê-lo suja o repo e trava o próximo git pull. Ver atualizar.sh.
 npm install --no-save
+
+echo "==> Tipografias dos formatos"
+# Sem isto a VPS nasce só com fonts-liberation e TODAS as famílias dos 15
+# presets caem em Liberation Mono — legenda monoespaçada, com pontuação
+# solta e espaço duplo. Era o bug das legendas.
+bash /opt/viral-farm/worker/vps/instalar-fontes.sh
 
 if [[ ! -f /opt/viral-farm/.env ]]; then
   cat > /opt/viral-farm/.env <<'FIM'
