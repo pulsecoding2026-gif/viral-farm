@@ -190,9 +190,19 @@ export function filtroDeEnquadramento(e: Enquadramento): string {
   if (e === "ajustar") {
     return [
       "split=2[bg][fg]",
+      // O desfoque acontece em MINIATURA, não em 1080x1920.
+      //
+      // gblur com sigma alto é uma convolução enorme por frame: em 1080x1920
+      // a 30fps ele dominava o tempo de render (a VPS ficava sem CPU até pra
+      // aceitar SSH). Reduzir pra 120x214 antes de borrar corta ~80x os
+      // pixels processados, e o sigma cai na mesma proporção — sigma 4 aqui
+      // equivale a ~36 no tamanho cheio.
+      //
+      // O resultado é igual ou melhor: a ampliação de volta suaviza o que
+      // sobrou, e o fundo precisa virar TEXTURA, não imagem legível.
       "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920," +
-        // sigma alto o bastante pra virar textura, não imagem reconhecível.
-        "gblur=sigma=28,eq=brightness=-0.16:saturation=1.15[bgb]",
+        "scale=120:214,gblur=sigma=4,scale=1080:1920," +
+        "eq=brightness=-0.16:saturation=1.15[bgb]",
       "[fg]scale=1080:-2[fgs]",
       "[bgb][fgs]overlay=(W-w)/2:(H-h)/2",
     ].join(";");

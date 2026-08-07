@@ -121,8 +121,15 @@ export async function renderizarCorte(
   args.push(
     "-r", "30",
     "-c:v", "libx264",
-    "-preset", "fast",
-    "-crf", "21",
+    // veryfast + crf 20, não fast + crf 21. Medido em worker/medir-render.ts:
+    // o par novo entrega o MESMO bitrate (6706 KB contra 6611 no clipe de
+    // teste) em 5,6s no lugar de 21,8. O preset mais rápido perde eficiência
+    // de compressão e o crf mais baixo devolve — sobra a velocidade.
+    //
+    // Importa porque a VPS tem pouca CPU: com o par antigo um corte levava
+    // de 3 a 6 minutos e a máquina ficava sem fôlego até pra aceitar SSH.
+    "-preset", "veryfast",
+    "-crf", "20",
     "-c:a", "aac",
     "-b:a", "128k",
     "-movflags", "+faststart",
