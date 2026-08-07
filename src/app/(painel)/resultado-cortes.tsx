@@ -101,7 +101,12 @@ function Editor({
 }) {
   const [inicio, setInicio] = useState(corte.inicio_s);
   const [fim, setFim] = useState(corte.fim_s);
-  const [estilo, setEstilo] = useState(corte.estilo ?? estiloDaAnalise);
+  // acharFormato normaliza: cortes gravados antes da galeria trazem os
+  // estilos velhos (karaoke/neon/minimal/sem), que a rota de reedição hoje
+  // recusa. Sem isso o seletor mostraria Hormozi e mandaria "karaoke".
+  const [estilo, setEstilo] = useState(
+    acharFormato(corte.estilo ?? estiloDaAnalise).id,
+  );
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
