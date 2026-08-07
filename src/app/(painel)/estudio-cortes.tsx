@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Scissors,
   Quotes,
@@ -19,6 +19,7 @@ import {
   type Corte,
   type NotasCorte,
 } from "@/lib/analises-db";
+import { AjusteCorte } from "./ajuste-corte";
 import { acharFormato } from "@/lib/formatos";
 
 /**
@@ -112,8 +113,41 @@ export function EstudioCortes({
   const [escolhidos, setEscolhidos] = useState<Set<string>>(
     () => new Set(propostos.map((c) => c.id)),
   );
+
+  /**
+   * Semeia a seleção quando os cortes chegam.
+   *
+   * O inicializador do useState roda UMA vez, na montagem — e abrindo pelo
+   * histórico o Estúdio monta antes do detalhe carregar, com `propostos`
+   * vazio. Sem isto, os cortes apareciam todos desmarcados e o botão de
+   * renderizar nascia desabilitado.
+   *
+   * O ref garante que semear aconteça uma vez só: sem ele, desmarcar todos
+   * de propósito faria a seleção voltar sozinha no próximo render.
+   */
+  const semeado = useRef(false);
+  const idsPropostos = propostos.map((c) => c.id).join(",");
+  useEffect(() => {
+    if (semeado.current || propostos.length === 0) return;
+    semeado.current = true;
+    setEscolhidos(new Set(propostos.map((c) => c.id)));
+    // propostos muda de identidade a cada render; a lista de ids não.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idsPropostos]);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  /** Janelas ajustadas no Estúdio. Ausente = a janela que a IA propôs. */
+  const [janelas, setJanelas] = useState<
+    Record<string, { inicio_s: number; fim_s: number }>
+  >({});
+
+  function ajustar(id: string, inicio_s: number, fim_s: number) {
+    setJanelas((prev) => ({ ...prev, [id]: { inicio_s, fim_s } }));
+  }
+
+  function janelaDe(c: Corte) {
+    return janelas[c.id] ?? { inicio_s: c.inicio_s, fim_s: c.fim_s };
+  }
 
   function alternar(id: string) {
     setEscolhidos((prev) => {
@@ -131,7 +165,13 @@ export function EstudioCortes({
       const r = await fetch(`/api/analises/${job.id}/renderizar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cortes: [...escolhidos] }),
+        body: JSON.stringify({
+          // Só manda a janela de quem foi ajustado; o resto vai como id
+          // simples e mantém o que a IA propôs.
+          cortes: [...escolhidos].map((id) =>
+            janelas[id] ? { id, ...janelas[id] } : id,
+          ),
+        }),
       });
       if (!r.ok) {
         const dados = await r.json().catch(() => ({}));
@@ -193,26 +233,35 @@ export function EstudioCortes({
             const marcado = escolhidos.has(c.id);
             return (
               <li key={c.id}>
-                <button
-                  type="button"
-                  onClick={() => alternar(c.id)}
-                  aria-pressed={marcado}
+                {/*
+                  Div, não button: o ajuste de janela põe um botão por palavra
+                  aqui dentro, e botão dentro de botão é HTML inválido — o
+                  React reclama de hidratação e o clique fica imprevisível.
+                  Quem alterna agora é o seletor, e só ele.
+                */}
+                <div
                   className={
                     "flex w-full items-start gap-4 px-5 py-4 text-left transition sm:px-6 " +
                     (marcado ? "bg-orange-600/[0.06]" : "opacity-55 hover:opacity-80")
                   }
                 >
                   {/* O seletor — a decisão em um toque. */}
-                  <span
+                  <button
+                    type="button"
+                    onClick={() => alternar(c.id)}
+                    aria-pressed={marcado}
+                    aria-label={
+                      marcado ? `Descartar "${c.titulo}"` : `Aprovar "${c.titulo}"`
+                    }
                     className={
                       "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition " +
                       (marcado
                         ? "border-orange-600 bg-orange-600 text-white"
-                        : "border-zinc-700 bg-zinc-950")
+                        : "border-zinc-700 bg-zinc-950 hover:border-zinc-500")
                     }
                   >
                     {marcado && <Check size={13} weight="bold" />}
-                  </span>
+                  </button>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -266,13 +315,27 @@ export function EstudioCortes({
 
                     {/* A prévia da fala: o que o espectador vai OUVIR. É o
                         que deixa decidir sem assistir o vídeo de novo. */}
-                    {c.previa && (
-                      <p className="mt-2 rounded-lg border border-zinc-800/80 bg-zinc-950/50 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-500">
-                        {c.previa}
-                      </p>
+                    {/* Com o ajuste disponível, ele SUBSTITUI a prévia: os
+                        dois mostram a mesma fala, e o ajuste ainda deixa
+                        mexer. Manter os dois seria repetição. */}
+                    {c.contexto && c.contexto.length > 0 ? (
+                      <AjusteCorte
+                        contexto={c.contexto}
+                        inicio={janelaDe(c).inicio_s}
+                        fim={janelaDe(c).fim_s}
+                        originalInicio={c.inicio_s}
+                        originalFim={c.fim_s}
+                        onMudar={(i, f) => ajustar(c.id, i, f)}
+                      />
+                    ) : (
+                      c.previa && (
+                        <p className="mt-2 rounded-lg border border-zinc-800/80 bg-zinc-950/50 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-500">
+                          {c.previa}
+                        </p>
+                      )
                     )}
                   </div>
-                </button>
+                </div>
               </li>
             );
           })}

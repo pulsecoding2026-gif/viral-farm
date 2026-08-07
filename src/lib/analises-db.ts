@@ -69,6 +69,23 @@ export type Corte = {
   url: string | null;
   /** Primeiras palavras faladas dentro do corte — a prévia do Estúdio. */
   previa: string | null;
+  /**
+   * Palavras em volta do corte, pro ajuste de início e fim no Estúdio.
+   *
+   * Vai ALÉM das bordas de propósito: o defeito clássico é o corte começar
+   * no meio da frase ("...vão mudar" em vez de "os carros do GTA VI vão
+   * mudar"), e consertar isso exige poder ESTENDER pra trás, não só encurtar.
+   *
+   * Ajuste por palavra, não por segundo: fala não se alinha a segundo, se
+   * alinha a palavra — e a transcrição já traz o tempo exato de cada uma.
+   */
+  contexto: PalavraDoCorte[] | null;
+};
+
+export type PalavraDoCorte = {
+  texto: string;
+  inicio_s: number;
+  fim_s: number;
 };
 
 /** Quando a análise falha, o `resultado` guarda o diagnóstico em vez do resumo. */
@@ -157,6 +174,29 @@ export async function listarAnalises(sb: SupabaseClient): Promise<JobAnalise[]> 
 /** Trinca [texto, início, fim] — como o worker compacta a transcrição. */
 type PalavraCompacta = [string, number, number];
 
+/**
+ * Quanto de fala vai ALÉM de cada borda do corte, em segundos.
+ *
+ * Generoso de propósito: o defeito clássico é o corte entrar no meio da
+ * frase, e consertar exige estender pra trás. 12s cobre uma frase longa
+ * sem inchar a resposta (≈35 palavras por borda).
+ */
+const FOLGA_CONTEXTO_S = 12;
+
+function contextoDoCorte(
+  palavras: PalavraCompacta[] | undefined,
+  inicio: number,
+  fim: number,
+): PalavraDoCorte[] | null {
+  if (!palavras?.length) return null;
+  const de = inicio - FOLGA_CONTEXTO_S;
+  const ate = fim + FOLGA_CONTEXTO_S;
+  const dentro = palavras
+    .filter(([, i, f]) => f > de && i < ate)
+    .map(([texto, inicio_s, fim_s]) => ({ texto, inicio_s, fim_s }));
+  return dentro.length > 0 ? dentro : null;
+}
+
 function previaDoCorte(
   palavras: PalavraCompacta[] | undefined,
   inicio: number,
@@ -226,6 +266,9 @@ export async function lerAnalise(
             .publicUrl + versao
         : null,
       previa: previaDoCorte(palavras, inicio, fim),
+      // Só o Estúdio usa: corte já renderizado não tem o que ajustar aqui.
+      contexto:
+        c.status === "proposto" ? contextoDoCorte(palavras, inicio, fim) : null,
     };
   });
 
@@ -263,18 +306,36 @@ export async function criarAnalise(
  * "renderizar os aprovados". Roda com a sessão do dono — RLS garante que
  * ninguém aprova corte alheio.
  */
+export type CorteAprovacao = {
+  id: string;
+  /** Janela ajustada no Estúdio. Ausente mantém a que a IA propôs. */
+  inicio_s?: number;
+  fim_s?: number;
+};
+
 export async function aprovarCortes(
   sb: SupabaseClient,
   analiseId: string,
-  corteIds: string[],
+  escolhidos: CorteAprovacao[],
 ): Promise<void> {
-  const { error: erroAprovar } = await sb
-    .from("cortes")
-    .update({ status: "aprovado" })
-    .eq("analise_id", analiseId)
-    .eq("status", "proposto")
-    .in("id", corteIds);
-  if (erroAprovar) throw new Error(`Não aprovei os cortes: ${erroAprovar.message}`);
+  const corteIds = escolhidos.map((c) => c.id);
+
+  // Um update por corte porque a janela pode ter sido ajustada individualmente
+  // — o Estúdio deixa mexer no início e no fim de cada um. São poucos (até 15)
+  // e só acontece no clique de aprovar.
+  for (const c of escolhidos) {
+    const ajuste =
+      c.inicio_s !== undefined && c.fim_s !== undefined
+        ? { inicio_s: c.inicio_s, fim_s: c.fim_s }
+        : {};
+    const { error } = await sb
+      .from("cortes")
+      .update({ status: "aprovado", ...ajuste })
+      .eq("id", c.id)
+      .eq("analise_id", analiseId)
+      .eq("status", "proposto");
+    if (error) throw new Error(`Não aprovei o corte: ${error.message}`);
+  }
 
   const { error: erroDescartar } = await sb
     .from("cortes")

@@ -4,9 +4,29 @@ import { aprovarCortes } from "@/lib/analises-db";
 
 export const runtime = "nodejs";
 
+/**
+ * Aceita o id sozinho (formato antigo) ou o id com a janela ajustada.
+ *
+ * A janela vem quando o dono mexeu no início/fim pelo ajuste de palavras —
+ * é o conserto do corte que entrava no meio da frase.
+ */
+const Escolhido = z.union([
+  z.string().uuid(),
+  z
+    .object({
+      id: z.string().uuid(),
+      inicio_s: z.number().min(0),
+      fim_s: z.number().min(0),
+    })
+    // Validado no servidor porque o cliente é editável: janela invertida ou
+    // longa demais faria o ffmpeg produzir lixo ou queimar minutos à toa.
+    .refine((c) => c.fim_s - c.inicio_s >= 3, "Corte curto demais.")
+    .refine((c) => c.fim_s - c.inicio_s <= 180, "Corte longo demais."),
+]);
+
 const Corpo = z.object({
   // Os cortes que o dono aprovou no Estúdio. Pelo menos um.
-  cortes: z.array(z.string().uuid()).min(1, "Escolha pelo menos um corte."),
+  cortes: z.array(Escolhido).min(1, "Escolha pelo menos um corte."),
 });
 
 /**
@@ -39,8 +59,11 @@ export async function POST(
   }
 
   const { id } = await ctx.params;
+  const escolhidos = parsed.data.cortes.map((c) =>
+    typeof c === "string" ? { id: c } : c,
+  );
   // RLS faz a autorização: os updates só acham linhas do próprio usuário.
-  await aprovarCortes(supabase, id, parsed.data.cortes);
+  await aprovarCortes(supabase, id, escolhidos);
 
   return Response.json({ ok: true }, { status: 202 });
 }
