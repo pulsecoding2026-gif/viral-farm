@@ -87,6 +87,24 @@ const CASOS: { nome: string; bruto: string; esperado: string; entrada?: true }[]
     esperado: "render_falhou",
   },
   {
+    // Aconteceu de verdade: a conta do DeepSeek zerou e a tela mandava
+    // "tente outro vídeo", que nunca ia resolver.
+    nome: "LLM sem saldo (402)",
+    bruto:
+      'DeepSeek respondeu 402: {"error":{"message":"Insufficient Balance","type":"unknown_error"}}',
+    esperado: "servico_indisponivel",
+  },
+  {
+    nome: "chave da IA invalida (401)",
+    bruto: 'Claude respondeu 401: {"error":{"type":"authentication_error"}}',
+    esperado: "servico_indisponivel",
+  },
+  {
+    nome: "provedor de IA fora do ar (503)",
+    bruto: "Groq respondeu 503: service unavailable",
+    esperado: "servico_indisponivel",
+  },
+  {
     nome: "erro totalmente inesperado",
     bruto: "RangeError: Maximum call stack size exceeded at 0x8007",
     esperado: "desconhecido",

@@ -33,6 +33,7 @@ export type CodigoErro =
   | "sem_corte_bom"
   | "render_falhou"
   | "entrada_invalida"
+  | "servico_indisponivel"
   | "desconhecido";
 
 /** O que a tela oferece depois da falha. */
@@ -101,6 +102,24 @@ const REGRAS: { codigo: CodigoErro; padrao: RegExp; mensagem: string; acao: Acao
     mensagem:
       "Esse vídeo não está mais disponível na plataforma — pode ter sido removido ou o canal encerrado.",
     acao: "outro_link",
+  },
+  {
+    /**
+     * Falha do NOSSO lado: LLM ou transcrição sem crédito, chave inválida,
+     * cota estourada, provedor fora do ar.
+     *
+     * Precisa vir ANTES do 429 genérico e do bloco de rede: sem regra
+     * própria, isto caía em "desconhecido" e a tela mandava tentar outro
+     * vídeo — conselho ativamente errado, porque vídeo nenhum ia funcionar.
+     * O dono não tem o que consertar aqui, e fingir que tem é pior que
+     * admitir a falha.
+     */
+    codigo: "servico_indisponivel",
+    padrao:
+      /insufficient balance|insufficient_quota|exceeded your current quota|respondeu 4(01|02|03)|invalid api key|authentication_error|respondeu 5\d\d/i,
+    mensagem:
+      "Nosso serviço de IA está indisponível no momento — é um problema nosso, não do seu vídeo. Nada foi cobrado de você. Tente de novo em alguns minutos.",
+    acao: "tentar",
   },
   {
     codigo: "muitas_tentativas",
