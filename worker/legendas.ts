@@ -43,11 +43,16 @@ WrapStyle: 2
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Fala,Arial,88,${c.primaria},${c.secundaria},&H00000000,&H96000000,-1,0,0,0,100,100,0,0,1,6,3,2,60,60,420,1
+${ESTILO_TITULO}
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 }
+
+/** Estilo da caixa de título que abre o corte — fundo branco, texto preto. */
+const ESTILO_TITULO =
+  "Style: Titulo,Arial,58,&H00000000,&H00000000,&H00FFFFFF,&H00FFFFFF,-1,0,0,0,100,100,0,0,3,14,0,8,90,90,150,1";
 
 function tempoAss(s: number): string {
   const h = Math.floor(s / 3600);
@@ -95,12 +100,29 @@ export function gerarAss(
   palavras: Palavra[],
   inicioCorte: number,
   estilo: EstiloLegenda = "karaoke",
+  tituloTela?: string,
 ): string | null {
-  if (estilo === "sem") return null;
-  const config = CORES[estilo];
+  // Sem legenda mas COM título ainda vale um .ass: o título é o gancho
+  // escrito, e some junto com a legenda seria perder as duas coisas.
+  if (estilo === "sem" && !tituloTela) return null;
+  // "sem" ainda precisa de UM estilo declarado no cabeçalho do .ass, senão o
+  // arquivo é inválido — usamos o karaokê como base e não emitimos falas.
+  const base = estilo === "sem" ? "karaoke" : estilo;
+  const config = CORES[base];
 
-  const blocos = agruparPalavras(palavras);
+  const blocos = estilo === "sem" ? [] : agruparPalavras(palavras);
   const linhas: string[] = [];
+
+  // Caixa de título nos primeiros 5s — o gancho que se LÊ enquanto a fala
+  // ainda está começando. Quebra em duas linhas pra não estourar a largura.
+  if (tituloTela?.trim()) {
+    const t = limpar(tituloTela.trim());
+    const meio = t.length > 26 ? t.lastIndexOf(" ", Math.ceil(t.length / 2)) : -1;
+    const texto = meio > 0 ? `${t.slice(0, meio)}\\N${t.slice(meio + 1)}` : t;
+    linhas.push(
+      `Dialogue: 1,${tempoAss(0)},${tempoAss(5)},Titulo,,0,0,0,,${texto}`,
+    );
+  }
 
   for (const bloco of blocos) {
     const inicio = bloco[0].inicio_s - inicioCorte;
@@ -127,5 +149,5 @@ export function gerarAss(
     );
   }
 
-  return cabecalho(estilo) + linhas.join("\n") + "\n";
+  return cabecalho(base) + linhas.join("\n") + "\n";
 }

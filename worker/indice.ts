@@ -147,7 +147,11 @@ async function analisar(job: JobAnalise): Promise<void> {
           palavrasNaJanela(transcricao.palavras, corte),
           dir,
           `corte-${i + 1}`,
-          estilo,
+          {
+            estilo,
+            tituloTela: job.opcoes.titulo !== false ? corte.titulo_tela : undefined,
+            limparSilencio: job.opcoes.limpar_silencio === true,
+          },
         );
         await subirVideoDoCorte(corteId, job.id, job.user_id, mp4);
         prontos += 1;
@@ -245,8 +249,15 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
           palavrasNaJanela(transcricao.palavras, corte),
           dir,
           `corte-${corte.ordem}`,
-          // Reedição pode trocar o estilo só deste corte.
-          (corte.estilo as EstiloLegenda | null) ?? estiloDaAnalise,
+          {
+            // Reedição pode trocar o estilo só deste corte.
+            estilo: (corte.estilo as EstiloLegenda | null) ?? estiloDaAnalise,
+            tituloTela:
+              job.opcoes.titulo !== false
+                ? (corte.titulo_tela ?? undefined)
+                : undefined,
+            limparSilencio: job.opcoes.limpar_silencio === true,
+          },
         );
         await subirVideoDoCorte(corte.id, job.id, job.user_id, mp4);
         prontos += 1;

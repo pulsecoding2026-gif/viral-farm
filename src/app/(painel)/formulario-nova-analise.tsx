@@ -11,6 +11,9 @@ import {
   SlidersHorizontal,
   ShieldCheck,
   Scissors,
+  Check,
+  TextT,
+  Waveform,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 import type { OpcoesAnalise } from "@/lib/analises-db";
@@ -121,6 +124,8 @@ export function FormularioNovaAnalise({
   const [duracao, setDuracao] = useState<"" | "curto" | "medio" | "longo">("");
   const [estilo, setEstilo] = useState<NonNullable<OpcoesAnalise["estilo"]>>("karaoke");
   const [direcao, setDirecao] = useState("");
+  const [titulo, setTitulo] = useState(true);
+  const [limparSilencio, setLimparSilencio] = useState(false);
 
   // Prévia direto do CDN de thumbnails do YouTube — sem API, sem terceiro.
   const thumb = useMemo(() => {
@@ -138,6 +143,8 @@ export function FormularioNovaAnalise({
       qtd,
       ...(duracao ? { duracao } : {}),
       estilo,
+      titulo,
+      limpar_silencio: limparSilencio,
       ...(direcao.trim() ? { direcao: direcao.trim() } : {}),
     };
 
@@ -308,7 +315,7 @@ export function FormularioNovaAnalise({
                   onChange={(e) => setQtd(Number(e.target.value))}
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950/40 px-3.5 py-2.5 text-sm text-zinc-100 outline-none transition focus:border-orange-600"
                 >
-                  {[3, 5, 8, 10].map((n) => (
+                  {[3, 5, 8, 10, 15].map((n) => (
                     <option key={n} value={n}>
                       {n} cortes
                     </option>
@@ -370,6 +377,75 @@ export function FormularioNovaAnalise({
                   );
                 })}
               </div>
+            </div>
+
+            {/* Acabamento: dois interruptores que mudam o corte final. */}
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setTitulo((v) => !v)}
+                aria-pressed={titulo}
+                className={
+                  "flex items-start gap-3 rounded-xl border p-3.5 text-left transition " +
+                  (titulo
+                    ? "border-orange-700 bg-orange-950/25"
+                    : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700")
+                }
+              >
+                <span
+                  className={
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition " +
+                    (titulo
+                      ? "border-orange-600 bg-orange-600 text-white"
+                      : "border-zinc-700")
+                  }
+                >
+                  {titulo && <Check size={11} weight="bold" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-100">
+                    <TextT size={14} className="text-orange-500" />
+                    Título na tela
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-zinc-500">
+                    Uma frase escrita nos 5 primeiros segundos — o gancho que
+                    se lê antes de ouvir.
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLimparSilencio((v) => !v)}
+                aria-pressed={limparSilencio}
+                className={
+                  "flex items-start gap-3 rounded-xl border p-3.5 text-left transition " +
+                  (limparSilencio
+                    ? "border-orange-700 bg-orange-950/25"
+                    : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700")
+                }
+              >
+                <span
+                  className={
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border transition " +
+                    (limparSilencio
+                      ? "border-orange-600 bg-orange-600 text-white"
+                      : "border-zinc-700")
+                  }
+                >
+                  {limparSilencio && <Check size={11} weight="bold" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-zinc-100">
+                    <Waveform size={14} className="text-orange-500" />
+                    Limpar silêncios
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-relaxed text-zinc-500">
+                    Remove as pausas longas entre as falas. Deixa o corte mais
+                    denso e mais curto.
+                  </span>
+                </span>
+              </button>
             </div>
 
             {/* Direção pra IA */}

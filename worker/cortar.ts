@@ -7,20 +7,32 @@ import type { TranscricaoPalavras } from "./transcritor";
  *
  * O modelo recebe a transcrição com timestamps e devolve blocos
  * SEMANTICAMENTE COMPLETOS: gancho no início, desenvolvimento, conclusão.
- * As regras (20–90s, funciona isolado, evita intro/despedida) vêm direto da
- * referência de como o Opus Clip opera.
+ *
+ * Cada corte volta com o DIAGNÓSTICO do score (gancho, fluxo, valor,
+ * tendência), não só a nota final: nota isolada é mágica, nota decomposta é
+ * argumento — o usuário entende por que aquele trecho foi escolhido.
  *
  * Provedores: `deepseek` (padrão — API compatível com OpenAI, custo baixo)
  * e `claude`. Troca por env LLM, sem mexer no resto do worker.
  */
 
+export type NotasCorte = {
+  gancho: number;
+  fluxo: number;
+  valor: number;
+  tendencia: number;
+};
+
 export type CorteEscolhido = {
   inicio_s: number;
   fim_s: number;
   titulo: string;
+  titulo_tela: string;
   gancho: string;
   motivo: string;
+  descricao: string;
   score: number;
+  notas: NotasCorte;
 };
 
 export type ConfigLlm = {
@@ -34,7 +46,7 @@ export type ConfigLlm = {
  * Tudo opcional: sem nada, vale o comportamento automático padrão.
  */
 export type OpcoesCorte = {
-  /** Máximo de cortes (1–10). */
+  /** Máximo de cortes (1–15). */
   qtd?: number;
   /** Faixa de duração alvo de cada corte. */
   duracao?: "curto" | "medio" | "longo";
@@ -54,9 +66,19 @@ const EsquemaCortes = z.object({
       inicio_s: z.number(),
       fim_s: z.number(),
       titulo: z.string(),
+      titulo_tela: z.string().optional(),
       gancho: z.string(),
       motivo: z.string(),
+      descricao: z.string().optional(),
       score: z.number(),
+      notas: z
+        .object({
+          gancho: z.number(),
+          fluxo: z.number(),
+          valor: z.number(),
+          tendencia: z.number(),
+        })
+        .optional(),
     }),
   ),
 });
@@ -78,7 +100,7 @@ function montarPrompt(
   duracaoVideo: number,
   opcoes: OpcoesCorte,
 ): string {
-  const maxCortes = Math.min(Math.max(opcoes.qtd ?? 5, 1), 10);
+  const maxCortes = Math.min(Math.max(opcoes.qtd ?? 8, 1), 15);
   const faixa = FAIXAS[opcoes.duracao ?? ""] ?? { de: 20, ate: 90 };
 
   // A direção do usuário entra ANTES das regras e com prioridade declarada:
@@ -101,12 +123,28 @@ Escolha até ${maxCortes} trechos que:
 - evitem introduções, despedidas e propaganda;
 - nunca comecem no meio de uma frase — ajuste inicio_s pro começo exato da fala.
 
-Pontue cada corte de 0 a 100 pesando: força do gancho (25%), clareza isolada (20%), potencial de retenção (15%), intensidade emocional (15%), conclusão (10%), novidade (10%), atividade (5%).
+Para CADA corte, avalie 4 dimensões de 0 a 100:
+- gancho: força dos primeiros 3 segundos em segurar quem está rolando o feed
+- fluxo: o trecho se sustenta sozinho, com começo, meio e fim
+- valor: entrega informação, emoção ou entretenimento real
+- tendencia: o assunto tem apelo atual e busca
+
+O score final é a média ponderada: gancho 35%, fluxo 25%, valor 25%, tendencia 15%.
 
 Se o vídeo não render ${maxCortes} cortes BONS, entregue menos. Corte fraco não entra.
 
 Responda APENAS com JSON válido, sem markdown, exatamente neste formato:
-{"cortes":[{"inicio_s":12.4,"fim_s":58.9,"titulo":"...","gancho":"primeira frase falada, literal","motivo":"por que segura atenção","score":87}]}`;
+{"cortes":[{
+"inicio_s":12.4,
+"fim_s":58.9,
+"titulo":"nome curto do corte para a lista",
+"titulo_tela":"frase de ate 45 caracteres que aparece ESCRITA na tela nos primeiros segundos, provocativa",
+"gancho":"primeira frase falada, literal",
+"motivo":"uma frase: por que este trecho segura atencao",
+"descricao":"legenda pronta para postar, 2 frases, com chamada final",
+"score":87,
+"notas":{"gancho":92,"fluxo":85,"valor":88,"tendencia":78}
+}]}`;
 }
 
 /* --------------------------------------------------------------- deepseek */
@@ -127,7 +165,9 @@ async function viaDeepseek(
       // Trava a saída em JSON — junto com o "APENAS JSON" do prompt, que a
       // própria doc do DeepSeek recomenda pra ancorar o formato.
       response_format: { type: "json_object" },
-      max_tokens: 4096,
+      // Mais cortes e mais campos por corte: o teto antigo (4096) cortava a
+      // resposta no meio e o JSON chegava quebrado.
+      max_tokens: 8192,
     }),
   });
 
@@ -154,7 +194,7 @@ async function viaClaude(config: ConfigLlm, prompt: string): Promise<unknown> {
 
   const resposta = await anthropic.messages.create({
     model: config.modelo,
-    max_tokens: 4096,
+    max_tokens: 8192,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -169,13 +209,20 @@ async function viaClaude(config: ConfigLlm, prompt: string): Promise<unknown> {
 
 /* ------------------------------------------------------------------ público */
 
+/** Média ponderada das 4 dimensões — a mesma fórmula que o prompt declara. */
+function scoreDasNotas(n: NotasCorte): number {
+  return Math.round(
+    n.gancho * 0.35 + n.fluxo * 0.25 + n.valor * 0.25 + n.tendencia * 0.15,
+  );
+}
+
 export async function escolherCortes(
   config: ConfigLlm,
   transcricao: TranscricaoPalavras,
   duracaoVideo: number,
   opcoes: OpcoesCorte,
 ): Promise<CorteEscolhido[]> {
-  const maxCortes = Math.min(Math.max(opcoes.qtd ?? 5, 1), 10);
+  const maxCortes = Math.min(Math.max(opcoes.qtd ?? 8, 1), 15);
   const prompt = montarPrompt(transcricao, duracaoVideo, opcoes);
 
   const bruto =
@@ -198,6 +245,30 @@ export async function escolherCortes(
         c.fim_s <= duracaoVideo + 1 &&
         c.fim_s - c.inicio_s >= 10,
     )
+    .map((c) => {
+      const notas = c.notas ?? {
+        // Modelo que ignorou as dimensões: espalha o score final nas quatro
+        // pra UI não quebrar, sem inventar diferença que não foi avaliada.
+        gancho: c.score,
+        fluxo: c.score,
+        valor: c.score,
+        tendencia: c.score,
+      };
+      return {
+        inicio_s: c.inicio_s,
+        fim_s: c.fim_s,
+        titulo: c.titulo,
+        // O título de tela é opcional no schema; sem ele, o do card serve.
+        titulo_tela: (c.titulo_tela ?? c.titulo).slice(0, 60),
+        gancho: c.gancho,
+        motivo: c.motivo,
+        descricao: c.descricao ?? "",
+        // Recalcula pela fórmula: o modelo às vezes devolve um score que não
+        // bate com as notas que ele mesmo deu.
+        score: c.notas ? scoreDasNotas(notas) : c.score,
+        notas,
+      };
+    })
     .sort((a, b) => b.score - a.score)
     .slice(0, maxCortes);
 }

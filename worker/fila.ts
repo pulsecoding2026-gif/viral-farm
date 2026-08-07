@@ -16,6 +16,10 @@ import type { TranscricaoPalavras } from "./transcritor";
 export type OpcoesJob = OpcoesCorte & {
   modo?: "auto" | "manual";
   estilo?: string;
+  /** Caixa de título nos primeiros 5s. Ligada por padrão. */
+  titulo?: boolean;
+  /** Remove as pausas longas entre as falas. */
+  limpar_silencio?: boolean;
 };
 
 export type JobAnalise = {

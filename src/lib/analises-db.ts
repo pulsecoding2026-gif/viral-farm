@@ -14,6 +14,18 @@ export type OpcoesAnalise = {
   duracao?: "curto" | "medio" | "longo";
   direcao?: string;
   estilo?: "karaoke" | "neon" | "minimal" | "sem";
+  /** Caixa de título nos primeiros 5s do corte. */
+  titulo?: boolean;
+  /** Remove as pausas longas entre as falas. */
+  limpar_silencio?: boolean;
+};
+
+/** Diagnóstico do score — por que o trecho foi escolhido. */
+export type NotasCorte = {
+  gancho: number;
+  fluxo: number;
+  valor: number;
+  tendencia: number;
 };
 
 export type ResumoCortes = {
@@ -35,6 +47,12 @@ export type Corte = {
   motivo: string | null;
   score: number | null;
   status: "proposto" | "aprovado" | "descartado" | "renderizando" | "pronto" | "erro";
+  /** Diagnóstico do score nas 4 dimensões. */
+  notas: NotasCorte | null;
+  /** Frase que aparece ESCRITA na tela nos primeiros segundos. */
+  titulo_tela: string | null;
+  /** Legenda pronta pra postar. */
+  descricao: string | null;
   /** Estilo escolhido na reedição; nulo herda o da análise. */
   estilo: OpcoesAnalise["estilo"] | null;
   /** URL pública do MP4 quando pronto. */
@@ -134,7 +152,7 @@ export async function lerAnalise(
   const { data: cortes, error: erroCortes } = await sb
     .from("cortes")
     .select(
-      "id, ordem, inicio_s, fim_s, titulo, gancho, motivo, score, status, arquivo, estilo, renderizado_em",
+      "id, ordem, inicio_s, fim_s, titulo, titulo_tela, gancho, motivo, descricao, score, notas, status, arquivo, estilo, renderizado_em",
     )
     .eq("analise_id", id)
     .order("ordem", { ascending: true });
@@ -155,9 +173,12 @@ export async function lerAnalise(
       inicio_s: inicio,
       fim_s: fim,
       titulo: c.titulo as string,
+      titulo_tela: (c.titulo_tela as string | null) ?? null,
       gancho: (c.gancho as string | null) ?? null,
       motivo: (c.motivo as string | null) ?? null,
+      descricao: (c.descricao as string | null) ?? null,
       score: (c.score as number | null) ?? null,
+      notas: (c.notas as NotasCorte | null) ?? null,
       status: c.status as Corte["status"],
       estilo: (c.estilo as Corte["estilo"]) ?? null,
       url: c.arquivo

@@ -24,9 +24,12 @@ export async function registrarCorte(
       inicio_s: corte.inicio_s,
       fim_s: corte.fim_s,
       titulo: corte.titulo,
+      titulo_tela: corte.titulo_tela,
       gancho: corte.gancho,
       motivo: corte.motivo,
+      descricao: corte.descricao,
       score: Math.round(corte.score),
+      notas: corte.notas,
       status,
     })
     .select("id")
@@ -43,6 +46,7 @@ export type CorteAprovado = {
   fim_s: number;
   /** Estilo escolhido na reedição; nulo herda o da análise. */
   estilo: string | null;
+  titulo_tela: string | null;
 };
 
 /** Cortes que o dono aprovou no Estúdio e ainda não foram renderizados. */
@@ -51,7 +55,7 @@ export async function lerCortesAprovados(
 ): Promise<CorteAprovado[]> {
   const { data, error } = await supabase()
     .from("cortes")
-    .select("id, ordem, inicio_s, fim_s, estilo")
+    .select("id, ordem, inicio_s, fim_s, estilo, titulo_tela")
     .eq("analise_id", analiseId)
     .eq("status", "aprovado")
     .order("ordem", { ascending: true });
@@ -63,6 +67,7 @@ export async function lerCortesAprovados(
     inicio_s: Number(c.inicio_s),
     fim_s: Number(c.fim_s),
     estilo: (c.estilo as string | null) ?? null,
+    titulo_tela: (c.titulo_tela as string | null) ?? null,
   }));
 }
 

@@ -10,8 +10,9 @@ import {
   Clock,
   Translate,
   FilmStrip,
+  TextT,
 } from "@phosphor-icons/react/dist/ssr";
-import type { JobAnalise, Corte } from "@/lib/analises-db";
+import type { JobAnalise, Corte, NotasCorte } from "@/lib/analises-db";
 
 /**
  * O Estúdio — Clip AI.
@@ -47,6 +48,48 @@ function CorScore({ score }: { score: number | null }) {
     >
       {score}
     </span>
+  );
+}
+
+const DIMENSOES: { chave: keyof NotasCorte; rotulo: string; dica: string }[] = [
+  { chave: "gancho", rotulo: "Gancho", dica: "Força dos 3 primeiros segundos" },
+  { chave: "fluxo", rotulo: "Fluxo", dica: "Se sustenta sozinho, do começo ao fim" },
+  { chave: "valor", rotulo: "Valor", dica: "Entrega informação, emoção ou diversão" },
+  { chave: "tendencia", rotulo: "Tendência", dica: "Apelo atual do assunto" },
+];
+
+/**
+ * O diagnóstico do score. Uma nota isolada é mágica; quatro barras mostram
+ * ONDE o corte é forte — e é isso que ajuda a escolher entre dois de score
+ * parecido.
+ */
+function Diagnostico({ notas }: { notas: NotasCorte }) {
+  return (
+    <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
+      {DIMENSOES.map(({ chave, rotulo, dica }) => {
+        const v = Math.max(0, Math.min(100, notas[chave] ?? 0));
+        const cor =
+          v >= 80 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-zinc-600";
+        return (
+          <div key={chave} title={dica}>
+            <div className="flex items-baseline justify-between gap-1">
+              <span className="text-[10px] tracking-wide text-zinc-500 uppercase">
+                {rotulo}
+              </span>
+              <span className="font-mono text-[10px] tabular-nums text-zinc-400">
+                {v}
+              </span>
+            </div>
+            <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className={`h-full rounded-full ${cor}`}
+                style={{ width: `${v}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -188,6 +231,16 @@ export function EstudioCortes({
                     {c.motivo && (
                       <p className="mt-1 text-xs leading-relaxed text-zinc-500">
                         {c.motivo}
+                      </p>
+                    )}
+
+                    {c.notas && <Diagnostico notas={c.notas} />}
+
+                    {/* O que vai ESCRITO na tela nos primeiros segundos. */}
+                    {c.titulo_tela && (
+                      <p className="mt-2.5 inline-flex items-center gap-1.5 rounded-md bg-white px-2 py-1 text-[11px] font-bold text-black">
+                        <TextT size={11} weight="bold" />
+                        {c.titulo_tela}
                       </p>
                     )}
 

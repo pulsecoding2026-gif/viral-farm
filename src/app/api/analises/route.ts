@@ -14,10 +14,12 @@ const Corpo = z.object({
   opcoes: z
     .object({
       modo: z.enum(["auto", "manual"]).optional(),
-      qtd: z.number().int().min(1).max(10).optional(),
+      qtd: z.number().int().min(1).max(15).optional(),
       duracao: z.enum(["curto", "medio", "longo"]).optional(),
       direcao: z.string().max(500).optional(),
       estilo: z.enum(["karaoke", "neon", "minimal", "sem"]).optional(),
+      titulo: z.boolean().optional(),
+      limpar_silencio: z.boolean().optional(),
     })
     .optional(),
 });
