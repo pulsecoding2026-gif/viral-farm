@@ -34,7 +34,9 @@ if [[ ! -d /opt/viral-farm ]]; then
 fi
 cd /opt/viral-farm
 git pull
-npm install
+# --no-save: o lock vem do Windows e não tem os opcionais de Linux; deixar o
+# npm reescrevê-lo suja o repo e trava o próximo git pull. Ver atualizar.sh.
+npm install --no-save
 
 if [[ ! -f /opt/viral-farm/.env ]]; then
   cat > /opt/viral-farm/.env <<'FIM'
