@@ -11,7 +11,7 @@ import {
   X,
   ArrowClockwise,
 } from "@phosphor-icons/react/dist/ssr";
-import type { JobAnalise, Corte } from "@/lib/analises-db";
+import { resumoDeCortes, type JobAnalise, type Corte } from "@/lib/analises-db";
 import { acharFormato } from "@/lib/formatos";
 import { SeletorFormato } from "./seletor-formato";
 
@@ -332,7 +332,8 @@ export function ResultadoCortes({
   // acharFormato normaliza: "auto" e nulo caem no padrão, porque o editor de
   // um corte só aceita formato concreto.
   const estiloDaAnalise = acharFormato(job.opcoes.estilo).id;
-  const duracaoVideo = job.resultado?.duracao_video_s ?? 5400;
+  const resumo = resumoDeCortes(job.resultado);
+  const duracaoVideo = resumo?.duracao_video_s ?? 5400;
 
   return (
     <div className="surgir space-y-4">
@@ -342,15 +343,15 @@ export function ResultadoCortes({
             <Scissors size={18} className="text-orange-500" />
             {cortes.length} {cortes.length === 1 ? "corte pronto" : "cortes prontos"}
           </h2>
-          {job.resultado?.titulo && (
+          {resumo?.titulo && (
             <p className="mt-0.5 truncate text-sm text-zinc-500">
-              de “{job.resultado.titulo}”
+              de “{resumo.titulo}”
             </p>
           )}
         </div>
-        {job.resultado?.duracao_total_ms && (
+        {resumo?.duracao_total_ms && (
           <p className="text-xs tabular-nums text-zinc-600">
-            processado em {Math.round(job.resultado.duracao_total_ms / 1000)}s
+            processado em {Math.round(resumo.duracao_total_ms / 1000)}s
           </p>
         )}
       </div>

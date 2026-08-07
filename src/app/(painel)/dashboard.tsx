@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  WarningCircle,
   Plus,
   ClockCounterClockwise,
   ArrowLeft,
 } from "@phosphor-icons/react/dist/ssr";
 import type { JobAnalise } from "@/lib/analises-db";
+import { PainelErro } from "./painel-erro";
 import { HistoricoAnalises } from "./historico-analises";
 import { FormularioNovaAnalise } from "./formulario-nova-analise";
 import { PainelProgresso } from "./painel-progresso";
@@ -175,17 +175,26 @@ export function Dashboard({
             }}
           />
         ) : jobAtual.status === "erro" ? (
-          <div className="surgir flex items-start gap-3 rounded-2xl border border-rose-900/60 bg-rose-950/25 p-5 text-sm text-rose-300">
-            <WarningCircle
-              size={19}
-              weight="fill"
-              className="mt-0.5 shrink-0 text-rose-500"
-            />
-            <div>
-              <p className="font-medium text-rose-200">A análise falhou</p>
-              <p className="mt-1 leading-relaxed">{jobAtual.mensagem}</p>
-            </div>
-          </div>
+          <PainelErro
+            job={jobAtual}
+            onOutroLink={abrirNova}
+            onRetomado={() => {
+              setJobs((prev) =>
+                prev.map((j) =>
+                  j.id === jobAtual.id
+                    ? {
+                        ...j,
+                        status: "processando",
+                        etapa: "na_fila",
+                        mensagem: null,
+                        resultado: null,
+                        cortes: undefined,
+                      }
+                    : j,
+                ),
+              );
+            }}
+          />
         ) : (
           <ResultadoCortes
             job={jobAtual}

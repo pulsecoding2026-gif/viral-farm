@@ -1,4 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  diagnosticar,
+  type CodigoErro,
+  type AcaoErro,
+} from "./analise/diagnostico";
 
 /**
  * Análises e cortes lidos do Supabase — substitui o data/analises.json.
@@ -64,6 +69,13 @@ export type Corte = {
   previa: string | null;
 };
 
+/** Quando a análise falha, o `resultado` guarda o diagnóstico em vez do resumo. */
+export type ResumoErro = {
+  tipo: "erro";
+  codigo: CodigoErro;
+  acao: AcaoErro;
+};
+
 export type JobAnalise = {
   id: string;
   link: string;
@@ -73,11 +85,18 @@ export type JobAnalise = {
   /** Epoch em ms — o formato que a UI já usava. */
   criado_em: number;
   mensagem: string | null;
-  resultado: ResumoCortes | null;
+  resultado: ResumoCortes | ResumoErro | null;
   opcoes: OpcoesAnalise;
   /** Só vem no detalhe (GET /api/analises/[id]). */
   cortes?: Corte[];
 };
+
+/** Estreita o resultado pro resumo de sucesso — o de erro não tem título. */
+export function resumoDeCortes(
+  r: JobAnalise["resultado"],
+): ResumoCortes | null {
+  return r && r.tipo === "cortes" ? r : null;
+}
 
 type LinhaAnalise = {
   id: string;
@@ -92,14 +111,28 @@ type LinhaAnalise = {
 };
 
 function linhaParaJob(l: LinhaAnalise): JobAnalise {
+  const resultado = (l.resultado as JobAnalise["resultado"]) ?? null;
+  const status = l.status as JobAnalise["status"];
+
+  // Segunda barreira contra vazar erro técnico: o worker já grava a mensagem
+  // traduzida, mas análises anteriores a isso guardaram o stderr cru do
+  // yt-dlp — e o cliente veria flags de CLI e link de wiki ao abrir o
+  // histórico. Falha SEM código de diagnóstico é linha antiga: traduz aqui.
+  // (Com código, a mensagem já passou pelo diagnosticar e não se mexe.)
+  const legado =
+    status === "erro" && !(resultado && resultado.tipo === "erro");
+  const d = legado ? diagnosticar(new Error(l.mensagem ?? "")) : null;
+
   return {
     id: l.id,
     link: l.link,
     nicho: l.nicho,
-    status: l.status as JobAnalise["status"],
+    status,
     etapa: l.etapa,
-    mensagem: l.mensagem,
-    resultado: (l.resultado as ResumoCortes | null) ?? null,
+    mensagem: d ? d.mensagem : l.mensagem,
+    resultado: d
+      ? { tipo: "erro", codigo: d.codigo, acao: d.acao }
+      : resultado,
     opcoes: (l.opcoes as OpcoesAnalise) ?? {},
     criado_em: new Date(l.criado_em).getTime(),
   };
@@ -298,4 +331,39 @@ export async function reeditarCorte(
   if (error) throw new Error(`Não atualizei o corte: ${error.message}`);
 
   return "ok";
+}
+
+/**
+ * Recoloca na fila uma análise que falhou.
+ *
+ * A maioria das falhas é transitória (verificação de robô, limite de taxa,
+ * rede) — antes disso a tela de erro era beco sem saída e a única saída era
+ * colar o link de novo, perdendo as opções escolhidas. Aqui o job volta com
+ * as MESMAS opções.
+ *
+ * O `.eq("status", "erro")` é o guarda: só quem falhou volta pra fila, então
+ * dois cliques seguidos não duplicam trabalho nem atropelam um job vivo.
+ */
+export async function retomarAnalise(
+  sb: SupabaseClient,
+  analiseId: string,
+): Promise<"ok" | "nao_achei"> {
+  // Cortes propostos de uma tentativa anterior sairiam duplicados quando o
+  // worker registrasse os novos.
+  await sb.from("cortes").delete().eq("analise_id", analiseId);
+
+  const { data, error } = await sb
+    .from("analises")
+    .update({
+      status: "processando",
+      etapa: "na_fila",
+      mensagem: null,
+      resultado: null,
+    })
+    .eq("id", analiseId)
+    .eq("status", "erro")
+    .select("id");
+
+  if (error) throw new Error(`Não recoloquei na fila: ${error.message}`);
+  return data && data.length > 0 ? "ok" : "nao_achei";
 }

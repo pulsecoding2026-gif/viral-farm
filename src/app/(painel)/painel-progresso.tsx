@@ -49,28 +49,53 @@ const ETAPAS: { chave: string; rotulo: string; detalhe: string; icone: Icon }[] 
   },
 ];
 
-function decompor(etapa: string): { indice: number; detalheVivo?: string } {
+/**
+ * Onde cada etapa COMEÇA na barra.
+ *
+ * Peso, não fração igual: com `(indice+1)/total` a barra marcava 100% no
+ * instante em que a renderização começava — e ficava lá parada durante a
+ * fase mais longa de todas. Barra que crava 100% com trabalho acontecendo
+ * é pior que barra nenhuma: parece travada.
+ *
+ * A renderização ocupa de 60% a 100% e é subdividida por "corte N de M", o
+ * único ponto do pipeline com progresso real e granular.
+ */
+const INICIO_PCT = [0, 6, 20, 46, 60];
+const FIM_RENDER = 100;
+
+function decompor(etapa: string): {
+  indice: number;
+  pct: number;
+  detalheVivo?: string;
+} {
+  const iRender = ETAPAS.length - 1;
+
   const render = etapa.match(/^renderizando_(\d+)_de_(\d+)$/);
   if (render) {
+    const feitos = Number(render[1]) - 1;
+    const total = Math.max(Number(render[2]), 1);
+    const faixa = FIM_RENDER - INICIO_PCT[iRender];
     return {
-      indice: ETAPAS.length - 1,
+      indice: iRender,
+      pct: Math.round(INICIO_PCT[iRender] + (feitos / total) * faixa),
       detalheVivo: `Corte ${render[1]} de ${render[2]} — 9:16, legenda animada`,
     };
   }
   // Volta do Estúdio: os aprovados entram direto na renderização.
   if (etapa === "renderizar_aprovados" || etapa === "preparando_render") {
     return {
-      indice: ETAPAS.length - 1,
+      indice: iRender,
+      pct: INICIO_PCT[iRender],
       detalheVivo: "Preparando os cortes que você aprovou",
     };
   }
   const i = ETAPAS.findIndex((e) => e.chave === etapa);
-  return { indice: i === -1 ? 0 : i };
+  const indice = i === -1 ? 0 : i;
+  return { indice, pct: INICIO_PCT[indice] };
 }
 
 export function PainelProgresso({ etapa }: { etapa: string | null }) {
-  const { indice: atual, detalheVivo } = decompor(etapa ?? "na_fila");
-  const pct = Math.round(((atual + 1) / ETAPAS.length) * 100);
+  const { indice: atual, pct, detalheVivo } = decompor(etapa ?? "na_fila");
 
   return (
     <div className="surgir overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40">

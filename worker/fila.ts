@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ambiente } from "./ambiente";
 import type { OpcoesCorte } from "./cortar";
 import type { TranscricaoPalavras } from "./transcritor";
+import { diagnosticar } from "../src/lib/analise/diagnostico";
 
 /**
  * A fila é a própria tabela `analises` — o Supabase é a ponte entre o site
@@ -145,9 +146,23 @@ export async function concluirJob(
     .eq("id", id);
 }
 
-export async function falharJob(id: string, mensagem: string): Promise<void> {
+/**
+ * Marca a análise como falha — com a mensagem JÁ traduzida pra humano.
+ *
+ * O código do diagnóstico vai no `resultado` (jsonb que já existe) em vez de
+ * numa coluna nova: é o que a tela usa pra decidir entre "tentar de novo" e
+ * "analisar outro vídeo". Guardar o texto cru em lugar nenhum é proposital —
+ * ele já foi pro log do worker, e no banco só serviria pra vazar de novo.
+ */
+export async function falharJob(id: string, erro: unknown): Promise<void> {
+  const d = diagnosticar(erro);
   await supabase()
     .from("analises")
-    .update({ status: "erro", etapa: null, mensagem })
+    .update({
+      status: "erro",
+      etapa: null,
+      mensagem: d.mensagem,
+      resultado: { tipo: "erro", codigo: d.codigo, acao: d.acao },
+    })
     .eq("id", id);
 }

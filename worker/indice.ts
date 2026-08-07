@@ -340,9 +340,10 @@ async function main() {
         await analisar(job);
       }
     } catch (e) {
-      const mensagem = e instanceof Error ? e.message : "Falha inesperada.";
+      // O erro cru fica AQUI, no log da VPS, onde serve pra depurar. O que
+      // vai pro banco (e pra tela) é a tradução do diagnosticar().
       console.error(`[worker] job ${job.id} falhou:`, e);
-      await falharJob(job.id, mensagem).catch(() => {});
+      await falharJob(job.id, e).catch(() => {});
     }
   }
 

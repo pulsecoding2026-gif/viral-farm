@@ -9,7 +9,7 @@ import {
   Plus,
   Scissors,
 } from "@phosphor-icons/react/dist/ssr";
-import type { JobAnalise } from "@/lib/analises-db";
+import { resumoDeCortes, type JobAnalise } from "@/lib/analises-db";
 
 function Status({ status }: { status: JobAnalise["status"] }) {
   if (status === "processando") {
@@ -31,17 +31,17 @@ function Status({ status }: { status: JobAnalise["status"] }) {
 }
 
 function titulo(job: JobAnalise): string {
-  return job.resultado?.titulo || job.link;
+  return resumoDeCortes(job.resultado)?.titulo || job.link;
 }
 
 function legenda(job: JobAnalise): string {
   if (job.status === "processando") return "Em andamento…";
   if (job.status === "revisao") {
-    const qtd = job.resultado?.qtd_cortes ?? 0;
+    const qtd = resumoDeCortes(job.resultado)?.qtd_cortes ?? 0;
     return `${qtd} ${qtd === 1 ? "corte proposto" : "cortes propostos"} — esperando você no Estúdio`;
   }
   if (job.status === "erro") return job.mensagem ?? "Falhou";
-  const qtd = job.resultado?.qtd_cortes ?? 0;
+  const qtd = resumoDeCortes(job.resultado)?.qtd_cortes ?? 0;
   return qtd === 1 ? "1 corte pronto" : `${qtd} cortes prontos`;
 }
 

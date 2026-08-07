@@ -13,7 +13,12 @@ import {
   TextT,
   Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
-import type { JobAnalise, Corte, NotasCorte } from "@/lib/analises-db";
+import {
+  resumoDeCortes,
+  type JobAnalise,
+  type Corte,
+  type NotasCorte,
+} from "@/lib/analises-db";
 import { acharFormato } from "@/lib/formatos";
 
 /**
@@ -103,6 +108,7 @@ export function EstudioCortes({
   onEnviado: () => void;
 }) {
   const propostos = (job.cortes ?? []).filter((c) => c.status === "proposto");
+  const resumo = resumoDeCortes(job.resultado);
   const [escolhidos, setEscolhidos] = useState<Set<string>>(
     () => new Set(propostos.map((c) => c.id)),
   );
@@ -159,19 +165,19 @@ export function EstudioCortes({
             Clip AI · Estúdio
           </p>
           <h2 className="mt-1.5 text-lg leading-snug font-semibold tracking-tight text-zinc-50">
-            {job.resultado?.titulo ?? job.link}
+            {resumo?.titulo ?? job.link}
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-400">
-            {job.resultado?.duracao_video_s && (
+            {resumo?.duracao_video_s && (
               <span className="flex items-center gap-1.5">
                 <Clock size={13} className="text-zinc-600" />
-                {tempo(job.resultado.duracao_video_s)} de vídeo
+                {tempo(resumo.duracao_video_s)} de vídeo
               </span>
             )}
-            {job.resultado?.idioma && (
+            {resumo?.idioma && (
               <span className="flex items-center gap-1.5">
                 <Translate size={13} className="text-zinc-600" />
-                {job.resultado.idioma}
+                {resumo.idioma}
               </span>
             )}
             <span className="flex items-center gap-1.5">
