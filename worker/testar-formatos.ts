@@ -8,14 +8,18 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { renderizarCorte } from "./renderizar";
 import { gerarAss } from "./legendas";
-import { acharFormato, SAFE_ZONE } from "../src/lib/formatos";
+import { acharFormato, FORMATOS, SAFE_ZONE } from "../src/lib/formatos";
 import type { Palavra } from "./transcritor";
 import { run, bin } from "../src/lib/proc";
 
 const FRASE =
   "eu perdi 5 contratações porque não entendi as 3 regras do jogo e isso custou caro";
 
-const AMOSTRA = ["hormozi", "podcast-premium", "dark-luxury", "hype-challenge"];
+/** Marcadas pra ver a cor de destaque de cada preset, não só a tipografia. */
+const DESTAQUES = ["contratações", "regras", "custou"];
+
+/** Todos: verificar amostra não responde se os OUTROS estão certos. */
+const AMOSTRA = FORMATOS.map((f) => f.id);
 
 function palavras(inicio: number, fim: number): Palavra[] {
   const p = FRASE.split(" ");
@@ -80,27 +84,51 @@ async function main() {
 
   console.log("Safe zone:", SAFE_ZONE.areaUtil.xPct, SAFE_ZONE.areaUtil.yPct, "\n");
 
+  const frames: string[] = [];
+
   for (const id of AMOSTRA) {
     const f = acharFormato(id);
-    const ass = gerarAss(p, corte.inicio_s, id, f.nome);
+    const ass = gerarAss(p, corte.inicio_s, id, f.nome, DESTAQUES);
     console.log(verificarSafeZone(ass ?? "", id));
 
     const t0 = Date.now();
     await renderizarCorte(fonte, corte, p, dir, id, {
       estilo: id,
       tituloTela: f.nome,
+      destaques: DESTAQUES,
     });
+    const png = path.join(dir, `${id}.png`);
     // Frame do meio pra inspeção visual.
     await run(
       bin.ffmpeg(),
-      ["-ss", "3.5", "-i", path.join(dir, `${id}.mp4`), "-frames:v", "1", "-y",
-       path.join(dir, `${id}.png`)],
+      ["-ss", "3.5", "-i", path.join(dir, `${id}.mp4`), "-frames:v", "1", "-y", png],
       { timeoutMs: 30_000 },
     );
+    frames.push(png);
     console.log(`   render ${((Date.now() - t0) / 1000).toFixed(1)}s → ${id}.png`);
   }
 
-  console.log(`\nframes em ${dir}`);
+  // Folha de contato: 15 imagens soltas não dá pra comparar. Lado a lado,
+  // um preset que saiu igual ao vizinho salta aos olhos.
+  const colunas = 5;
+  const linhas = Math.ceil(frames.length / colunas);
+  const contato = path.join(dir, "todos.png");
+  await run(
+    bin.ffmpeg(),
+    [
+      ...frames.flatMap((f) => ["-i", f]),
+      "-filter_complex",
+      `${frames.map((_, i) => `[${i}:v]scale=300:-1[v${i}]`).join(";")};` +
+        `${frames.map((_, i) => `[v${i}]`).join("")}xstack=inputs=${frames.length}:` +
+        `layout=${frames
+          .map((_, i) => `${(i % colunas) === 0 ? "0" : `w0*${i % colunas}`}_${Math.floor(i / colunas) === 0 ? "0" : `h0*${Math.floor(i / colunas)}`}`)
+          .join("|")}[out]`,
+      "-map", "[out]", "-y", contato,
+    ],
+    { timeoutMs: 120_000 },
+  );
+
+  console.log(`\n${frames.length} frames + folha de contato (${colunas}x${linhas}) em ${dir}`);
 }
 
 main().catch((e) => {
