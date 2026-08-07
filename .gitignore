@@ -49,3 +49,8 @@ next-env.d.ts
 
 # temporarios de geracao
 _tmp-*
+
+# cookies de sessao do YouTube — CREDENCIAL. Um cookies.txt da acesso a
+# conta inteira enquanto a sessao viver; commitar um seria vazar a conta.
+cookies*.txt
+*.cookies.txt
