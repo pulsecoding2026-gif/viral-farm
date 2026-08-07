@@ -33,7 +33,16 @@ type Usuario = { nome: string; email: string };
 /** Preferência de lateral recolhida, lembrada entre visitas. */
 const CHAVE_RECOLHIDA = "vsi:lateral-recolhida";
 
-/** Slug da rota atual — "" na home. */
+/**
+ * Onde o painel começa.
+ *
+ * Já foi "/", quando o app morava na raiz. Depois que a landing tomou a raiz,
+ * apontar pra lá mandava quem está logado pra página de VENDAS — que mostra
+ * "Entrar / Começar" independente de sessão, então parecia deslogamento.
+ */
+const INICIO = "/painel";
+
+/** Slug da rota atual — "" na raiz. */
 function slugAtual(pathname: string): string {
   return pathname === "/" ? "" : pathname.split("/")[1];
 }
@@ -51,7 +60,7 @@ function Lateral({
   const slug = slugAtual(pathname);
   const secaoAtiva = acharSecao(slug);
   const pai = acharPai(slug);
-  const naHome = pathname === "/";
+  const noInicio = pathname === INICIO;
 
   // Tudo aberto por padrão: com poucos blocos, o mapa inteiro à vista custa
   // menos que um clique pra descobrir o que existe. O estado guarda só o que
@@ -72,13 +81,13 @@ function Lateral({
     // próximos, porque proximidade é o que diz "isto pertence àquilo".
     <nav className={"flex flex-col gap-1.5 " + (recolhida ? "px-2" : "px-2")}>
       <Link
-        href="/"
+        href={INICIO}
         onClick={aoNavegar}
-        aria-current={naHome ? "page" : undefined}
+        aria-current={noInicio ? "page" : undefined}
         title={recolhida ? "Dashboard" : undefined}
-        className={classeTopo(naHome)}
+        className={classeTopo(noInicio)}
       >
-        <House size={19} weight={naHome ? "fill" : "regular"} />
+        <House size={19} weight={noInicio ? "fill" : "regular"} />
         {!recolhida && "Dashboard"}
       </Link>
 
@@ -417,7 +426,7 @@ export function AppShell({
           }
         >
           <Link
-            href="/"
+            href={INICIO}
             title={recolhida ? "Viral Farm" : undefined}
             aria-label="Viral Farm"
             className={
@@ -461,7 +470,7 @@ export function AppShell({
                   sem ele o flex-1 estica o lockup para 27px e a marca muda de
                   tamanho conforme a tela, o que lê como descuido. */}
               <Link
-                href="/"
+                href={INICIO}
                 onClick={() => setGaveta(false)}
                 aria-label="Viral Farm"
                 className="min-w-0 flex-1 transition-opacity hover:opacity-80"
@@ -500,7 +509,7 @@ export function AppShell({
             <List size={20} />
           </button>
           <Link
-            href="/"
+            href={INICIO}
             aria-label="Viral Farm"
             className="min-w-0 transition-opacity hover:opacity-80"
           >

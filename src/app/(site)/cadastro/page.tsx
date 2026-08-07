@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AcessoLayout } from "../acesso-layout";
 import { FormularioAcesso } from "../formulario-acesso";
+import { mandarLogadoProPainel } from "../acesso-guarda";
 
 export const metadata: Metadata = {
   title: "Criar conta",
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
     "Crie sua conta no Viral Farm e transforme seu material bruto em roteiro.",
 };
 
-export default function CadastroPage() {
+export default async function CadastroPage() {
+  await mandarLogadoProPainel();
+
   return (
     <AcessoLayout
       titulo="Criar conta"

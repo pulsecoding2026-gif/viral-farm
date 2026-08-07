@@ -1,14 +1,12 @@
 import { redirect } from "next/navigation";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 import { clienteSupabase } from "@/lib/supabase/servidor";
 import { AppShell } from "./app-shell";
 
 /**
  * Layout do painel: tudo aqui dentro ganha a lateral e a rolagem travada no
- * contêiner de conteúdo.
- *
- * A verificação de sessão fica AQUI — um ponto só protegendo todas as rotas
- * do app, em vez de cada página checar por conta. `getUser()` valida contra
- * o servidor do Supabase; cookie forjado não passa.
+ * contêiner de conteúdo, e a sessão é conferida num ponto só — em vez de cada
+ * página checar por conta.
  */
 export default async function PainelLayout({
   children,
@@ -18,7 +16,22 @@ export default async function PainelLayout({
   const supabase = await clienteSupabase();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  /*
+    `getUser()` devolve user = null em DOIS casos muito diferentes: a pessoa
+    não está logada, ou não deu pra falar com o Supabase (rede, timeout,
+    certificado). Tratar os dois como "deslogado" derrubava a sessão a cada
+    soluço de rede — era o "toda hora fica deslogando".
+
+    Falha de rede não é resposta sobre identidade: em vez de destruir a
+    sessão, deixamos o erro subir pro error.tsx, que oferece tentar de novo
+    com o cookie intacto.
+  */
+  if (error && isAuthRetryableFetchError(error)) {
+    throw new Error("Não deu pra confirmar sua sessão agora.");
+  }
 
   if (!user) redirect("/entrar");
 
