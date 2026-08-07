@@ -16,13 +16,30 @@ cd /opt/viral-farm
 
 echo "==> Antes: $(git log --oneline -1)"
 
-# O lock é gerado; se um npm install antigo o sujou, a versão do repo manda.
-git checkout -- package-lock.json 2>/dev/null || true
-git pull --ff-only
+# fetch + reset, não pull.
+#
+# Esta máquina é ALVO de deploy: o que vale é o que está no master, nunca o
+# que está no disco. E ela GERA arquivos versionados — o package-lock (que o
+# npm reescreve) e as miniaturas dos formatos (worker/gerar-miniaturas.ts
+# escreve em public/formatos, que é commitado). Com `pull --ff-only`, cada um
+# desses aborta a atualização com "local changes would be overwritten", e o
+# deploy falha em silêncio: o script segue, reinicia o pm2 e você acha que
+# subiu código novo que nunca chegou.
+#
+# .env e segredos/ sobrevivem porque estão no .gitignore.
+git fetch --quiet origin master
+git reset --hard --quiet origin/master
 
 npm install --no-save --no-audit --no-fund
 
 echo "==> Depois: $(git log --oneline -1)"
+
+# Guarda contra deploy que não chegou: sem isto, um fetch que falhou por
+# rede reiniciaria o worker no código velho sem avisar ninguém.
+if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/master)" ]]; then
+  echo "!! HEAD não bate com origin/master — NÃO reiniciei o worker." >&2
+  exit 1
+fi
 
 pm2 restart viral-worker
 sleep 3
