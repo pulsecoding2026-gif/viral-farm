@@ -30,6 +30,7 @@ import {
   type JobAnalise,
 } from "./fila";
 import { Cancelado } from "../src/lib/proc";
+import { gerarProxy, subirProxy } from "./proxy";
 import {
   registrarCorte,
   subirVideoDoCorte,
@@ -63,6 +64,38 @@ const FONTE_VALIDADE_MS = 24 * 60 * 60 * 1000;
 
 function caminhoFonte(analiseId: string): string {
   return path.join(FONTES, `${analiseId}.mp4`);
+}
+
+/**
+ * Gera e sobe o proxy leve que o editor usa pra editar no navegador.
+ *
+ * BEST-EFFORT DE PROPÓSITO: o proxy só serve ao Editor. Se ele falhar, a
+ * análise continua válida — os cortes já foram entregues. Derrubar um job
+ * pronto por causa de um arquivo auxiliar seria trocar o principal pelo
+ * acessório.
+ *
+ * Também é o último passo: numa VPS de um núcleo o encode custa minutos num
+ * vídeo longo, e adiantá-lo atrasaria o que a pessoa está esperando ver.
+ */
+async function prepararProxy(
+  job: JobAnalise,
+  video: string,
+  dir: string,
+  sinal: AbortSignal,
+): Promise<void> {
+  if (sinal.aborted) return;
+  try {
+    const t0 = Date.now();
+    const arquivo = await gerarProxy(video, dir, sinal);
+    const url = await subirProxy(job.id, job.user_id, arquivo);
+    await supabase().from("analises").update({ proxy_url: url }).eq("id", job.id);
+    console.log(
+      `[worker] ${job.id}: proxy pronto em ${Math.round((Date.now() - t0) / 1000)}s`,
+    );
+  } catch (e) {
+    if (e instanceof Cancelado) return;
+    console.error(`[worker] ${job.id}: proxy falhou (a análise segue válida):`, e);
+  }
 }
 
 /**
@@ -184,6 +217,10 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
       console.log(
         `[worker] ${job.id} em revisão: ${cortes.length} proposta(s) esperando o Estúdio`,
       );
+      // DEPOIS de liberar o Estúdio: o proxy só serve ao editor, e nesta VPS
+      // de um núcleo ele custa minutos num vídeo longo. Gerar antes atrasaria
+      // as propostas, que é o que a pessoa está esperando na tela.
+      await prepararProxy(job, video, dir, sinal);
       return;
     }
 
@@ -246,6 +283,9 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
     console.log(
       `[worker] ${job.id} pronto: ${prontos} corte(s) em ${Math.round((Date.now() - t0) / 1000)}s`,
     );
+    // Depois de entregar os cortes, pelo mesmo motivo do modo Estúdio.
+    await guardarFonte(video, job.id).catch(() => {});
+    await prepararProxy(job, video, dir, sinal);
   } finally {
     await fs.rm(dir, { recursive: true, force: true }).catch(() => {
       // O SO limpa o tmpdir eventualmente; falha aqui não derruba o job.
