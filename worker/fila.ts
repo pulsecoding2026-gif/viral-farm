@@ -135,6 +135,20 @@ export function vigiarCancelamento(
         .maybeSingle();
       // Sumiu do banco (apagada) conta como cancelada: não há pra quem
       // entregar o resultado.
+      //
+      // 'revisao' e 'pronto' NÃO contam. Antes, qualquer status diferente de
+      // 'processando' disparava o cancelamento — e o modo Estúdio termina
+      // justamente indo pra 'revisao'. O worker anunciava "cancelado pelo
+      // dono" três segundos depois de entregar as propostas, sem ninguém ter
+      // cancelado nada.
+      //
+      // Log que mente custa caro: eu mesmo persegui um cancelamento
+      // inexistente nesta base antes de perceber que a mensagem era falsa.
+      const terminou = data && (data.status === "revisao" || data.status === "pronto");
+      if (terminou) {
+        clearInterval(timer);
+        return;
+      }
       if (!data || data.status !== "processando") {
         clearInterval(timer);
         aoCancelar();
