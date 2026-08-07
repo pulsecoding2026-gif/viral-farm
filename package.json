@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit",
     "check:schema": "tsx scripts/check-schema.ts",
     "analisar": "tsx scripts/analisar.ts",
+    "worker": "tsx worker/indice.ts",
+    "worker:teste": "tsx worker/testar-render.ts",
     "testar:midia": "tsx scripts/testar-midia.ts"
   },
   "dependencies": {

@@ -26,12 +26,17 @@ export class ProcError extends Error {
 export function run(
   bin: string,
   args: string[],
-  opts: { timeoutMs?: number } = {},
+  opts: { timeoutMs?: number; cwd?: string } = {},
 ): Promise<string> {
-  const { timeoutMs = 5 * 60_000 } = opts;
+  const { timeoutMs = 5 * 60_000, cwd } = opts;
 
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, { windowsHide: true });
+    // cwd existe por causa dos filtros do ffmpeg (ass=arquivo.ass): caminho
+    // absoluto do Windows leva "C:", o parser de filtro divide no ":" e
+    // nenhum esquema de escape sobrevive igual em todas as versões. Rodar
+    // DE DENTRO do diretório e referenciar por nome relativo elimina a
+    // classe inteira de problema.
+    const p = spawn(bin, args, { windowsHide: true, cwd });
 
     let stdout = "";
     let stderr = "";
