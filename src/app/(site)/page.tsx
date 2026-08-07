@@ -142,6 +142,14 @@ export default function LandingPage() {
             <Link href="/entrar" className="transition hover:text-zinc-400">
               Entrar
             </Link>
+            {/* Exigidos na revisão de app do TikTok e do Google — precisam
+                estar acessíveis de qualquer página pública. */}
+            <Link href="/termos" className="transition hover:text-zinc-400">
+              Termos
+            </Link>
+            <Link href="/politica" className="transition hover:text-zinc-400">
+              Privacidade
+            </Link>
           </div>
         </div>
       </footer>
