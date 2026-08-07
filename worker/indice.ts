@@ -30,7 +30,7 @@ import {
   type JobAnalise,
 } from "./fila";
 import { Cancelado } from "../src/lib/proc";
-import { gerarProxy, subirProxy } from "./proxy";
+import { gerarProxy, subirProxy, ProxyNaoCabe } from "./proxy";
 import { renderizarProjeto } from "./renderizar-projeto";
 import {
   registrarCorte,
@@ -113,6 +113,12 @@ async function prepararProxy(
     );
   } catch (e) {
     if (e instanceof Cancelado) return;
+    // "Não cabe" é decisão do sistema, não falha: vira aviso, não erro. O
+    // editor já trata a ausência de proxy com mensagem própria.
+    if (e instanceof ProxyNaoCabe) {
+      console.log(`[worker] ${job.id}: sem proxy — ${e.message}`);
+      return;
+    }
     console.error(`[worker] ${job.id}: proxy falhou (a análise segue válida):`, e);
   } finally {
     // Sem isto o timer segura o processo vivo por até 25 min depois do fim.
