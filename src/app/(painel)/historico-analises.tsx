@@ -7,6 +7,7 @@ import {
   CaretRight,
   ClockCounterClockwise,
   Plus,
+  Scissors,
 } from "@phosphor-icons/react/dist/ssr";
 import type { JobAnalise } from "@/lib/analises-db";
 
@@ -14,6 +15,11 @@ function Status({ status }: { status: JobAnalise["status"] }) {
   if (status === "processando") {
     return (
       <SpinnerGap size={16} className="shrink-0 animate-spin text-orange-500" />
+    );
+  }
+  if (status === "revisao") {
+    return (
+      <Scissors size={16} weight="fill" className="shrink-0 text-amber-400" />
     );
   }
   if (status === "pronto") {
@@ -30,6 +36,10 @@ function titulo(job: JobAnalise): string {
 
 function legenda(job: JobAnalise): string {
   if (job.status === "processando") return "Em andamento…";
+  if (job.status === "revisao") {
+    const qtd = job.resultado?.qtd_cortes ?? 0;
+    return `${qtd} ${qtd === 1 ? "corte proposto" : "cortes propostos"} — esperando você no Estúdio`;
+  }
   if (job.status === "erro") return job.mensagem ?? "Falhou";
   const qtd = job.resultado?.qtd_cortes ?? 0;
   return qtd === 1 ? "1 corte pronto" : `${qtd} cortes prontos`;

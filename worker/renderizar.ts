@@ -1,9 +1,8 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { run, bin } from "../src/lib/proc";
-import { gerarAss } from "./legendas";
+import { gerarAss, type EstiloLegenda } from "./legendas";
 import type { Palavra } from "./transcritor";
-import type { CorteEscolhido } from "./cortar";
 
 /**
  * Renderização de um corte: recorta a janela de tempo, converte pra 9:16
@@ -16,19 +15,19 @@ import type { CorteEscolhido } from "./cortar";
 
 export async function renderizarCorte(
   videoFonte: string,
-  corte: CorteEscolhido,
+  corte: { inicio_s: number; fim_s: number },
   palavrasDoCorte: Palavra[],
   dir: string,
   nome: string,
+  estilo: EstiloLegenda = "karaoke",
 ): Promise<string> {
   const nomeAss = `${nome}.ass`;
   const saida = path.join(dir, `${nome}.mp4`);
 
-  await fs.writeFile(
-    path.join(dir, nomeAss),
-    gerarAss(palavrasDoCorte, corte.inicio_s),
-    "utf-8",
-  );
+  const ass = gerarAss(palavrasDoCorte, corte.inicio_s, estilo);
+  if (ass !== null) {
+    await fs.writeFile(path.join(dir, nomeAss), ass, "utf-8");
+  }
 
   const duracao = corte.fim_s - corte.inicio_s;
 
@@ -38,7 +37,7 @@ export async function renderizarCorte(
     "crop=1080:1920",
     // Nome relativo + cwd no run(): caminho absoluto do Windows tem "C:",
     // o parser de filtro divide no ":" e nenhum escape é portátil.
-    `ass=${nomeAss}`,
+    ...(ass !== null ? [`ass=${nomeAss}`] : []),
   ].join(",");
 
   await run(
@@ -68,7 +67,7 @@ export async function renderizarCorte(
 /** Palavras da transcrição que caem dentro da janela do corte. */
 export function palavrasNaJanela(
   palavras: Palavra[],
-  corte: CorteEscolhido,
+  corte: { inicio_s: number; fim_s: number },
 ): Palavra[] {
   return palavras.filter(
     (p) => p.inicio_s >= corte.inicio_s - 0.2 && p.fim_s <= corte.fim_s + 0.2,

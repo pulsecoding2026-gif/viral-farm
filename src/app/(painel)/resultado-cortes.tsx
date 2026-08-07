@@ -119,7 +119,11 @@ function CartaoCorte({ corte }: { corte: Corte }) {
 }
 
 export function ResultadoCortes({ job }: { job: JobAnalise }) {
-  const cortes = job.cortes ?? [];
+  // Descartados no Estúdio ficam de fora da entrega; propostos não deveriam
+  // existir num job pronto, mas se existirem também não são resultado.
+  const cortes = (job.cortes ?? []).filter(
+    (c) => c.status !== "descartado" && c.status !== "proposto",
+  );
 
   return (
     <div className="surgir space-y-4">

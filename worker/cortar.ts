@@ -29,6 +29,25 @@ export type ConfigLlm = {
   modelo: string;
 };
 
+/**
+ * As escolhas do usuário no envio — a "autoridade" do Estúdio.
+ * Tudo opcional: sem nada, vale o comportamento automático padrão.
+ */
+export type OpcoesCorte = {
+  /** Máximo de cortes (1–10). */
+  qtd?: number;
+  /** Faixa de duração alvo de cada corte. */
+  duracao?: "curto" | "medio" | "longo";
+  /** Direção em texto livre — vai como prioridade máxima no prompt. */
+  direcao?: string;
+};
+
+const FAIXAS: Record<string, { de: number; ate: number }> = {
+  curto: { de: 20, ate: 40 },
+  medio: { de: 40, ate: 60 },
+  longo: { de: 60, ate: 90 },
+};
+
 const EsquemaCortes = z.object({
   cortes: z.array(
     z.object({
@@ -57,10 +76,19 @@ function transcricaoComTempo(t: TranscricaoPalavras): string {
 function montarPrompt(
   transcricao: TranscricaoPalavras,
   duracaoVideo: number,
-  maxCortes: number,
+  opcoes: OpcoesCorte,
 ): string {
-  return `Você seleciona cortes virais de vídeos longos, no padrão dos melhores editores de shorts.
+  const maxCortes = Math.min(Math.max(opcoes.qtd ?? 5, 1), 10);
+  const faixa = FAIXAS[opcoes.duracao ?? ""] ?? { de: 20, ate: 90 };
 
+  // A direção do usuário entra ANTES das regras e com prioridade declarada:
+  // é a autoridade dele sobre o corte — a IA obedece, não sugere.
+  const direcao = opcoes.direcao?.trim()
+    ? `\nDIREÇÃO DO USUÁRIO (prioridade máxima — obedeça acima de qualquer regra geral):\n"${opcoes.direcao.trim().slice(0, 500)}"\n`
+    : "";
+
+  return `Você seleciona cortes virais de vídeos longos, no padrão dos melhores editores de shorts.
+${direcao}
 Transcrição com timestamps (vídeo tem ${Math.round(duracaoVideo)}s no total):
 
 ${transcricaoComTempo(transcricao)}
@@ -69,7 +97,7 @@ Escolha até ${maxCortes} trechos que:
 - comecem com um gancho forte (pergunta, promessa, conflito, número, afirmação polêmica);
 - tenham contexto suficiente pra funcionar FORA do vídeo original;
 - terminem com uma conclusão, não no meio de uma ideia;
-- durem entre 20 e 90 segundos;
+- durem entre ${faixa.de} e ${faixa.ate} segundos;
 - evitem introduções, despedidas e propaganda;
 - nunca comecem no meio de uma frase — ajuste inicio_s pro começo exato da fala.
 
@@ -145,9 +173,10 @@ export async function escolherCortes(
   config: ConfigLlm,
   transcricao: TranscricaoPalavras,
   duracaoVideo: number,
-  maxCortes: number,
+  opcoes: OpcoesCorte,
 ): Promise<CorteEscolhido[]> {
-  const prompt = montarPrompt(transcricao, duracaoVideo, maxCortes);
+  const maxCortes = Math.min(Math.max(opcoes.qtd ?? 5, 1), 10);
+  const prompt = montarPrompt(transcricao, duracaoVideo, opcoes);
 
   const bruto =
     config.provedor === "deepseek"

@@ -13,6 +13,7 @@ export async function registrarCorte(
   userId: string,
   ordem: number,
   corte: CorteEscolhido,
+  status: "proposto" | "renderizando" = "proposto",
 ): Promise<string> {
   const { data, error } = await supabase()
     .from("cortes")
@@ -26,12 +27,47 @@ export async function registrarCorte(
       gancho: corte.gancho,
       motivo: corte.motivo,
       score: Math.round(corte.score),
+      status,
     })
     .select("id")
     .single();
 
   if (error) throw new Error(`Não registrei o corte: ${error.message}`);
   return data.id as string;
+}
+
+export type CorteAprovado = {
+  id: string;
+  ordem: number;
+  inicio_s: number;
+  fim_s: number;
+};
+
+/** Cortes que o dono aprovou no Estúdio e ainda não foram renderizados. */
+export async function lerCortesAprovados(
+  analiseId: string,
+): Promise<CorteAprovado[]> {
+  const { data, error } = await supabase()
+    .from("cortes")
+    .select("id, ordem, inicio_s, fim_s")
+    .eq("analise_id", analiseId)
+    .eq("status", "aprovado")
+    .order("ordem", { ascending: true });
+
+  if (error) throw new Error(`Não li os cortes aprovados: ${error.message}`);
+  return (data ?? []).map((c) => ({
+    id: c.id as string,
+    ordem: c.ordem as number,
+    inicio_s: Number(c.inicio_s),
+    fim_s: Number(c.fim_s),
+  }));
+}
+
+export async function marcarCorteRenderizando(corteId: string): Promise<void> {
+  await supabase()
+    .from("cortes")
+    .update({ status: "renderizando" })
+    .eq("id", corteId);
 }
 
 export async function subirVideoDoCorte(

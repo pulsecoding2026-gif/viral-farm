@@ -10,6 +10,16 @@ const Corpo = z.object({
   // Opcional: é uma dica pra IA, que identifica o nicho pelo material de
   // qualquer forma.
   nicho: z.string().max(120).optional(),
+  // As escolhas do Estúdio — tudo com padrão seguro.
+  opcoes: z
+    .object({
+      modo: z.enum(["auto", "manual"]).optional(),
+      qtd: z.number().int().min(1).max(10).optional(),
+      duracao: z.enum(["curto", "medio", "longo"]).optional(),
+      direcao: z.string().max(500).optional(),
+      estilo: z.enum(["karaoke", "neon", "minimal", "sem"]).optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -55,6 +65,7 @@ export async function POST(req: Request) {
     user.id,
     parsed.data.link.trim(),
     parsed.data.nicho ?? "",
+    parsed.data.opcoes ?? {},
   );
 
   return Response.json({ id }, { status: 202 });

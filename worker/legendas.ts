@@ -12,7 +12,29 @@ import type { Palavra } from "./transcritor";
  *   branco  &H00FFFFFF · laranja #f74111 vira &H001141F7 · preto &H00000000
  */
 
-const CABECALHO = `[Script Info]
+/**
+ * Predefinições de legenda — o "Predefinições rápidas" do Estúdio.
+ *
+ * Cada estilo é só cores e karaokê ligado/desligado; a mecânica de blocos e
+ * tempos é a mesma. `sem` pula a legenda por inteiro.
+ */
+export type EstiloLegenda = "karaoke" | "neon" | "minimal" | "sem";
+
+const CORES: Record<
+  Exclude<EstiloLegenda, "sem">,
+  { primaria: string; secundaria: string; karaoke: boolean }
+> = {
+  // Palavra acende no laranja da marca (#f74111 → &H001141F7 em BGR).
+  karaoke: { primaria: "&H001141F7", secundaria: "&H00FFFFFF", karaoke: true },
+  // Verde vibrante estilo Mozi (#3DFC8C → BGR 8CFC3D).
+  neon: { primaria: "&H008CFC3D", secundaria: "&H00FFFFFF", karaoke: true },
+  // Branco puro, sem destaque — pra vídeo sóbrio.
+  minimal: { primaria: "&H00FFFFFF", secundaria: "&H00FFFFFF", karaoke: false },
+};
+
+function cabecalho(estilo: Exclude<EstiloLegenda, "sem">): string {
+  const c = CORES[estilo];
+  return `[Script Info]
 ScriptType: v4.00+
 PlayResX: 1080
 PlayResY: 1920
@@ -20,11 +42,12 @@ WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Fala,Arial,88,&H001141F7,&H00FFFFFF,&H00000000,&H96000000,-1,0,0,0,100,100,0,0,1,6,3,2,60,60,420,1
+Style: Fala,Arial,88,${c.primaria},${c.secundaria},&H00000000,&H96000000,-1,0,0,0,100,100,0,0,1,6,3,2,60,60,420,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
+}
 
 function tempoAss(s: number): string {
   const h = Math.floor(s / 3600);
@@ -65,9 +88,17 @@ export function agruparPalavras(palavras: Palavra[]): Palavra[][] {
 
 /**
  * Gera o .ass de um corte. Recebe as palavras JÁ dentro da janela do corte;
- * os tempos são reancorados pro zero do clipe.
+ * os tempos são reancorados pro zero do clipe. Devolve null quando o estilo
+ * é "sem" — o render pula o filtro de legenda.
  */
-export function gerarAss(palavras: Palavra[], inicioCorte: number): string {
+export function gerarAss(
+  palavras: Palavra[],
+  inicioCorte: number,
+  estilo: EstiloLegenda = "karaoke",
+): string | null {
+  if (estilo === "sem") return null;
+  const config = CORES[estilo];
+
   const blocos = agruparPalavras(palavras);
   const linhas: string[] = [];
 
@@ -77,8 +108,10 @@ export function gerarAss(palavras: Palavra[], inicioCorte: number): string {
     if (fim <= 0) continue;
 
     // \k mede em centissegundos a duração de cada palavra no karaokê.
+    // Sem karaokê, o bloco aparece inteiro já na cor primária.
     const texto = bloco
       .map((p, i) => {
+        if (!config.karaoke) return limpar(p.texto.toUpperCase());
         // A 1ª palavra espera do início do bloco; as demais, da anterior.
         const de = i === 0 ? inicio : bloco[i - 1].fim_s - inicioCorte;
         const duracaoCs = Math.max(
@@ -94,5 +127,5 @@ export function gerarAss(palavras: Palavra[], inicioCorte: number): string {
     );
   }
 
-  return CABECALHO + linhas.join("\n") + "\n";
+  return cabecalho(estilo) + linhas.join("\n") + "\n";
 }

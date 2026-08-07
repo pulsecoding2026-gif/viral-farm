@@ -12,6 +12,7 @@ import { HistoricoAnalises } from "./historico-analises";
 import { FormularioNovaAnalise } from "./formulario-nova-analise";
 import { PainelProgresso } from "./painel-progresso";
 import { ResultadoCortes } from "./resultado-cortes";
+import { EstudioCortes } from "./estudio-cortes";
 
 type Aba = "nova" | "historico";
 
@@ -91,10 +92,14 @@ export function Dashboard({
   }, [idSelecionado, jobAtual?.status]);
 
   // Análise aberta pelo histórico chega sem os cortes (a lista é leve).
-  // Uma busca única no detalhe completa — e o mesmo cobre a transição
-  // processando → pronto, que o polling acima entrega já com cortes.
+  // Uma busca única no detalhe completa — e o mesmo cobre as transições
+  // processando → revisao/pronto, que o polling acima entrega com cortes.
   useEffect(() => {
-    if (!idSelecionado || jobAtual?.status !== "pronto" || jobAtual.cortes) {
+    if (
+      !idSelecionado ||
+      (jobAtual?.status !== "pronto" && jobAtual?.status !== "revisao") ||
+      jobAtual.cortes
+    ) {
       return;
     }
     let cancelado = false;
@@ -150,6 +155,25 @@ export function Dashboard({
 
         {jobAtual.status === "processando" ? (
           <PainelProgresso etapa={jobAtual.etapa} />
+        ) : jobAtual.status === "revisao" ? (
+          <EstudioCortes
+            job={jobAtual}
+            onEnviado={() => {
+              // Volta pro fluxo de progresso: o worker assume daqui.
+              setJobs((prev) =>
+                prev.map((j) =>
+                  j.id === jobAtual.id
+                    ? {
+                        ...j,
+                        status: "processando",
+                        etapa: "renderizar_aprovados",
+                        cortes: undefined,
+                      }
+                    : j,
+                ),
+              );
+            }}
+          />
         ) : jobAtual.status === "erro" ? (
           <div className="surgir flex items-start gap-3 rounded-2xl border border-rose-900/60 bg-rose-950/25 p-5 text-sm text-rose-300">
             <WarningCircle
@@ -239,6 +263,7 @@ export function Dashboard({
                 criado_em: Date.now(),
                 mensagem: null,
                 resultado: null,
+                opcoes: novo.opcoes,
               },
               ...prev,
             ]);

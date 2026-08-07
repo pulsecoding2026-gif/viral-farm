@@ -57,6 +57,13 @@ function decompor(etapa: string): { indice: number; detalheVivo?: string } {
       detalheVivo: `Corte ${render[1]} de ${render[2]} — 9:16, legenda animada`,
     };
   }
+  // Volta do Estúdio: os aprovados entram direto na renderização.
+  if (etapa === "renderizar_aprovados" || etapa === "preparando_render") {
+    return {
+      indice: ETAPAS.length - 1,
+      detalheVivo: "Preparando os cortes que você aprovou",
+    };
+  }
   const i = ETAPAS.findIndex((e) => e.chave === etapa);
   return { indice: i === -1 ? 0 : i };
 }

@@ -5,8 +5,16 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  *
  * Tudo aqui roda com o cliente DA SESSÃO (RLS decide o que aparece), nunca
  * com a chave de serviço: quem escreve nos jobs é o worker da VPS; o site
- * só cria o pedido e lê o progresso.
+ * só cria o pedido, lê o progresso e registra as decisões do Estúdio.
  */
+
+export type OpcoesAnalise = {
+  modo?: "auto" | "manual";
+  qtd?: number;
+  duracao?: "curto" | "medio" | "longo";
+  direcao?: string;
+  estilo?: "karaoke" | "neon" | "minimal" | "sem";
+};
 
 export type ResumoCortes = {
   tipo: "cortes";
@@ -26,21 +34,24 @@ export type Corte = {
   gancho: string | null;
   motivo: string | null;
   score: number | null;
-  status: "renderizando" | "pronto" | "erro";
+  status: "proposto" | "aprovado" | "descartado" | "renderizando" | "pronto" | "erro";
   /** URL pública do MP4 quando pronto. */
   url: string | null;
+  /** Primeiras palavras faladas dentro do corte — a prévia do Estúdio. */
+  previa: string | null;
 };
 
 export type JobAnalise = {
   id: string;
   link: string;
   nicho: string;
-  status: "processando" | "pronto" | "erro";
+  status: "processando" | "revisao" | "pronto" | "erro";
   etapa: string | null;
   /** Epoch em ms — o formato que a UI já usava. */
   criado_em: number;
   mensagem: string | null;
   resultado: ResumoCortes | null;
+  opcoes: OpcoesAnalise;
   /** Só vem no detalhe (GET /api/analises/[id]). */
   cortes?: Corte[];
 };
@@ -53,6 +64,7 @@ type LinhaAnalise = {
   etapa: string | null;
   mensagem: string | null;
   resultado: unknown;
+  opcoes: unknown;
   criado_em: string;
 };
 
@@ -65,11 +77,13 @@ function linhaParaJob(l: LinhaAnalise): JobAnalise {
     etapa: l.etapa,
     mensagem: l.mensagem,
     resultado: (l.resultado as ResumoCortes | null) ?? null,
+    opcoes: (l.opcoes as OpcoesAnalise) ?? {},
     criado_em: new Date(l.criado_em).getTime(),
   };
 }
 
-const COLUNAS = "id, link, nicho, status, etapa, mensagem, resultado, criado_em";
+const COLUNAS =
+  "id, link, nicho, status, etapa, mensagem, resultado, opcoes, criado_em";
 
 export async function listarAnalises(sb: SupabaseClient): Promise<JobAnalise[]> {
   const { data, error } = await sb
@@ -82,13 +96,28 @@ export async function listarAnalises(sb: SupabaseClient): Promise<JobAnalise[]> 
   return (data as LinhaAnalise[]).map(linhaParaJob);
 }
 
+/** Trinca [texto, início, fim] — como o worker compacta a transcrição. */
+type PalavraCompacta = [string, number, number];
+
+function previaDoCorte(
+  palavras: PalavraCompacta[] | undefined,
+  inicio: number,
+  fim: number,
+): string | null {
+  if (!palavras?.length) return null;
+  const dentro = palavras.filter(([, i, f]) => i >= inicio - 0.2 && f <= fim + 0.2);
+  if (dentro.length === 0) return null;
+  const texto = dentro.slice(0, 42).map(([t]) => t).join(" ");
+  return dentro.length > 42 ? `${texto}…` : texto;
+}
+
 export async function lerAnalise(
   sb: SupabaseClient,
   id: string,
 ): Promise<JobAnalise | null> {
   const { data, error } = await sb
     .from("analises")
-    .select(COLUNAS)
+    .select(`${COLUNAS}, transcricao`)
     .eq("id", id)
     .maybeSingle();
 
@@ -96,6 +125,9 @@ export async function lerAnalise(
   if (!data) return null;
 
   const job = linhaParaJob(data as LinhaAnalise);
+  const palavras = (
+    data.transcricao as { palavras?: PalavraCompacta[] } | null
+  )?.palavras;
 
   const { data: cortes, error: erroCortes } = await sb
     .from("cortes")
@@ -105,20 +137,25 @@ export async function lerAnalise(
 
   if (erroCortes) throw new Error(`Não li os cortes: ${erroCortes.message}`);
 
-  job.cortes = (cortes ?? []).map((c) => ({
-    id: c.id as string,
-    ordem: c.ordem as number,
-    inicio_s: Number(c.inicio_s),
-    fim_s: Number(c.fim_s),
-    titulo: c.titulo as string,
-    gancho: (c.gancho as string | null) ?? null,
-    motivo: (c.motivo as string | null) ?? null,
-    score: (c.score as number | null) ?? null,
-    status: c.status as Corte["status"],
-    url: c.arquivo
-      ? sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data.publicUrl
-      : null,
-  }));
+  job.cortes = (cortes ?? []).map((c) => {
+    const inicio = Number(c.inicio_s);
+    const fim = Number(c.fim_s);
+    return {
+      id: c.id as string,
+      ordem: c.ordem as number,
+      inicio_s: inicio,
+      fim_s: fim,
+      titulo: c.titulo as string,
+      gancho: (c.gancho as string | null) ?? null,
+      motivo: (c.motivo as string | null) ?? null,
+      score: (c.score as number | null) ?? null,
+      status: c.status as Corte["status"],
+      url: c.arquivo
+        ? sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data.publicUrl
+        : null,
+      previa: previaDoCorte(palavras, inicio, fim),
+    };
+  });
 
   return job;
 }
@@ -128,6 +165,7 @@ export async function criarAnalise(
   userId: string,
   link: string,
   nicho: string,
+  opcoes: OpcoesAnalise,
 ): Promise<string> {
   const { data, error } = await sb
     .from("analises")
@@ -138,10 +176,46 @@ export async function criarAnalise(
       status: "processando",
       // É esta etapa que o worker da VPS fica caçando.
       etapa: "na_fila",
+      opcoes,
     })
     .select("id")
     .single();
 
   if (error) throw new Error(`Não criei a análise: ${error.message}`);
   return data.id as string;
+}
+
+/**
+ * A decisão do Estúdio: aprova os cortes escolhidos, descarta o resto e
+ * devolve a análise pra fila com a etapa que o worker entende como
+ * "renderizar os aprovados". Roda com a sessão do dono — RLS garante que
+ * ninguém aprova corte alheio.
+ */
+export async function aprovarCortes(
+  sb: SupabaseClient,
+  analiseId: string,
+  corteIds: string[],
+): Promise<void> {
+  const { error: erroAprovar } = await sb
+    .from("cortes")
+    .update({ status: "aprovado" })
+    .eq("analise_id", analiseId)
+    .eq("status", "proposto")
+    .in("id", corteIds);
+  if (erroAprovar) throw new Error(`Não aprovei os cortes: ${erroAprovar.message}`);
+
+  const { error: erroDescartar } = await sb
+    .from("cortes")
+    .update({ status: "descartado" })
+    .eq("analise_id", analiseId)
+    .eq("status", "proposto");
+  if (erroDescartar)
+    throw new Error(`Não descartei os demais: ${erroDescartar.message}`);
+
+  const { error } = await sb
+    .from("analises")
+    .update({ status: "processando", etapa: "renderizar_aprovados" })
+    .eq("id", analiseId)
+    .eq("status", "revisao");
+  if (error) throw new Error(`Não mandei pra renderização: ${error.message}`);
 }
