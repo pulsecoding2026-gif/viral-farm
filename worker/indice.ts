@@ -25,6 +25,7 @@ import {
   pararParaRevisao,
   salvarTranscricao,
   lerTranscricao,
+  recuperarOrfaos,
   type JobAnalise,
 } from "./fila";
 import {
@@ -362,6 +363,19 @@ async function main() {
   console.log(
     `[worker] de pé. transcritor=${ambiente.transcritor()} llm=${llm.provedor}/${llm.modelo} fontes=${FONTES}`,
   );
+
+  // Antes do laço: um deploy ou uma queda no meio de um job deixa a linha em
+  // 'processando' numa etapa que a fila não procura mais, e o dono fica com
+  // o progresso girando pra sempre.
+  try {
+    const recuperados = await recuperarOrfaos();
+    if (recuperados > 0) {
+      console.log(`[worker] ${recuperados} job(s) órfão(s) devolvido(s) à fila`);
+    }
+  } catch (e) {
+    // Não impede o worker de trabalhar — só perde a recuperação desta vez.
+    console.error("[worker] não consegui recuperar órfãos:", e);
+  }
 
   while (vivo) {
     let job: JobAnalise | null = null;

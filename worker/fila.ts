@@ -82,6 +82,64 @@ export async function marcarEtapa(id: string, etapa: string): Promise<void> {
 }
 
 /**
+ * Devolve à fila os jobs que um worker morto deixou pendurados.
+ *
+ * `pegarProximoJob` só enxerga as etapas 'na_fila' e 'renderizar_aprovados'.
+ * Assim que assume um job, ele troca a etapa por 'baixando' — e a partir daí,
+ * se o processo morrer (deploy, queda, reboot da VPS), a linha fica em
+ * 'processando' numa etapa que ninguém mais procura. O job nunca termina e
+ * nunca falha: o dono vê o progresso girando pra sempre.
+ *
+ * Roda SÓ na partida, antes do laço. Nesse instante o worker ainda não pegou
+ * nada, então tudo que está em 'processando' fora da fila é órfão por
+ * definição — e como é um processo por VPS, não há risco de roubar o job de
+ * um colega vivo.
+ */
+export async function recuperarOrfaos(): Promise<number> {
+  const { data: orfaos, error } = await supabase()
+    .from("analises")
+    .select("id")
+    .eq("status", "processando")
+    .not("etapa", "in", '("na_fila","renderizar_aprovados")');
+
+  if (error) throw new Error(`Não li os órfãos: ${error.message}`);
+  if (!orfaos || orfaos.length === 0) return 0;
+
+  for (const { id } of orfaos) {
+    // Cortes já aprovados no Estúdio não podem ser perdidos: a curadoria foi
+    // trabalho do dono. Se existem, o job volta pra fase de renderização.
+    const { data: aprovados } = await supabase()
+      .from("cortes")
+      .select("id")
+      .eq("analise_id", id)
+      .in("status", ["aprovado", "renderizando"]);
+
+    if (aprovados && aprovados.length > 0) {
+      // 'renderizando' é estado de quem morreu no meio — volta pra aprovado.
+      await supabase()
+        .from("cortes")
+        .update({ status: "aprovado" })
+        .eq("analise_id", id)
+        .eq("status", "renderizando");
+      await supabase()
+        .from("analises")
+        .update({ etapa: "renderizar_aprovados" })
+        .eq("id", id);
+    } else {
+      // Sem curadoria a perder: recomeça do zero. Os cortes parciais saem
+      // porque o worker vai registrar os novos e sairiam duplicados.
+      await supabase().from("cortes").delete().eq("analise_id", id);
+      await supabase()
+        .from("analises")
+        .update({ etapa: "na_fila", resultado: null })
+        .eq("id", id);
+    }
+  }
+
+  return orfaos.length;
+}
+
+/**
  * Grava a transcrição na análise — compactada em trincas [texto, início, fim]
  * pra não inchar o jsonb (vídeo de 1h passa de 10 mil palavras).
  */
