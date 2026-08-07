@@ -143,12 +143,10 @@ function avisosDoProjetoNaUI(p: Projeto): string[] {
       "Keyframes de enquadramento ainda não animam no render — sai o valor inicial do clipe.",
     );
   }
-  if (videos.some((v) => v.efeitos.length > 0)) {
-    avisos.push("Efeitos ainda não entram no render.");
-  }
-  if (videos.some((v) => v.transicao)) {
-    avisos.push("Transições entre clipes ainda não entram no render.");
-  }
+  // Efeitos e transições SAÍRAM desta lista quando o render aprendeu a
+  // fazê-los (worker/render-projeto.ts). O comentário do cabeçalho manda
+  // apagar nos dois lugares justamente pra este aviso não sobreviver ao que
+  // ele descrevia — aviso obsoleto ensina a ignorar todos os outros.
   if (videos.some((v) => v.enquadramento.rotacao !== 0)) {
     avisos.push("Rotação ainda não entra no render.");
   }
