@@ -171,6 +171,70 @@ export async function listarAnalises(sb: SupabaseClient): Promise<JobAnalise[]> 
   return (data as LinhaAnalise[]).map(linhaParaJob);
 }
 
+/** Um corte pronto, com o contexto da análise de onde saiu. */
+export type CorteNaEstante = {
+  id: string;
+  analise_id: string;
+  titulo: string;
+  /** Título do vídeo original — o que situa o corte na estante. */
+  origem: string;
+  inicio_s: number;
+  fim_s: number;
+  estilo: string | null;
+  url: string;
+  renderizado_em: number | null;
+};
+
+/**
+ * Todos os cortes PRONTOS do dono, de todas as análises.
+ *
+ * É o acervo do Editor: o Analisador entrega automático, e aqui a pessoa
+ * escolhe qual daqueles cortes quer abrir e ajustar na mão. Sem isto o
+ * editor começaria vazio e obrigaria a passar pelo histórico de análises
+ * pra achar o que editar.
+ */
+export async function listarCortesProntos(
+  sb: SupabaseClient,
+  limite = 60,
+): Promise<CorteNaEstante[]> {
+  const { data, error } = await sb
+    .from("cortes")
+    .select(
+      "id, analise_id, titulo, inicio_s, fim_s, estilo, arquivo, renderizado_em, analises(resultado, link)",
+    )
+    .eq("status", "pronto")
+    .not("arquivo", "is", null)
+    .order("renderizado_em", { ascending: false })
+    .limit(limite);
+
+  if (error) throw new Error(`Não li os cortes: ${error.message}`);
+
+  return (data ?? []).map((c) => {
+    const analise = c.analises as { resultado?: unknown; link?: string } | null;
+    const resumo = analise?.resultado as { titulo?: string } | null;
+    // ?v= muda a cada render: sem isso o navegador serve o MP4 velho do
+    // cache depois de uma edição, no mesmo caminho e mesma URL.
+    const versao = c.renderizado_em
+      ? `?v=${new Date(c.renderizado_em as string).getTime()}`
+      : "";
+    return {
+      id: c.id as string,
+      analise_id: c.analise_id as string,
+      titulo: (c.titulo as string) ?? "Corte",
+      origem: resumo?.titulo ?? analise?.link ?? "",
+      inicio_s: Number(c.inicio_s),
+      fim_s: Number(c.fim_s),
+      estilo: (c.estilo as string | null) ?? null,
+      url:
+        sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data
+          .publicUrl + versao,
+      renderizado_em: c.renderizado_em
+        ? new Date(c.renderizado_em as string).getTime()
+        : null,
+    };
+  });
+}
+
 /** Trinca [texto, início, fim] — como o worker compacta a transcrição. */
 type PalavraCompacta = [string, number, number];
 

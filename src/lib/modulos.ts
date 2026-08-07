@@ -183,18 +183,16 @@ export const SECOES: Secao[] = [
     icone: "MagicWand",
     modulos: [
       {
-        slug: "clip-ai",
-        rotulo: "Clip AI",
-        resumo: "Vídeo longo vira cortes prontos, no formato de cada rede",
+        // Era "Clip AI", e o que ele prometia (achar os melhores momentos,
+        // cortar em 9:16, legendar, tirar silêncio) o Analisador JÁ faz —
+        // eram o mesmo produto com dois nomes. Aqui vive a outra metade: o
+        // ajuste na mão do que a automação entregou.
+        slug: "editor-viral",
+        rotulo: "Editor Viral IA",
+        resumo: "Abra um corte e ajuste na mão: tempo, legenda, formato",
         icone: "Scissors",
         cor: "from-blue-500 to-sky-600",
-        recursos: [
-          "Entrada por upload, link do YouTube, podcast ou live",
-          "Detecção automática dos melhores momentos",
-          "Formato escolhido na hora: Shorts, Reels, TikTok ou Stories",
-          "Corte vertical com reenquadramento e zoom automático",
-          "Remoção de silêncio, legendas, trilha e CTA no fim",
-        ],
+        pronto: true,
       },
       {
         slug: "voice-viral",
