@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from "node:fs/promises";
-import { run, bin } from "../proc";
+import { run, bin, Cancelado } from "../proc";
 import { env } from "../env";
 
 /**
@@ -112,7 +112,10 @@ function argsBase(client: string | null): string[] {
   ];
 }
 
-export async function lerMetadados(url: URL): Promise<Metadados> {
+export async function lerMetadados(
+  url: URL,
+  sinal?: AbortSignal,
+): Promise<Metadados> {
   // Mesma cascata de clients do download. Esta chamada roda ANTES do
   // download — sem a cascata aqui, o job morria na porta de entrada sem
   // nem chegar no fallback.
@@ -130,10 +133,12 @@ export async function lerMetadados(url: URL): Promise<Metadados> {
           "--no-playlist",
           url.toString(),
         ],
-        { timeoutMs: 60_000 },
+        { timeoutMs: 60_000, sinal },
       );
       break;
     } catch (err) {
+      // Igual ao baixarVideo: cancelamento sai da cascata na hora.
+      if (err instanceof Cancelado) throw err;
       ultimoErro = err;
     }
   }
@@ -203,7 +208,11 @@ async function limparDiretorio(dir: string) {
   );
 }
 
-export async function baixarVideo(url: URL, dir: string): Promise<string> {
+export async function baixarVideo(
+  url: URL,
+  dir: string,
+  sinal?: AbortSignal,
+): Promise<string> {
   const saida = path.join(dir, "video.%(ext)s");
   let ultimoErro: unknown;
 
@@ -234,7 +243,7 @@ export async function baixarVideo(url: URL, dir: string): Promise<string> {
           saida,
           url.toString(),
         ],
-        { timeoutMs: 4 * 60_000 },
+        { timeoutMs: 4 * 60_000, sinal },
       );
 
       const caminho = stdout
@@ -254,6 +263,13 @@ export async function baixarVideo(url: URL, dir: string): Promise<string> {
       ultimoErro = new Error("Download terminou sem produzir arquivo válido.");
       await limparDiretorio(dir);
     } catch (err) {
+      // Cancelamento não é "esse client não deu certo": sem esta saída, a
+      // cascata tentaria os outros dois e o dono esperaria três downloads
+      // depois de já ter mandado parar.
+      if (err instanceof Cancelado) {
+        await limparDiretorio(dir);
+        throw err;
+      }
       ultimoErro = err;
       // Restos parciais confundiriam a próxima tentativa.
       await limparDiretorio(dir);

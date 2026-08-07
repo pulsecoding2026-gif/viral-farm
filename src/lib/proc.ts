@@ -23,14 +23,26 @@ export class ProcError extends Error {
  * argumentos vêm de input do usuário (URL do vídeo), então shell aqui seria
  * injeção de comando.
  */
+export class Cancelado extends Error {
+  constructor() {
+    super("Cancelado pelo dono.");
+    this.name = "Cancelado";
+  }
+}
+
 export function run(
   bin: string,
   args: string[],
-  opts: { timeoutMs?: number; cwd?: string } = {},
+  opts: { timeoutMs?: number; cwd?: string; sinal?: AbortSignal } = {},
 ): Promise<string> {
-  const { timeoutMs = 5 * 60_000, cwd } = opts;
+  const { timeoutMs = 5 * 60_000, cwd, sinal } = opts;
 
   return new Promise((resolve, reject) => {
+    // Já cancelado antes de nascer: não gasta processo.
+    if (sinal?.aborted) {
+      reject(new Cancelado());
+      return;
+    }
     // cwd existe por causa dos filtros do ffmpeg (ass=arquivo.ass): caminho
     // absoluto do Windows leva "C:", o parser de filtro divide no ":" e
     // nenhum esquema de escape sobrevive igual em todas as versões. Rodar
@@ -41,17 +53,31 @@ export function run(
     let stdout = "";
     let stderr = "";
     let matouPorTimeout = false;
+    let matouPorCancelamento = false;
 
     const timer = setTimeout(() => {
       matouPorTimeout = true;
       p.kill("SIGKILL");
     }, timeoutMs);
 
+    // Cancelar de verdade é MATAR o processo, não pedir gentilmente: um
+    // ffmpeg de vários minutos não observa flag nenhuma, e checar entre
+    // etapas deixaria o dono esperando o render inteiro terminar.
+    const aoCancelar = () => {
+      matouPorCancelamento = true;
+      p.kill("SIGKILL");
+    };
+    sinal?.addEventListener("abort", aoCancelar, { once: true });
+    const limpar = () => {
+      clearTimeout(timer);
+      sinal?.removeEventListener("abort", aoCancelar);
+    };
+
     p.stdout.on("data", (d) => (stdout += d.toString()));
     p.stderr.on("data", (d) => (stderr += d.toString()));
 
     p.on("error", (err) => {
-      clearTimeout(timer);
+      limpar();
       if ((err as NodeJS.ErrnoException).code === "ENOENT") {
         reject(
           new Error(
@@ -65,7 +91,14 @@ export function run(
     });
 
     p.on("close", (code) => {
-      clearTimeout(timer);
+      limpar();
+      // Cancelamento antes do timeout: o processo morreu porque MANDAMOS.
+      // Reportar como falha viraria "a análise falhou" na tela de quem
+      // acabou de clicar em cancelar.
+      if (matouPorCancelamento) {
+        reject(new Cancelado());
+        return;
+      }
       if (matouPorTimeout) {
         reject(new Error(`"${bin}" estourou o timeout de ${timeoutMs}ms`));
         return;

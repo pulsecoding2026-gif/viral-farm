@@ -2,6 +2,7 @@
 
 import {
   SpinnerGap,
+  StopCircle,
   CheckCircle,
   XCircle,
   CaretRight,
@@ -27,6 +28,12 @@ function Status({ status }: { status: JobAnalise["status"] }) {
       <CheckCircle size={16} weight="fill" className="shrink-0 text-emerald-500" />
     );
   }
+  // Cinza, não vermelho: interromper foi decisão do dono, não falha.
+  if (status === "cancelado") {
+    return (
+      <StopCircle size={16} weight="fill" className="shrink-0 text-zinc-600" />
+    );
+  }
   return <XCircle size={16} weight="fill" className="shrink-0 text-rose-500" />;
 }
 
@@ -40,6 +47,7 @@ function legenda(job: JobAnalise): string {
     const qtd = resumoDeCortes(job.resultado)?.qtd_cortes ?? 0;
     return `${qtd} ${qtd === 1 ? "corte proposto" : "cortes propostos"} — esperando você no Estúdio`;
   }
+  if (job.status === "cancelado") return "Interrompida por você";
   if (job.status === "erro") return job.mensagem ?? "Falhou";
   const qtd = resumoDeCortes(job.resultado)?.qtd_cortes ?? 0;
   return qtd === 1 ? "1 corte pronto" : `${qtd} cortes prontos`;

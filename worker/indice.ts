@@ -26,8 +26,10 @@ import {
   salvarTranscricao,
   lerTranscricao,
   recuperarOrfaos,
+  vigiarCancelamento,
   type JobAnalise,
 } from "./fila";
+import { Cancelado } from "../src/lib/proc";
 import {
   registrarCorte,
   subirVideoDoCorte,
@@ -61,6 +63,17 @@ const FONTE_VALIDADE_MS = 24 * 60 * 60 * 1000;
 
 function caminhoFonte(analiseId: string): string {
   return path.join(FONTES, `${analiseId}.mp4`);
+}
+
+/**
+ * Ponto de checagem entre etapas.
+ *
+ * O sinal mata ffmpeg e yt-dlp na hora, mas transcrição e LLM são chamadas
+ * de rede que não recebem sinal — sem isto, cancelar durante a escolha dos
+ * cortes só teria efeito quando a renderização começasse.
+ */
+function pararSeCancelado(sinal: AbortSignal): void {
+  if (sinal.aborted) throw new Cancelado();
 }
 
 /**
@@ -113,27 +126,31 @@ async function limparFontesVencidas(): Promise<void> {
 
 /* ------------------------------------------------------- fase 1: analisar */
 
-async function analisar(job: JobAnalise): Promise<void> {
+async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
   const t0 = Date.now();
   const modo = job.opcoes.modo ?? "auto";
   console.log(`[worker] analisar ${job.id} (${modo}): ${job.link}`);
 
   const url = validarUrl(job.link);
-  const metadados = await lerMetadados(url);
+  const metadados = await lerMetadados(url, sinal);
 
   const dir = path.join(os.tmpdir(), `viralfarm-${randomUUID()}`);
   await fs.mkdir(dir, { recursive: true });
 
   try {
-    const video = await baixarVideo(url, dir);
+    const video = await baixarVideo(url, dir, sinal);
     const duracao = await duracaoDoArquivo(video);
+
+    // Entre etapas: as chamadas de rede (transcrição, LLM) não recebem sinal,
+    // então este é o ponto onde um cancelamento durante elas é percebido.
+    pararSeCancelado(sinal);
 
     await marcarEtapa(job.id, "transcrevendo");
     const transcritor = criarTranscritor(ambiente.transcritor(), {
       groq: process.env.GROQ_API_KEY,
     });
     const transcricao = await transcritor.transcrever(
-      await extrairAudio(video, dir),
+      await extrairAudio(video, dir, sinal),
     );
     if (transcricao.palavras.length === 0) {
       throw new Error(
@@ -141,6 +158,7 @@ async function analisar(job: JobAnalise): Promise<void> {
       );
     }
     await salvarTranscricao(job.id, transcricao);
+    pararSeCancelado(sinal);
 
     await marcarEtapa(job.id, "escolhendo_cortes");
     const cortes = await escolherCortes(
@@ -152,6 +170,7 @@ async function analisar(job: JobAnalise): Promise<void> {
     if (cortes.length === 0) {
       throw new Error("O vídeo não rendeu nenhum corte bom o bastante.");
     }
+    pararSeCancelado(sinal);
 
     if (modo === "manual") {
       // Propõe e para: a decisão agora é do dono, no Estúdio. O fonte fica
@@ -174,6 +193,7 @@ async function analisar(job: JobAnalise): Promise<void> {
     const vertical = await ehVertical(video);
     let prontos = 0;
     for (const [i, corte] of cortes.entries()) {
+      pararSeCancelado(sinal);
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${cortes.length}`);
       const corteId = await registrarCorte(
         job.id, job.user_id, i + 1, corte, "renderizando",
@@ -190,6 +210,7 @@ async function analisar(job: JobAnalise): Promise<void> {
           `corte-${i + 1}`,
           {
             enquadramento,
+            sinal,
             // O formato vem por corte: a IA casou cada trecho com o preset
             // que combina com aquele conteúdo. Escolha fixa do usuário já
             // chegou aqui repetida em todos pelo prompt.
@@ -201,6 +222,9 @@ async function analisar(job: JobAnalise): Promise<void> {
         await subirVideoDoCorte(corteId, job.id, job.user_id, mp4);
         prontos += 1;
       } catch (e) {
+        // Cancelamento não é falha do corte: sobe e encerra o job inteiro,
+        // senão o laço seguiria renderizando os outros.
+        if (e instanceof Cancelado) throw e;
         console.error(`[worker] corte ${i + 1} falhou:`, e);
         await falharCorte(corteId);
       }
@@ -254,7 +278,10 @@ async function supabaseResultadoParcial(
 
 /* ---------------------------------------------------- fase 2: renderizar */
 
-async function renderizarAprovados(job: JobAnalise): Promise<void> {
+async function renderizarAprovados(
+  job: JobAnalise,
+  sinal: AbortSignal,
+): Promise<void> {
   const t0 = Date.now();
   console.log(`[worker] renderizar aprovados de ${job.id}`);
 
@@ -278,7 +305,7 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
     const existe = await fs.stat(video).then((s) => s.isFile()).catch(() => false);
     if (!existe) {
       await marcarEtapa(job.id, "baixando");
-      video = await baixarVideo(validarUrl(job.link), dir);
+      video = await baixarVideo(validarUrl(job.link), dir, sinal);
       await guardarFonte(video, job.id);
     }
 
@@ -288,6 +315,7 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
     const vertical = await ehVertical(video);
     let prontos = 0;
     for (const [i, corte] of aprovados.entries()) {
+      pararSeCancelado(sinal);
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${aprovados.length}`);
       await marcarCorteRenderizando(corte.id);
       try {
@@ -302,6 +330,7 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
           `corte-${corte.ordem}`,
           {
             enquadramento,
+            sinal,
             // Reedição pode trocar o formato só deste corte.
             estilo: corte.estilo ?? formatoDaAnalise,
             tituloTela:
@@ -314,6 +343,8 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
         await subirVideoDoCorte(corte.id, job.id, job.user_id, mp4);
         prontos += 1;
       } catch (e) {
+        // Cancelamento encerra o job, não marca o corte como falho.
+        if (e instanceof Cancelado) throw e;
         console.error(`[worker] corte ${corte.ordem} falhou:`, e);
         await falharCorte(corte.id);
       }
@@ -394,17 +425,36 @@ async function main() {
       continue;
     }
 
+    // Um controlador por job: a vigilância olha a linha no banco e, quando
+    // ela sai de 'processando', aborta — o que mata o yt-dlp/ffmpeg em
+    // andamento em vez de esperar minutos pelo fim do render.
+    const controlador = new AbortController();
+    const pararVigilancia = vigiarCancelamento(job.id, () => {
+      console.log(`[worker] ${job!.id}: cancelado pelo dono, interrompendo`);
+      controlador.abort();
+    });
+
     try {
       if (job.etapa === "renderizar_aprovados") {
-        await renderizarAprovados(job);
+        await renderizarAprovados(job, controlador.signal);
       } else {
-        await analisar(job);
+        await analisar(job, controlador.signal);
       }
     } catch (e) {
-      // O erro cru fica AQUI, no log da VPS, onde serve pra depurar. O que
-      // vai pro banco (e pra tela) é a tradução do diagnosticar().
-      console.error(`[worker] job ${job.id} falhou:`, e);
-      await falharJob(job.id, e).catch(() => {});
+      // Cancelamento não é falha: a linha já está em 'cancelado' (foi o que
+      // disparou a interrupção). Marcar como erro pintaria de vermelho a
+      // tela de quem acabou de mandar parar.
+      if (e instanceof Cancelado || controlador.signal.aborted) {
+        console.log(`[worker] job ${job.id} interrompido.`);
+      } else {
+        // O erro cru fica AQUI, no log da VPS, onde serve pra depurar. O que
+        // vai pro banco (e pra tela) é a tradução do diagnosticar().
+        console.error(`[worker] job ${job.id} falhou:`, e);
+        await falharJob(job.id, e).catch(() => {});
+      }
+    } finally {
+      // Sem isto o intervalo vaza um timer por job processado.
+      pararVigilancia();
     }
   }
 

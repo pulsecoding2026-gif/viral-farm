@@ -82,6 +82,44 @@ export async function marcarEtapa(id: string, etapa: string): Promise<void> {
 }
 
 /**
+ * Vigia a linha do job e dispara o cancelamento quando ela sai de
+ * 'processando'.
+ *
+ * A Vercel não fala com a VPS — o banco é a única ponte. A rota /cancelar
+ * só troca o status; quem tem que perceber e matar o processo é isto aqui.
+ *
+ * 3s é o compromisso: rápido o bastante pra parecer instantâneo pra quem
+ * clicou, raro o bastante pra não pesar (é um SELECT de uma coluna).
+ *
+ * Devolve a função que encerra a vigilância — o chamador PRECISA chamá-la
+ * no finally, senão o intervalo vaza a cada job.
+ */
+export function vigiarCancelamento(
+  id: string,
+  aoCancelar: () => void,
+): () => void {
+  const timer = setInterval(async () => {
+    try {
+      const { data } = await supabase()
+        .from("analises")
+        .select("status")
+        .eq("id", id)
+        .maybeSingle();
+      // Sumiu do banco (apagada) conta como cancelada: não há pra quem
+      // entregar o resultado.
+      if (!data || data.status !== "processando") {
+        clearInterval(timer);
+        aoCancelar();
+      }
+    } catch {
+      // Supabase instável não pode matar um job que está indo bem.
+    }
+  }, 3000);
+
+  return () => clearInterval(timer);
+}
+
+/**
  * Devolve à fila os jobs que um worker morto deixou pendurados.
  *
  * `pegarProximoJob` só enxerga as etapas 'na_fila' e 'renderizar_aprovados'.

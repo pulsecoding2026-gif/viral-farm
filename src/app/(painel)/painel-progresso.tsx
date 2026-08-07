@@ -6,6 +6,7 @@ import {
   Waveform,
   Sparkle,
   FilmStrip,
+  StopCircle,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -94,7 +95,15 @@ function decompor(etapa: string): {
   return { indice, pct: INICIO_PCT[indice] };
 }
 
-export function PainelProgresso({ etapa }: { etapa: string | null }) {
+export function PainelProgresso({
+  etapa,
+  onCancelar,
+  cancelando,
+}: {
+  etapa: string | null;
+  onCancelar?: () => void;
+  cancelando?: boolean;
+}) {
   const { indice: atual, pct, detalheVivo } = decompor(etapa ?? "na_fila");
 
   return (
@@ -182,10 +191,29 @@ export function PainelProgresso({ etapa }: { etapa: string | null }) {
         })}
       </ol>
 
-      <p className="border-t border-zinc-800 px-5 py-3.5 text-xs leading-relaxed text-zinc-500 sm:px-6">
-        Vídeo longo leva alguns minutos. Pode fechar esta aba — o trabalho
-        continua no servidor e os cortes ficam salvos no histórico.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 px-5 py-3.5 sm:px-6">
+        <p className="max-w-[58ch] text-xs leading-relaxed text-zinc-500">
+          Vídeo longo leva alguns minutos. Pode fechar esta aba — o trabalho
+          continua no servidor e os cortes ficam salvos no histórico.
+        </p>
+        {/* Link errado ou opção errada não deveria custar a espera do
+            pipeline inteiro. O worker mata o processo em andamento. */}
+        {onCancelar && (
+          <button
+            type="button"
+            onClick={onCancelar}
+            disabled={cancelando}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-rose-900 hover:bg-rose-950/30 hover:text-rose-300 disabled:opacity-50"
+          >
+            {cancelando ? (
+              <CircleNotch size={13} className="animate-spin" />
+            ) : (
+              <StopCircle size={13} weight="bold" />
+            )}
+            {cancelando ? "Interrompendo…" : "Interromper"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

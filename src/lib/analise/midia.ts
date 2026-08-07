@@ -109,7 +109,11 @@ export async function extrairFrames(
  * Extrai a trilha de áudio em mono 16kHz — formato que o Whisper espera.
  * Mais que isso é desperdício de upload e não melhora a transcrição.
  */
-export async function extrairAudio(video: string, dir: string): Promise<string> {
+export async function extrairAudio(
+  video: string,
+  dir: string,
+  sinal?: AbortSignal,
+): Promise<string> {
   const destino = path.join(dir, "audio.mp3");
 
   await run(
@@ -127,7 +131,7 @@ export async function extrairAudio(video: string, dir: string): Promise<string> 
       "-y",
       destino,
     ],
-    { timeoutMs: 2 * 60_000 },
+    { timeoutMs: 2 * 60_000, sinal },
   );
 
   return destino;

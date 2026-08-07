@@ -31,6 +31,8 @@ export type OpcoesRender = {
    * histórico. Quem mede e escolhe é worker/enquadramento.ts.
    */
   enquadramento?: Enquadramento;
+  /** Cancelamento: mata o ffmpeg em vez de esperar o render terminar. */
+  sinal?: AbortSignal;
 };
 
 export async function renderizarCorte(
@@ -46,6 +48,7 @@ export async function renderizarCorte(
     tituloTela,
     limparSilencio = false,
     enquadramento = "preencher",
+    sinal,
   } = opcoes;
   const nomeAss = `${nome}.ass`;
   const saida = path.join(dir, `${nome}.mp4`);
@@ -123,7 +126,7 @@ export async function renderizarCorte(
     "-y", saida,
   );
 
-  await run(bin.ffmpeg(), args, { timeoutMs: 10 * 60_000, cwd: dir });
+  await run(bin.ffmpeg(), args, { timeoutMs: 10 * 60_000, cwd: dir, sinal });
 
   return saida;
 }

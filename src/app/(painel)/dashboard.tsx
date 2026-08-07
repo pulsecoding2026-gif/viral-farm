@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { JobAnalise } from "@/lib/analises-db";
 import { PainelErro } from "./painel-erro";
+import { PainelCancelado } from "./painel-cancelado";
 import { HistoricoAnalises } from "./historico-analises";
 import { FormularioNovaAnalise } from "./formulario-nova-analise";
 import { PainelProgresso } from "./painel-progresso";
@@ -30,6 +31,7 @@ export function Dashboard({
   const [jobs, setJobs] = useState<JobAnalise[]>(jobsIniciais);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>("nova");
+  const [cancelando, setCancelando] = useState<string | null>(null);
   const pollAtualRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollListaRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -121,6 +123,46 @@ export function Dashboard({
     setAba("nova");
   }
 
+  /** Otimismo local: o polling confirma no ciclo seguinte. */
+  function marcarNaFila(id: string) {
+    setJobs((prev) =>
+      prev.map((j) =>
+        j.id === id
+          ? {
+              ...j,
+              status: "processando",
+              etapa: "na_fila",
+              mensagem: null,
+              resultado: null,
+              cortes: undefined,
+            }
+          : j,
+      ),
+    );
+  }
+
+  async function cancelar(id: string) {
+    setCancelando(id);
+    try {
+      const r = await fetch(`/api/analises/${id}/cancelar`, { method: "POST" });
+      // 409 = já terminou entre o clique e a chamada. O polling mostra o
+      // estado real; insistir só confundiria.
+      if (r.ok) {
+        setJobs((prev) =>
+          prev.map((j) =>
+            j.id === id
+              ? { ...j, status: "cancelado", etapa: null, mensagem: null }
+              : j,
+          ),
+        );
+      }
+    } catch {
+      // Falha de rede: o job segue rodando e o polling continua contando.
+    } finally {
+      setCancelando(null);
+    }
+  }
+
   /* --------------------------------------------------------- análise aberta */
 
   // Com uma análise aberta, ela ocupa a tela inteira: é o conteúdo, não um
@@ -154,7 +196,17 @@ export function Dashboard({
         </div>
 
         {jobAtual.status === "processando" ? (
-          <PainelProgresso etapa={jobAtual.etapa} />
+          <PainelProgresso
+            etapa={jobAtual.etapa}
+            cancelando={cancelando === jobAtual.id}
+            onCancelar={() => cancelar(jobAtual.id)}
+          />
+        ) : jobAtual.status === "cancelado" ? (
+          <PainelCancelado
+            job={jobAtual}
+            onOutroLink={abrirNova}
+            onRetomado={() => marcarNaFila(jobAtual.id)}
+          />
         ) : jobAtual.status === "revisao" ? (
           <EstudioCortes
             job={jobAtual}
@@ -178,22 +230,7 @@ export function Dashboard({
           <PainelErro
             job={jobAtual}
             onOutroLink={abrirNova}
-            onRetomado={() => {
-              setJobs((prev) =>
-                prev.map((j) =>
-                  j.id === jobAtual.id
-                    ? {
-                        ...j,
-                        status: "processando",
-                        etapa: "na_fila",
-                        mensagem: null,
-                        resultado: null,
-                        cortes: undefined,
-                      }
-                    : j,
-                ),
-              );
-            }}
+            onRetomado={() => marcarNaFila(jobAtual.id)}
           />
         ) : (
           <ResultadoCortes

@@ -80,7 +80,7 @@ export type JobAnalise = {
   id: string;
   link: string;
   nicho: string;
-  status: "processando" | "revisao" | "pronto" | "erro";
+  status: "processando" | "revisao" | "pronto" | "erro" | "cancelado";
   etapa: string | null;
   /** Epoch em ms — o formato que a UI já usava. */
   criado_em: number;
@@ -334,6 +334,38 @@ export async function reeditarCorte(
 }
 
 /**
+ * Interrompe uma análise em andamento.
+ *
+ * Só marca o status — quem realmente para é o worker, que vigia a própria
+ * linha e mata o ffmpeg/yt-dlp quando ela sai de 'processando'. É por isso
+ * que o retorno é imediato: a UI não espera o processo morrer.
+ *
+ * Cobre 'revisao' também: uma análise parada no Estúdio que o dono não quer
+ * mais é a mesma decisão, só que sem processo pra matar.
+ */
+export async function cancelarAnalise(
+  sb: SupabaseClient,
+  analiseId: string,
+): Promise<"ok" | "nao_achei"> {
+  const { data, error } = await sb
+    .from("analises")
+    .update({
+      status: "cancelado",
+      etapa: null,
+      mensagem: null,
+      resultado: null,
+    })
+    .eq("id", analiseId)
+    // O filtro é o guarda: análise pronta ou já cancelada não volta atrás,
+    // e RLS já esconde o que não é do dono.
+    .in("status", ["processando", "revisao"])
+    .select("id");
+
+  if (error) throw new Error(`Não consegui cancelar: ${error.message}`);
+  return data && data.length > 0 ? "ok" : "nao_achei";
+}
+
+/**
  * Recoloca na fila uma análise que falhou.
  *
  * A maioria das falhas é transitória (verificação de robô, limite de taxa,
@@ -361,7 +393,9 @@ export async function retomarAnalise(
       resultado: null,
     })
     .eq("id", analiseId)
-    .eq("status", "erro")
+    // Cancelado também retoma: quem parou por engano não deveria precisar
+    // recolar o link e reescolher tudo de novo.
+    .in("status", ["erro", "cancelado"])
     .select("id");
 
   if (error) throw new Error(`Não recoloquei na fila: ${error.message}`);
