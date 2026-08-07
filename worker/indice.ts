@@ -9,6 +9,12 @@ import { ambiente } from "./ambiente";
 import { criarTranscritor } from "./transcritor";
 import { escolherCortes } from "./cortar";
 import { renderizarCorte, palavrasNaJanela } from "./renderizar";
+import {
+  medirQuadro,
+  decidirEnquadramento,
+  ehVertical,
+  type Enquadramento,
+} from "./enquadramento";
 import { acharFormato } from "../src/lib/formatos";
 import {
   supabase,
@@ -54,6 +60,35 @@ const FONTE_VALIDADE_MS = 24 * 60 * 60 * 1000;
 
 function caminhoFonte(analiseId: string): string {
   return path.join(FONTES, `${analiseId}.mp4`);
+}
+
+/**
+ * Mede o trecho e decide entre crop central e fundo desfocado.
+ *
+ * Roda por CORTE, não por vídeo: o mesmo material tem hora de close (crop
+ * enche a tela) e hora de plano aberto ou frase escrita (crop mutila). É
+ * justamente essa alternância que separa corte profissional de corte
+ * amador.
+ *
+ * Falha aqui não derruba o corte — cai no crop central, que é o
+ * comportamento de sempre.
+ */
+async function escolherEnquadramento(
+  video: string,
+  corte: { inicio_s: number; fim_s: number },
+  fonteVertical: boolean,
+  rotulo: string,
+): Promise<Enquadramento> {
+  if (fonteVertical) return "preencher";
+  try {
+    const medida = await medirQuadro(video, corte.inicio_s, corte.fim_s);
+    const { enquadramento, motivo } = decidirEnquadramento(medida);
+    console.log(`[worker] ${rotulo}: ${enquadramento} — ${motivo}`);
+    return enquadramento;
+  } catch (e) {
+    console.error(`[worker] ${rotulo}: medição falhou, usando crop central:`, e);
+    return "preencher";
+  }
 }
 
 async function guardarFonte(video: string, analiseId: string): Promise<void> {
@@ -133,6 +168,9 @@ async function analisar(job: JobAnalise): Promise<void> {
     }
 
     // Modo auto: o comportamento clássico — renderiza tudo já.
+    // Fonte já vertical não precisa de enquadramento nenhum: crop e fundo
+    // desfocado só teriam o que fazer se sobrasse largura.
+    const vertical = await ehVertical(video);
     let prontos = 0;
     for (const [i, corte] of cortes.entries()) {
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${cortes.length}`);
@@ -140,6 +178,9 @@ async function analisar(job: JobAnalise): Promise<void> {
         job.id, job.user_id, i + 1, corte, "renderizando",
       );
       try {
+        const enquadramento = await escolherEnquadramento(
+          video, corte, vertical, `corte ${i + 1}`,
+        );
         const mp4 = await renderizarCorte(
           video,
           corte,
@@ -147,6 +188,7 @@ async function analisar(job: JobAnalise): Promise<void> {
           dir,
           `corte-${i + 1}`,
           {
+            enquadramento,
             // O formato vem por corte: a IA casou cada trecho com o preset
             // que combina com aquele conteúdo. Escolha fixa do usuário já
             // chegou aqui repetida em todos pelo prompt.
@@ -242,11 +284,15 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
     // O corte guarda o formato que a IA escolheu (ou o que a reedição trocou).
     // O da análise só entra se o corte for anterior a essa coluna.
     const formatoDaAnalise = acharFormato(job.opcoes.estilo).id;
+    const vertical = await ehVertical(video);
     let prontos = 0;
     for (const [i, corte] of aprovados.entries()) {
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${aprovados.length}`);
       await marcarCorteRenderizando(corte.id);
       try {
+        const enquadramento = await escolherEnquadramento(
+          video, corte, vertical, `corte ${corte.ordem}`,
+        );
         const mp4 = await renderizarCorte(
           video,
           corte,
@@ -254,6 +300,7 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
           dir,
           `corte-${corte.ordem}`,
           {
+            enquadramento,
             // Reedição pode trocar o formato só deste corte.
             estilo: corte.estilo ?? formatoDaAnalise,
             tituloTela:

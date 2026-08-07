@@ -79,6 +79,54 @@ export function run(
   });
 }
 
+/**
+ * Igual ao run(), mas devolve stdout como Buffer.
+ *
+ * Existe por causa da leitura de frames: `run()` concatena com toString(),
+ * o que destrói byte binário (qualquer sequência inválida em UTF-8 vira
+ * U+FFFD). Pra medir pixel a gente precisa do byte exato.
+ */
+export function runBinario(
+  bin: string,
+  args: string[],
+  opts: { timeoutMs?: number } = {},
+): Promise<Buffer> {
+  const { timeoutMs = 60_000 } = opts;
+
+  return new Promise((resolve, reject) => {
+    const p = spawn(bin, args, { windowsHide: true });
+    const pedacos: Buffer[] = [];
+    let stderr = "";
+    let matouPorTimeout = false;
+
+    const timer = setTimeout(() => {
+      matouPorTimeout = true;
+      p.kill("SIGKILL");
+    }, timeoutMs);
+
+    p.stdout.on("data", (d: Buffer) => pedacos.push(d));
+    p.stderr.on("data", (d) => (stderr += d.toString()));
+
+    p.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+
+    p.on("close", (code) => {
+      clearTimeout(timer);
+      if (matouPorTimeout) {
+        reject(new Error(`"${bin}" estourou o timeout de ${timeoutMs}ms`));
+        return;
+      }
+      if (code !== 0) {
+        reject(new ProcError(bin, code, stderr));
+        return;
+      }
+      resolve(Buffer.concat(pedacos));
+    });
+  });
+}
+
 export const bin = {
   ffmpeg: () => env().FFMPEG_PATH ?? "ffmpeg",
   ffprobe: () => env().FFPROBE_PATH ?? "ffprobe",

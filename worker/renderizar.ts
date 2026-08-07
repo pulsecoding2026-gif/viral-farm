@@ -3,22 +3,21 @@ import fs from "node:fs/promises";
 import { run, bin } from "../src/lib/proc";
 import { gerarAss, type EstiloLegenda } from "./legendas";
 import { limparSilencios, filtroDeJanelas } from "./silencio";
+import { filtroDeEnquadramento, type Enquadramento } from "./enquadramento";
 import type { Palavra } from "./transcritor";
 
 /**
  * Renderização de um corte: recorta a janela de tempo, converte pra 9:16
- * (1080x1920) com crop central, opcionalmente remove os silêncios e queima
- * a legenda animada mais o título de abertura.
+ * (1080x1920) no enquadramento escolhido, opcionalmente remove os silêncios
+ * e queima a legenda animada mais o título de abertura.
  *
- * Crop central é decisão de MVP consciente: a v2 troca o centro fixo por
- * trajetória guiada por detecção de rosto. O filtro já isola essa etapa.
+ * O enquadramento não é mais fixo: crop central perde 22% de cada lado, o
+ * que é ótimo pra rosto e desastroso pra frase escrita na tela. Quem decide
+ * é worker/enquadramento.ts, medindo o próprio quadro.
+ *
+ * O centro do crop continua fixo — a v2 troca por trajetória guiada por
+ * detecção de rosto. O filtro já isola essa etapa.
  */
-
-const VERTICAL = [
-  // Cobre 1080x1920 sem distorcer e apara a sobra: é o "cover" do CSS.
-  "scale=1080:1920:force_original_aspect_ratio=increase",
-  "crop=1080:1920",
-];
 
 export type OpcoesRender = {
   /** Id do formato (src/lib/formatos.ts) ou "sem" para nenhuma legenda. */
@@ -27,6 +26,11 @@ export type OpcoesRender = {
   tituloTela?: string;
   /** Remove as pausas longas entre as falas. */
   limparSilencio?: boolean;
+  /**
+   * Como o quadro vira 9:16. Ausente = crop central, o comportamento
+   * histórico. Quem mede e escolhe é worker/enquadramento.ts.
+   */
+  enquadramento?: Enquadramento;
 };
 
 export async function renderizarCorte(
@@ -37,7 +41,12 @@ export async function renderizarCorte(
   nome: string,
   opcoes: OpcoesRender = {},
 ): Promise<string> {
-  const { estilo = "hormozi", tituloTela, limparSilencio = false } = opcoes;
+  const {
+    estilo = "hormozi",
+    tituloTela,
+    limparSilencio = false,
+    enquadramento = "preencher",
+  } = opcoes;
   const nomeAss = `${nome}.ass`;
   const saida = path.join(dir, `${nome}.mp4`);
 
@@ -64,16 +73,25 @@ export async function renderizarCorte(
 
   // Nome relativo + cwd no run(): caminho absoluto do Windows tem "C:", o
   // parser de filtro divide no ":" e nenhum escape é portátil.
-  const filtroLegenda = ass !== null ? [`ass=${nomeAss}`] : [];
+  const sufixoLegenda = ass !== null ? `,ass=${nomeAss}` : "";
+
+  /**
+   * O enquadramento vem como GRAFO, não como lista de filtros: "ajustar" usa
+   * split e pads nomeados ([bg]/[fg]/[bgb]/[fgs]) separados por ';', então
+   * não dá pra juntar com vírgula como era o crop. O grafo tem entrada e
+   * saída implícitas, o que permite prefixar um rótulo de entrada e colar a
+   * legenda com vírgula no fim — que é o que os dois caminhos abaixo fazem.
+   */
+  const grafoVideo = filtroDeEnquadramento(enquadramento) + sufixoLegenda;
 
   const args: string[] = [];
 
   if (limpeza && limpeza.janelas.length > 1) {
     // Colagem: as janelas viram trims concatenados e o resultado passa pelo
-    // vertical + legenda. Sem -ss/-t aqui — quem recorta é o filtro.
+    // enquadramento + legenda. Sem -ss/-t aqui — quem recorta é o filtro.
     const cadeia = [
       filtroDeJanelas(limpeza.janelas),
-      `[vcat]${[...VERTICAL, ...filtroLegenda].join(",")}[vout]`,
+      `[vcat]${grafoVideo}[vout]`,
     ].join(";");
 
     args.push(
@@ -90,7 +108,7 @@ export async function renderizarCorte(
       "-ss", corte.inicio_s.toFixed(2),
       "-t", duracao.toFixed(2),
       "-i", videoFonte,
-      "-vf", [...VERTICAL, ...filtroLegenda].join(","),
+      "-vf", grafoVideo,
     );
   }
 
