@@ -163,15 +163,56 @@ function temKaraoke(animacao: string): boolean {
 /* --------------------------------------------------------------- destaque */
 
 /**
+ * Normaliza pra comparar: sem pontuação, sem acento, minúscula.
+ *
+ * A IA devolve a palavra como ela aparece na frase; a transcrição traz a
+ * pontuação colada ("game."). Comparar cru erraria justamente as palavras
+ * de fim de frase, que costumam ser as de mais impacto.
+ */
+function chave(palavra: string): string {
+  return palavra
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^\p{L}\p{N}]/gu, "")
+    .toLowerCase();
+}
+
+/**
+ * Monta o conjunto de chaves a partir do que a IA devolveu.
+ *
+ * Quebra em PALAVRAS: a IA devolve naturalmente nomes próprios inteiros
+ * ("GTA VI", "Rockstar Games"), mas a transcrição traz um token por palavra.
+ * Comparar a frase toda nunca casava — e eram justamente os nomes próprios,
+ * o destaque mais óbvio de todos, que sumiam em silêncio.
+ *
+ * Token de uma letra fica de fora: "a", "e", "o" apareceriam na frase toda
+ * e pintariam a legenda inteira.
+ */
+function chavesDeDestaque(destaques: string[]): Set<string> {
+  const chaves = new Set<string>();
+  for (const bruto of destaques) {
+    for (const parte of bruto.split(/\s+/)) {
+      const k = chave(parte);
+      if (k.length > 1) chaves.add(k);
+    }
+  }
+  return chaves;
+}
+
+/**
  * Palavras que ganham a cor de destaque.
  *
- * As regras dos presets são semânticas ("amarelo em números", "vermelho em
- * dor e perda"). Número dá pra detectar aqui; o resto exigiria a IA marcar
- * palavra a palavra — por ora aplicamos o que é verificável no texto e
- * deixamos o resto pro modelo, numa etapa futura.
+ * As regras dos presets são semânticas ("amarelo no número que prova",
+ * "vermelho em dor e perda") — regex não resolve isso. Quem lê a
+ * transcrição inteira é a IA, então é ela que marca (worker/cortar.ts) e
+ * aqui a gente só casa.
+ *
+ * Número continua entrando sozinho: é destaque em todo preset e não custa
+ * nada confirmar sem depender do modelo.
  */
-function ehDestaque(palavra: string): boolean {
-  return /\d/.test(palavra);
+function fazDestaque(destaques: Set<string>) {
+  return (palavra: string): boolean =>
+    /\d/.test(palavra) || destaques.has(chave(palavra));
 }
 
 /* ----------------------------------------------------------------- público */
@@ -283,6 +324,7 @@ export function gerarAss(
   inicioCorte: number,
   formatoId: EstiloLegenda = "hormozi",
   tituloTela?: string,
+  destaques: string[] = [],
 ): string | null {
   // "sem" continua sendo um valor válido: alguns cortes não levam legenda.
   const semLegenda = formatoId === "sem";
@@ -312,6 +354,7 @@ export function gerarAss(
     const corDestaque = corAss(f.destaque?.cores?.[0] ?? "#FFD400");
     const corPrimaria = corAss(l.cor);
     const karaoke = temKaraoke(l.animacao);
+    const ehDestaque = fazDestaque(chavesDeDestaque(destaques));
 
     for (const bloco of agruparPalavras(palavras, l.maxCaracteresLinha, l.maxLinhas)) {
       const inicio = bloco[0].inicio_s - inicioCorte;

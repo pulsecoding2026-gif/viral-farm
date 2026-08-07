@@ -63,6 +63,8 @@ export type Corte = {
   estilo: string | null;
   /** Por que a IA casou ESTE trecho com ESSE formato. */
   motivo_formato: string | null;
+  /** Palavras que a IA marcou pra pintar com a cor de destaque. */
+  destaques: string[] | null;
   /** URL pública do MP4 quando pronto. */
   url: string | null;
   /** Primeiras palavras faladas dentro do corte — a prévia do Estúdio. */
@@ -188,7 +190,7 @@ export async function lerAnalise(
   const { data: cortes, error: erroCortes } = await sb
     .from("cortes")
     .select(
-      "id, ordem, inicio_s, fim_s, titulo, titulo_tela, gancho, motivo, descricao, score, notas, status, arquivo, estilo, motivo_formato, renderizado_em",
+      "id, ordem, inicio_s, fim_s, titulo, titulo_tela, gancho, motivo, descricao, score, notas, status, arquivo, estilo, motivo_formato, destaques, renderizado_em",
     )
     .eq("analise_id", id)
     .order("ordem", { ascending: true });
@@ -218,6 +220,7 @@ export async function lerAnalise(
       status: c.status as Corte["status"],
       estilo: (c.estilo as string | null) ?? null,
       motivo_formato: (c.motivo_formato as string | null) ?? null,
+      destaques: (c.destaques as string[] | null) ?? null,
       url: c.arquivo
         ? sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data
             .publicUrl + versao

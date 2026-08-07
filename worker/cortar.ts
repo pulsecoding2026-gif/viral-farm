@@ -38,6 +38,15 @@ export type CorteEscolhido = {
   formato: string;
   /** Por que este formato combina com este trecho. */
   motivoFormato: string;
+  /**
+   * Palavras que ganham a cor de destaque na legenda, literais da fala.
+   *
+   * Antes o destaque era `/\d/` — só número. Os presets pedem coisas
+   * semânticas ("vermelho em dor e perda", "amarelo no número que prova"),
+   * que regex nenhum resolve. Quem lê a transcrição inteira é a IA, então é
+   * ela que marca.
+   */
+  destaques: string[];
 };
 
 export type ConfigLlm = {
@@ -91,6 +100,7 @@ const EsquemaCortes = z.object({
         .optional(),
       formato: z.string().optional(),
       motivoFormato: z.string().optional(),
+      destaques: z.array(z.string()).optional(),
     }),
   ),
 });
@@ -176,6 +186,12 @@ Para CADA corte, avalie 4 dimensões de 0 a 100:
 
 O score final é a média ponderada: gancho 35%, fluxo 25%, valor 25%, tendencia 15%.
 
+PALAVRAS DE DESTAQUE — para cada corte, liste de 2 a 5 palavras que a legenda vai pintar com a cor de destaque:
+- copie a palavra LITERAL da transcrição, exatamente como aparece (a legenda casa por texto; palavra reescrita não é encontrada);
+- escolha o que carrega o impacto: número que prova, nome próprio, o verbo da virada, a palavra de dor ou de ganho;
+- NÃO destaque artigo, preposição, pronome nem verbo de ligação — destaque em tudo é o mesmo que destaque em nada;
+- espalhe pelo corte, não só na primeira frase.
+
 Se o vídeo não render ${maxCortes} cortes BONS, entregue menos. Corte fraco não entra.
 
 Responda APENAS com JSON válido, sem markdown, exatamente neste formato:
@@ -190,7 +206,8 @@ Responda APENAS com JSON válido, sem markdown, exatamente neste formato:
 "score":87,
 "notas":{"gancho":92,"fluxo":85,"valor":88,"tendencia":78},
 "formato":"${formatoFixo ? opcoes.estilo : "id de um dos formatos da lista acima"}",
-"motivoFormato":"uma frase: por que este formato serve a este trecho"
+"motivoFormato":"uma frase: por que este formato serve a este trecho",
+"destaques":["palavra","literal","da","fala"]
 }]}`;
 }
 
@@ -318,6 +335,11 @@ export async function escolherCortes(
         // existe — formato inválido não pode derrubar a renderização.
         formato: acharFormato(c.formato).id,
         motivoFormato: c.motivoFormato ?? "",
+        // Teto de 6: o modelo às vezes devolve meia frase, e destaque em
+        // tudo é o mesmo que destaque em nada.
+        destaques: (c.destaques ?? [])
+          .filter((d) => typeof d === "string" && d.trim().length > 1)
+          .slice(0, 6),
       };
     })
     .sort((a, b) => b.score - a.score)

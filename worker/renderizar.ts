@@ -33,6 +33,8 @@ export type OpcoesRender = {
   enquadramento?: Enquadramento;
   /** Cancelamento: mata o ffmpeg em vez de esperar o render terminar. */
   sinal?: AbortSignal;
+  /** Palavras que a IA marcou pra ganhar a cor de destaque na legenda. */
+  destaques?: string[];
 };
 
 export async function renderizarCorte(
@@ -49,6 +51,7 @@ export async function renderizarCorte(
     limparSilencio = false,
     enquadramento = "preencher",
     sinal,
+    destaques = [],
   } = opcoes;
   const nomeAss = `${nome}.ass`;
   const saida = path.join(dir, `${nome}.mp4`);
@@ -69,7 +72,7 @@ export async function renderizarCorte(
 
   // gerarAss espera tempos absolutos e uma âncora; aqui já normalizamos pra
   // zero, então a âncora é zero.
-  const ass = gerarAss(palavrasLegenda, 0, estilo, tituloTela);
+  const ass = gerarAss(palavrasLegenda, 0, estilo, tituloTela, destaques);
   if (ass !== null) {
     await fs.writeFile(path.join(dir, nomeAss), ass, "utf-8");
   }

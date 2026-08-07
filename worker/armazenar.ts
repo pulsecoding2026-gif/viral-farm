@@ -34,6 +34,9 @@ export async function registrarCorte(
       // Estúdio mostra e o que a reedição usa como ponto de partida.
       estilo: corte.formato,
       motivo_formato: corte.motivoFormato || null,
+      // Guardado porque a reedição re-renderiza a partir do banco: sem isto
+      // o corte reeditado sairia sem o destaque que o original tinha.
+      destaques: corte.destaques?.length ? corte.destaques : null,
       status,
     })
     .select("id")
@@ -51,6 +54,8 @@ export type CorteAprovado = {
   /** Estilo escolhido na reedição; nulo herda o da análise. */
   estilo: string | null;
   titulo_tela: string | null;
+  /** Marcadas pela IA na análise — a reedição precisa manter. */
+  destaques: string[] | null;
 };
 
 /** Cortes que o dono aprovou no Estúdio e ainda não foram renderizados. */
@@ -59,7 +64,7 @@ export async function lerCortesAprovados(
 ): Promise<CorteAprovado[]> {
   const { data, error } = await supabase()
     .from("cortes")
-    .select("id, ordem, inicio_s, fim_s, estilo, titulo_tela")
+    .select("id, ordem, inicio_s, fim_s, estilo, titulo_tela, destaques")
     .eq("analise_id", analiseId)
     .eq("status", "aprovado")
     .order("ordem", { ascending: true });
@@ -72,6 +77,7 @@ export async function lerCortesAprovados(
     fim_s: Number(c.fim_s),
     estilo: (c.estilo as string | null) ?? null,
     titulo_tela: (c.titulo_tela as string | null) ?? null,
+    destaques: (c.destaques as string[] | null) ?? null,
   }));
 }
 

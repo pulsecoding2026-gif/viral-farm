@@ -215,6 +215,7 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
             // que combina com aquele conteúdo. Escolha fixa do usuário já
             // chegou aqui repetida em todos pelo prompt.
             estilo: corte.formato,
+            destaques: corte.destaques,
             tituloTela: job.opcoes.titulo !== false ? corte.titulo_tela : undefined,
             limparSilencio: job.opcoes.limpar_silencio === true,
           },
@@ -333,6 +334,9 @@ async function renderizarAprovados(
             sinal,
             // Reedição pode trocar o formato só deste corte.
             estilo: corte.estilo ?? formatoDaAnalise,
+            // Vem do banco: sem isto o corte reeditado perderia o destaque
+            // que o original tinha.
+            destaques: corte.destaques ?? [],
             tituloTela:
               job.opcoes.titulo !== false
                 ? (corte.titulo_tela ?? undefined)
