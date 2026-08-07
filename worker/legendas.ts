@@ -126,7 +126,7 @@ function fatorLargura(caixa: string, fonte?: string): number {
  * Abaixo disto ela existe mas não cumpre a função — e o preset que pedia
  * "elegante e discreto" entregava 35px, que ninguém lê.
  */
-const CORPO_MINIMO = 46;
+const CORPO_MINIMO = 62;
 
 function corpoDaFonte(f: Formato): number {
   const l = f.legenda;
@@ -134,11 +134,20 @@ function corpoDaFonte(f: Formato): number {
   const cabe =
     margens(f).util /
     (l.maxCaracteresLinha * fatorLargura(l.caixa, fontePrincipal(l.fonte)));
-  // O piso vence o maxCaracteresLinha do preset: quando os dois brigam,
-  // quebrar a linha mais cedo custa uma linha, encolher a fonte custa o
-  // texto inteiro. Quem paga o preço é a quantidade de caracteres, não a
-  // leitura — e caracteresPorLinha() abaixo reequilibra a quebra.
-  return Math.max(CORPO_MINIMO, Math.round(Math.min(pedido, cabe)));
+
+  /**
+   * O piso levanta o `cabe`, mas NUNCA passa do que o preset pediu.
+   *
+   * Os presets foram escritos supondo os 1080px do quadro; a safe zone
+   * deixa 670px úteis. Com isso um maxCaracteresLinha de 26–30 esmagava a
+   * fonte pra 35–46px — o Dark Luxury pedia 96px e recebia 40.
+   *
+   * `max(cabe, MINIMO)` conserta os esmagados; o `min(pedido, …)` por fora
+   * impede que o piso INFLE um preset que legitimamente quer ser pequeno,
+   * e preserva a hierarquia entre eles (Hormozi 77 segue maior que Dark
+   * Luxury 62, e Kinetic 129 segue maior que os dois).
+   */
+  return Math.round(Math.min(pedido, Math.max(cabe, CORPO_MINIMO)));
 }
 
 /**
