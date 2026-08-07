@@ -1,13 +1,18 @@
 import { z } from "zod";
 import { clienteSupabase } from "@/lib/supabase/servidor";
 import { reeditarCorte } from "@/lib/analises-db";
+import { IDS_FORMATO } from "@/lib/formatos";
 
 export const runtime = "nodejs";
 
 const Corpo = z.object({
   inicio_s: z.number().min(0),
   fim_s: z.number().positive(),
-  estilo: z.enum(["karaoke", "neon", "minimal", "sem"]).optional(),
+  // Sem "auto" aqui: reeditar é escolher um formato pra ESTE corte.
+  estilo: z
+    .string()
+    .refine((v) => IDS_FORMATO.includes(v), "Formato desconhecido.")
+    .optional(),
 });
 
 /**

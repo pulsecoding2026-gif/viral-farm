@@ -1158,3 +1158,10 @@ export function acharFormato(id: string | null | undefined): Formato {
 
 /** Categorias presentes, para os filtros da galeria. */
 export const CATEGORIAS = [...new Set(FORMATOS.map((f) => f.categoria))].sort();
+
+/** Ids válidos + "auto" (a IA escolhe por corte) — o que as rotas aceitam. */
+export const IDS_FORMATO = FORMATOS.map((f) => f.id);
+
+export function ehEscolhaDeFormato(v: unknown): v is string {
+  return typeof v === "string" && (v === "auto" || IDS_FORMATO.includes(v));
+}

@@ -11,8 +11,10 @@ import {
   Translate,
   FilmStrip,
   TextT,
+  Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
 import type { JobAnalise, Corte, NotasCorte } from "@/lib/analises-db";
+import { acharFormato } from "@/lib/formatos";
 
 /**
  * O Estúdio — Clip AI.
@@ -231,6 +233,18 @@ export function EstudioCortes({
                     {c.motivo && (
                       <p className="mt-1 text-xs leading-relaxed text-zinc-500">
                         {c.motivo}
+                      </p>
+                    )}
+
+                    {/* O formato que a IA casou com ESTE trecho — sem isso a
+                        escolha automática fica invisível pro dono. */}
+                    {c.estilo && (
+                      <p className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-zinc-500">
+                        <span className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-950/60 px-1.5 py-0.5 font-medium text-zinc-300">
+                          <Sparkle size={9} weight="fill" className="text-orange-500" />
+                          {acharFormato(c.estilo).nome}
+                        </span>
+                        {c.motivo_formato}
                       </p>
                     )}
 

@@ -9,7 +9,7 @@ import { ambiente } from "./ambiente";
 import { criarTranscritor } from "./transcritor";
 import { escolherCortes } from "./cortar";
 import { renderizarCorte, palavrasNaJanela } from "./renderizar";
-import type { EstiloLegenda } from "./legendas";
+import { acharFormato } from "../src/lib/formatos";
 import {
   supabase,
   pegarProximoJob,
@@ -133,7 +133,6 @@ async function analisar(job: JobAnalise): Promise<void> {
     }
 
     // Modo auto: o comportamento clássico — renderiza tudo já.
-    const estilo = (job.opcoes.estilo ?? "karaoke") as EstiloLegenda;
     let prontos = 0;
     for (const [i, corte] of cortes.entries()) {
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${cortes.length}`);
@@ -148,7 +147,10 @@ async function analisar(job: JobAnalise): Promise<void> {
           dir,
           `corte-${i + 1}`,
           {
-            estilo,
+            // O formato vem por corte: a IA casou cada trecho com o preset
+            // que combina com aquele conteúdo. Escolha fixa do usuário já
+            // chegou aqui repetida em todos pelo prompt.
+            estilo: corte.formato,
             tituloTela: job.opcoes.titulo !== false ? corte.titulo_tela : undefined,
             limparSilencio: job.opcoes.limpar_silencio === true,
           },
@@ -237,7 +239,9 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
       await guardarFonte(video, job.id);
     }
 
-    const estiloDaAnalise = (job.opcoes.estilo ?? "karaoke") as EstiloLegenda;
+    // O corte guarda o formato que a IA escolheu (ou o que a reedição trocou).
+    // O da análise só entra se o corte for anterior a essa coluna.
+    const formatoDaAnalise = acharFormato(job.opcoes.estilo).id;
     let prontos = 0;
     for (const [i, corte] of aprovados.entries()) {
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${aprovados.length}`);
@@ -250,8 +254,8 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
           dir,
           `corte-${corte.ordem}`,
           {
-            // Reedição pode trocar o estilo só deste corte.
-            estilo: (corte.estilo as EstiloLegenda | null) ?? estiloDaAnalise,
+            // Reedição pode trocar o formato só deste corte.
+            estilo: corte.estilo ?? formatoDaAnalise,
             tituloTela:
               job.opcoes.titulo !== false
                 ? (corte.titulo_tela ?? undefined)

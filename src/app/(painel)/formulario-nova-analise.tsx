@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
 import type { OpcoesAnalise } from "@/lib/analises-db";
+import { SeletorFormato } from "./seletor-formato";
 
 const NICHOS = [
   "curiosidades",
@@ -58,43 +59,6 @@ const PLATAFORMAS: { id: string; rotulo: string; icone: Icon; exemplo: string; c
   },
 ];
 
-const ESTILOS: { id: NonNullable<OpcoesAnalise["estilo"]>; rotulo: string; amostra: React.ReactNode }[] = [
-  {
-    id: "karaoke",
-    rotulo: "Karaokê",
-    amostra: (
-      <span className="font-black tracking-tight uppercase">
-        <span className="text-orange-500">Farmar</span>{" "}
-        <span className="text-white">viral</span>
-      </span>
-    ),
-  },
-  {
-    id: "neon",
-    rotulo: "Neon",
-    amostra: (
-      <span className="font-black tracking-tight uppercase">
-        <span className="text-emerald-400">Farmar</span>{" "}
-        <span className="text-white">viral</span>
-      </span>
-    ),
-  },
-  {
-    id: "minimal",
-    rotulo: "Minimal",
-    amostra: (
-      <span className="font-black tracking-tight text-white uppercase">
-        Farmar viral
-      </span>
-    ),
-  },
-  {
-    id: "sem",
-    rotulo: "Sem legenda",
-    amostra: <span className="text-zinc-600">—</span>,
-  },
-];
-
 /** Id do vídeo do YouTube, pros formatos de URL que aceitamos. */
 function idDoYoutube(link: string): string | null {
   const m = link.match(
@@ -122,7 +86,9 @@ export function FormularioNovaAnalise({
   const [modo, setModo] = useState<"auto" | "manual">("manual");
   const [qtd, setQtd] = useState(5);
   const [duracao, setDuracao] = useState<"" | "curto" | "medio" | "longo">("");
-  const [estilo, setEstilo] = useState<NonNullable<OpcoesAnalise["estilo"]>>("karaoke");
+  // "auto" é o padrão: a IA casa cada corte com o formato que cabe naquele
+  // trecho — que é justamente o que a galeria de 15 presets permite fazer.
+  const [estilo, setEstilo] = useState("auto");
   const [direcao, setDirecao] = useState("");
   const [titulo, setTitulo] = useState(true);
   const [limparSilencio, setLimparSilencio] = useState(false);
@@ -345,39 +311,7 @@ export function FormularioNovaAnalise({
               </div>
             </div>
 
-            {/* Estilo de legenda */}
-            <div>
-              <p className="mb-2 text-sm font-medium text-zinc-300">Legenda</p>
-              <div
-                role="radiogroup"
-                aria-label="Estilo de legenda"
-                className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-              >
-                {ESTILOS.map((e) => {
-                  const ativo = e.id === estilo;
-                  return (
-                    <button
-                      key={e.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={ativo}
-                      onClick={() => setEstilo(e.id)}
-                      className={
-                        "rounded-xl border px-3 py-3 text-center transition " +
-                        (ativo
-                          ? "border-orange-700 bg-orange-950/25"
-                          : "border-zinc-800 bg-zinc-950/40 hover:border-zinc-700")
-                      }
-                    >
-                      <p className="text-[13px]">{e.amostra}</p>
-                      <p className="mt-1.5 text-[11px] text-zinc-500">
-                        {e.rotulo}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <SeletorFormato valor={estilo} onEscolher={setEstilo} />
 
             {/* Acabamento: dois interruptores que mudam o corte final. */}
             <div className="grid gap-2 sm:grid-cols-2">

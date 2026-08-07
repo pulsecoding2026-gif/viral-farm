@@ -11,7 +11,9 @@ import {
   X,
   ArrowClockwise,
 } from "@phosphor-icons/react/dist/ssr";
-import type { JobAnalise, Corte, OpcoesAnalise } from "@/lib/analises-db";
+import type { JobAnalise, Corte } from "@/lib/analises-db";
+import { acharFormato } from "@/lib/formatos";
+import { SeletorFormato } from "./seletor-formato";
 
 /**
  * Os cortes prontos de uma análise — a entrega do produto.
@@ -49,13 +51,6 @@ function CorSCore({ score }: { score: number | null }) {
     </span>
   );
 }
-
-const ESTILOS: { id: NonNullable<OpcoesAnalise["estilo"]>; rotulo: string }[] = [
-  { id: "karaoke", rotulo: "Karaokê" },
-  { id: "neon", rotulo: "Neon" },
-  { id: "minimal", rotulo: "Minimal" },
-  { id: "sem", rotulo: "Sem legenda" },
-];
 
 /** Botões de empurrar um limite do corte em segundos. */
 function Ajuste({
@@ -99,16 +94,14 @@ function Editor({
   onEnviado,
 }: {
   corte: Corte;
-  estiloDaAnalise: NonNullable<OpcoesAnalise["estilo"]>;
+  estiloDaAnalise: string;
   duracaoVideo: number;
   onFechar: () => void;
   onEnviado: () => void;
 }) {
   const [inicio, setInicio] = useState(corte.inicio_s);
   const [fim, setFim] = useState(corte.fim_s);
-  const [estilo, setEstilo] = useState<NonNullable<OpcoesAnalise["estilo"]>>(
-    corte.estilo ?? estiloDaAnalise,
-  );
+  const [estilo, setEstilo] = useState(corte.estilo ?? estiloDaAnalise);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -161,25 +154,8 @@ function Editor({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Estilo da legenda">
-        {ESTILOS.map((e) => (
-          <button
-            key={e.id}
-            type="button"
-            role="radio"
-            aria-checked={estilo === e.id}
-            onClick={() => setEstilo(e.id)}
-            className={
-              "rounded-full px-3 py-1.5 text-xs font-medium transition " +
-              (estilo === e.id
-                ? "bg-orange-600 text-white"
-                : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200")
-            }
-          >
-            {e.rotulo}
-          </button>
-        ))}
-      </div>
+      {/* Sem "auto" aqui: reeditar é escolher o formato DESTE corte. */}
+      <SeletorFormato valor={estilo} onEscolher={setEstilo} permitirAuto={false} />
 
       {erro && (
         <p className="flex items-start gap-2 text-xs text-rose-400">
@@ -221,7 +197,7 @@ function CartaoCorte({
   onReeditado,
 }: {
   corte: Corte;
-  estiloDaAnalise: NonNullable<OpcoesAnalise["estilo"]>;
+  estiloDaAnalise: string;
   duracaoVideo: number;
   onReeditado: () => void;
 }) {
@@ -348,7 +324,9 @@ export function ResultadoCortes({
   const cortes = (job.cortes ?? []).filter(
     (c) => c.status !== "descartado" && c.status !== "proposto",
   );
-  const estiloDaAnalise = job.opcoes.estilo ?? "karaoke";
+  // acharFormato normaliza: "auto" e nulo caem no padrão, porque o editor de
+  // um corte só aceita formato concreto.
+  const estiloDaAnalise = acharFormato(job.opcoes.estilo).id;
   const duracaoVideo = job.resultado?.duracao_video_s ?? 5400;
 
   return (

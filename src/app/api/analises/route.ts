@@ -2,6 +2,7 @@ import { z } from "zod";
 import { clienteSupabase } from "@/lib/supabase/servidor";
 import { criarAnalise, listarAnalises } from "@/lib/analises-db";
 import { validarUrl, ErroDeEntrada } from "@/lib/analise/extrair";
+import { ehEscolhaDeFormato } from "@/lib/formatos";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,8 @@ const Corpo = z.object({
       qtd: z.number().int().min(1).max(15).optional(),
       duracao: z.enum(["curto", "medio", "longo"]).optional(),
       direcao: z.string().max(500).optional(),
-      estilo: z.enum(["karaoke", "neon", "minimal", "sem"]).optional(),
+      // Id da galeria de formatos, ou "auto" pra IA escolher corte a corte.
+      estilo: z.string().refine(ehEscolhaDeFormato, "Formato desconhecido.").optional(),
       titulo: z.boolean().optional(),
       limpar_silencio: z.boolean().optional(),
     })

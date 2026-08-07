@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { TranscricaoPalavras } from "./transcritor";
+import { FORMATOS, acharFormato } from "../src/lib/formatos";
 
 /**
  * Seleção dos cortes — o cérebro do produto, plugável como a transcrição.
@@ -33,6 +34,10 @@ export type CorteEscolhido = {
   descricao: string;
   score: number;
   notas: NotasCorte;
+  /** Formato escolhido pela IA para ESTE corte. */
+  formato: string;
+  /** Por que este formato combina com este trecho. */
+  motivoFormato: string;
 };
 
 export type ConfigLlm = {
@@ -52,6 +57,11 @@ export type OpcoesCorte = {
   duracao?: "curto" | "medio" | "longo";
   /** Direção em texto livre — vai como prioridade máxima no prompt. */
   direcao?: string;
+  /**
+   * Formato fixo escolhido pelo usuário. Ausente (ou "auto") deixa a IA
+   * escolher o formato de cada corte pelo conteúdo do trecho.
+   */
+  estilo?: string;
 };
 
 const FAIXAS: Record<string, { de: number; ate: number }> = {
@@ -79,9 +89,26 @@ const EsquemaCortes = z.object({
           tendencia: z.number(),
         })
         .optional(),
+      formato: z.string().optional(),
+      motivoFormato: z.string().optional(),
     }),
   ),
 });
+
+/**
+ * Catálogo de formatos para o prompt.
+ *
+ * Só id, categoria, quando usar e duração — é o que basta pra decidir. Mandar
+ * o preset inteiro (tipografia, cores, safe area) gastaria contexto com
+ * informação que não muda a escolha: o modelo decide pelo CONTEÚDO, não pela
+ * cor da legenda.
+ */
+function catalogoDeFormatos(): string {
+  return FORMATOS.map(
+    (f) =>
+      `- ${f.id} (${f.categoria}, ${f.duracaoIdeal.minSeg}-${f.duracaoIdeal.maxSeg}s): ${f.quandoUsar}`,
+  ).join("\n");
+}
 
 function transcricaoComTempo(t: TranscricaoPalavras): string {
   // Uma marca de tempo a cada ~12 palavras: granular o bastante pra cortar,
@@ -109,6 +136,23 @@ function montarPrompt(
     ? `\nDIREÇÃO DO USUÁRIO (prioridade máxima — obedeça acima de qualquer regra geral):\n"${opcoes.direcao.trim().slice(0, 500)}"\n`
     : "";
 
+  // Formato fixo pelo usuário dispensa a escolha; "auto" (ou nada) manda a
+  // IA casar cada trecho com o formato que combina com aquele conteúdo.
+  const formatoFixo = opcoes.estilo && opcoes.estilo !== "auto";
+  const blocoFormato = formatoFixo
+    ? `\nO usuário já escolheu o formato "${opcoes.estilo}" para todos os cortes. Repita esse valor no campo "formato" e explique em "motivoFormato" como aproveitar esse estilo neste trecho.\n`
+    : `
+ESCOLHA DO FORMATO — para cada corte, escolha o preset de edição que melhor combina com AQUELE trecho específico:
+
+${catalogoDeFormatos()}
+
+Como escolher:
+- case pelo CONTEÚDO e pela emoção do trecho, não pelo tema geral do vídeo;
+- cortes diferentes do mesmo vídeo podem (e devem) ter formatos diferentes — uma afirmação forte pede um formato, uma história pede outro;
+- respeite a faixa de duração do formato: não escolha um formato de 40-90s para um corte de 22s;
+- em "motivoFormato", diga em uma frase por que esse formato serve a esse trecho.
+`;
+
   return `Você seleciona cortes virais de vídeos longos, no padrão dos melhores editores de shorts.
 ${direcao}
 Transcrição com timestamps (vídeo tem ${Math.round(duracaoVideo)}s no total):
@@ -122,6 +166,7 @@ Escolha até ${maxCortes} trechos que:
 - durem entre ${faixa.de} e ${faixa.ate} segundos;
 - evitem introduções, despedidas e propaganda;
 - nunca comecem no meio de uma frase — ajuste inicio_s pro começo exato da fala.
+${blocoFormato}
 
 Para CADA corte, avalie 4 dimensões de 0 a 100:
 - gancho: força dos primeiros 3 segundos em segurar quem está rolando o feed
@@ -143,7 +188,9 @@ Responda APENAS com JSON válido, sem markdown, exatamente neste formato:
 "motivo":"uma frase: por que este trecho segura atencao",
 "descricao":"legenda pronta para postar, 2 frases, com chamada final",
 "score":87,
-"notas":{"gancho":92,"fluxo":85,"valor":88,"tendencia":78}
+"notas":{"gancho":92,"fluxo":85,"valor":88,"tendencia":78},
+"formato":"${formatoFixo ? opcoes.estilo : "id de um dos formatos da lista acima"}",
+"motivoFormato":"uma frase: por que este formato serve a este trecho"
 }]}`;
 }
 
@@ -267,6 +314,10 @@ export async function escolherCortes(
         // bate com as notas que ele mesmo deu.
         score: c.notas ? scoreDasNotas(notas) : c.score,
         notas,
+        // acharFormato cai no padrão se o modelo inventar um id que não
+        // existe — formato inválido não pode derrubar a renderização.
+        formato: acharFormato(c.formato).id,
+        motivoFormato: c.motivoFormato ?? "",
       };
     })
     .sort((a, b) => b.score - a.score)

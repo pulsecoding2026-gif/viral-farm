@@ -13,7 +13,8 @@ export type OpcoesAnalise = {
   qtd?: number;
   duracao?: "curto" | "medio" | "longo";
   direcao?: string;
-  estilo?: "karaoke" | "neon" | "minimal" | "sem";
+  /** Id da galeria (src/lib/formatos.ts) ou "auto": a IA escolhe por corte. */
+  estilo?: string;
   /** Caixa de título nos primeiros 5s do corte. */
   titulo?: boolean;
   /** Remove as pausas longas entre as falas. */
@@ -53,8 +54,10 @@ export type Corte = {
   titulo_tela: string | null;
   /** Legenda pronta pra postar. */
   descricao: string | null;
-  /** Estilo escolhido na reedição; nulo herda o da análise. */
-  estilo: OpcoesAnalise["estilo"] | null;
+  /** Formato deste corte — escolhido pela IA ou trocado na reedição. */
+  estilo: string | null;
+  /** Por que a IA casou ESTE trecho com ESSE formato. */
+  motivo_formato: string | null;
   /** URL pública do MP4 quando pronto. */
   url: string | null;
   /** Primeiras palavras faladas dentro do corte — a prévia do Estúdio. */
@@ -152,7 +155,7 @@ export async function lerAnalise(
   const { data: cortes, error: erroCortes } = await sb
     .from("cortes")
     .select(
-      "id, ordem, inicio_s, fim_s, titulo, titulo_tela, gancho, motivo, descricao, score, notas, status, arquivo, estilo, renderizado_em",
+      "id, ordem, inicio_s, fim_s, titulo, titulo_tela, gancho, motivo, descricao, score, notas, status, arquivo, estilo, motivo_formato, renderizado_em",
     )
     .eq("analise_id", id)
     .order("ordem", { ascending: true });
@@ -180,7 +183,8 @@ export async function lerAnalise(
       score: (c.score as number | null) ?? null,
       notas: (c.notas as NotasCorte | null) ?? null,
       status: c.status as Corte["status"],
-      estilo: (c.estilo as Corte["estilo"]) ?? null,
+      estilo: (c.estilo as string | null) ?? null,
+      motivo_formato: (c.motivo_formato as string | null) ?? null,
       url: c.arquivo
         ? sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data
             .publicUrl + versao

@@ -30,6 +30,10 @@ export async function registrarCorte(
       descricao: corte.descricao,
       score: Math.round(corte.score),
       notas: corte.notas,
+      // O formato escolhido pela IA fica gravado no corte: é o que o
+      // Estúdio mostra e o que a reedição usa como ponto de partida.
+      estilo: corte.formato,
+      motivo_formato: corte.motivoFormato || null,
       status,
     })
     .select("id")
