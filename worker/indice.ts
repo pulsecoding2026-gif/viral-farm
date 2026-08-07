@@ -223,15 +223,17 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
 
   try {
-    // O fonte guardado torna isso imediato; se passou das 24h, baixa de novo.
+    // O fonte guardado torna isso imediato; se passou das 24h, baixa de novo
+    // — e volta pro cache, porque uma edição raramente vem sozinha.
     let video = caminhoFonte(job.id);
     const existe = await fs.stat(video).then((s) => s.isFile()).catch(() => false);
     if (!existe) {
       await marcarEtapa(job.id, "baixando");
       video = await baixarVideo(validarUrl(job.link), dir);
+      await guardarFonte(video, job.id);
     }
 
-    const estilo = (job.opcoes.estilo ?? "karaoke") as EstiloLegenda;
+    const estiloDaAnalise = (job.opcoes.estilo ?? "karaoke") as EstiloLegenda;
     let prontos = 0;
     for (const [i, corte] of aprovados.entries()) {
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${aprovados.length}`);
@@ -243,7 +245,8 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
           palavrasNaJanela(transcricao.palavras, corte),
           dir,
           `corte-${corte.ordem}`,
-          estilo,
+          // Reedição pode trocar o estilo só deste corte.
+          (corte.estilo as EstiloLegenda | null) ?? estiloDaAnalise,
         );
         await subirVideoDoCorte(corte.id, job.id, job.user_id, mp4);
         prontos += 1;
@@ -257,8 +260,8 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
       throw new Error("Nenhum corte sobreviveu à renderização.");
     }
 
-    // Missão do fonte cumprida — apaga já, sem esperar as 24h.
-    await fs.rm(caminhoFonte(job.id), { force: true }).catch(() => {});
+    // O fonte FICA até a limpeza de 24h: reeditar um corte pronto (trocar
+    // estilo, ajustar tempo) volta pra cá, e com o fonte vivo é imediato.
 
     const { data } = await supabase()
       .from("analises")
@@ -266,9 +269,16 @@ async function renderizarAprovados(job: JobAnalise): Promise<void> {
       .eq("id", job.id)
       .single();
     const resultado = (data?.resultado ?? {}) as Record<string, unknown>;
+    // Conta no banco, não no loop: uma REEDIÇÃO renderiza só 1 corte, mas o
+    // resumo precisa continuar dizendo o total de prontos da análise.
+    const { count } = await supabase()
+      .from("cortes")
+      .select("id", { count: "exact", head: true })
+      .eq("analise_id", job.id)
+      .eq("status", "pronto");
     await concluirJob(job.id, {
       ...resultado,
-      qtd_cortes: prontos,
+      qtd_cortes: count ?? prontos,
       duracao_total_ms: Date.now() - t0,
     });
     console.log(

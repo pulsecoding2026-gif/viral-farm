@@ -41,6 +41,8 @@ export type CorteAprovado = {
   ordem: number;
   inicio_s: number;
   fim_s: number;
+  /** Estilo escolhido na reedição; nulo herda o da análise. */
+  estilo: string | null;
 };
 
 /** Cortes que o dono aprovou no Estúdio e ainda não foram renderizados. */
@@ -49,7 +51,7 @@ export async function lerCortesAprovados(
 ): Promise<CorteAprovado[]> {
   const { data, error } = await supabase()
     .from("cortes")
-    .select("id, ordem, inicio_s, fim_s")
+    .select("id, ordem, inicio_s, fim_s, estilo")
     .eq("analise_id", analiseId)
     .eq("status", "aprovado")
     .order("ordem", { ascending: true });
@@ -60,6 +62,7 @@ export async function lerCortesAprovados(
     ordem: c.ordem as number,
     inicio_s: Number(c.inicio_s),
     fim_s: Number(c.fim_s),
+    estilo: (c.estilo as string | null) ?? null,
   }));
 }
 
@@ -87,7 +90,12 @@ export async function subirVideoDoCorte(
 
   const { error } = await supabase()
     .from("cortes")
-    .update({ status: "pronto", arquivo: caminho })
+    .update({
+      status: "pronto",
+      arquivo: caminho,
+      // Vira o ?v= da URL pública — fura o cache do navegador na reedição.
+      renderizado_em: new Date().toISOString(),
+    })
     .eq("id", corteId);
 
   if (error) throw new Error(`Não marquei o corte como pronto: ${error.message}`);

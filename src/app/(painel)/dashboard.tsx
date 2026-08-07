@@ -187,7 +187,24 @@ export function Dashboard({
             </div>
           </div>
         ) : (
-          <ResultadoCortes job={jobAtual} />
+          <ResultadoCortes
+            job={jobAtual}
+            onReeditado={() => {
+              // O corte voltou pra esteira: reativa o fluxo de progresso.
+              setJobs((prev) =>
+                prev.map((j) =>
+                  j.id === jobAtual.id
+                    ? {
+                        ...j,
+                        status: "processando",
+                        etapa: "renderizar_aprovados",
+                        cortes: undefined,
+                      }
+                    : j,
+                ),
+              );
+            }}
+          />
         )}
       </div>
     );

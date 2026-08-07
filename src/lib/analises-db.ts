@@ -35,6 +35,8 @@ export type Corte = {
   motivo: string | null;
   score: number | null;
   status: "proposto" | "aprovado" | "descartado" | "renderizando" | "pronto" | "erro";
+  /** Estilo escolhido na reedição; nulo herda o da análise. */
+  estilo: OpcoesAnalise["estilo"] | null;
   /** URL pública do MP4 quando pronto. */
   url: string | null;
   /** Primeiras palavras faladas dentro do corte — a prévia do Estúdio. */
@@ -131,7 +133,9 @@ export async function lerAnalise(
 
   const { data: cortes, error: erroCortes } = await sb
     .from("cortes")
-    .select("id, ordem, inicio_s, fim_s, titulo, gancho, motivo, score, status, arquivo")
+    .select(
+      "id, ordem, inicio_s, fim_s, titulo, gancho, motivo, score, status, arquivo, estilo, renderizado_em",
+    )
     .eq("analise_id", id)
     .order("ordem", { ascending: true });
 
@@ -140,6 +144,11 @@ export async function lerAnalise(
   job.cortes = (cortes ?? []).map((c) => {
     const inicio = Number(c.inicio_s);
     const fim = Number(c.fim_s);
+    // ?v= muda a cada renderização: sem isso, depois de uma reedição o
+    // navegador serviria o MP4 antigo do cache — mesmo caminho, mesmo URL.
+    const versao = c.renderizado_em
+      ? `?v=${new Date(c.renderizado_em as string).getTime()}`
+      : "";
     return {
       id: c.id as string,
       ordem: c.ordem as number,
@@ -150,8 +159,10 @@ export async function lerAnalise(
       motivo: (c.motivo as string | null) ?? null,
       score: (c.score as number | null) ?? null,
       status: c.status as Corte["status"],
+      estilo: (c.estilo as Corte["estilo"]) ?? null,
       url: c.arquivo
-        ? sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data.publicUrl
+        ? sb.storage.from("cortes").getPublicUrl(c.arquivo as string).data
+            .publicUrl + versao
         : null,
       previa: previaDoCorte(palavras, inicio, fim),
     };
@@ -218,4 +229,48 @@ export async function aprovarCortes(
     .eq("id", analiseId)
     .eq("status", "revisao");
   if (error) throw new Error(`Não mandei pra renderização: ${error.message}`);
+}
+
+/**
+ * Reedita um corte PRONTO: nova janela de tempo e/ou estilo. O corte volta
+ * pra 'aprovado' e a análise volta pra fila de renderização — o worker
+ * sobrescreve o mesmo arquivo.
+ *
+ * Só quando a análise está quieta ('pronto'): reeditar no meio de outra
+ * renderização embolaria a etapa que o worker está seguindo.
+ */
+export async function reeditarCorte(
+  sb: SupabaseClient,
+  corteId: string,
+  campos: { inicio_s: number; fim_s: number; estilo?: string },
+): Promise<"ok" | "ocupada" | "nao_achei"> {
+  // RLS: se o corte for de outra pessoa, simplesmente não aparece.
+  const { data: corte } = await sb
+    .from("cortes")
+    .select("id, analise_id, status")
+    .eq("id", corteId)
+    .maybeSingle();
+  if (!corte) return "nao_achei";
+
+  const { data: analise, error: erroFila } = await sb
+    .from("analises")
+    .update({ status: "processando", etapa: "renderizar_aprovados" })
+    .eq("id", corte.analise_id as string)
+    .eq("status", "pronto")
+    .select("id");
+  if (erroFila) throw new Error(`Não voltei pra fila: ${erroFila.message}`);
+  if (!analise || analise.length === 0) return "ocupada";
+
+  const { error } = await sb
+    .from("cortes")
+    .update({
+      inicio_s: campos.inicio_s,
+      fim_s: campos.fim_s,
+      ...(campos.estilo ? { estilo: campos.estilo } : {}),
+      status: "aprovado",
+    })
+    .eq("id", corteId);
+  if (error) throw new Error(`Não atualizei o corte: ${error.message}`);
+
+  return "ok";
 }
