@@ -311,6 +311,8 @@ export type CorteAprovacao = {
   /** Janela ajustada no Estúdio. Ausente mantém a que a IA propôs. */
   inicio_s?: number;
   fim_s?: number;
+  /** Formato trocado no Estúdio. Ausente mantém o que a IA escolheu. */
+  estilo?: string;
 };
 
 export async function aprovarCortes(
@@ -328,9 +330,12 @@ export async function aprovarCortes(
       c.inicio_s !== undefined && c.fim_s !== undefined
         ? { inicio_s: c.inicio_s, fim_s: c.fim_s }
         : {};
+    // O worker lê `corte.estilo` na renderização, então trocar aqui já muda
+    // o formato daquele corte sem tocar nos outros.
+    const formato = c.estilo ? { estilo: c.estilo } : {};
     const { error } = await sb
       .from("cortes")
-      .update({ status: "aprovado", ...ajuste })
+      .update({ status: "aprovado", ...ajuste, ...formato })
       .eq("id", c.id)
       .eq("analise_id", analiseId)
       .eq("status", "proposto");

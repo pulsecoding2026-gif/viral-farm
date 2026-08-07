@@ -20,6 +20,7 @@ import {
   type NotasCorte,
 } from "@/lib/analises-db";
 import { AjusteCorte } from "./ajuste-corte";
+import { SeletorFormatoCompacto } from "./seletor-formato";
 import { acharFormato } from "@/lib/formatos";
 
 /**
@@ -141,8 +142,17 @@ export function EstudioCortes({
     Record<string, { inicio_s: number; fim_s: number }>
   >({});
 
+  /** Formatos trocados no Estúdio. Ausente = o que a IA escolheu. */
+  const [formatos, setFormatos] = useState<Record<string, string>>({});
+
   function ajustar(id: string, inicio_s: number, fim_s: number) {
     setJanelas((prev) => ({ ...prev, [id]: { inicio_s, fim_s } }));
+  }
+
+  function formatoDe(c: Corte) {
+    // acharFormato normaliza: corte antigo pode trazer estilo nulo ou um id
+    // que não existe mais, e o seletor precisa de um formato concreto.
+    return formatos[c.id] ?? acharFormato(c.estilo).id;
   }
 
   function janelaDe(c: Corte) {
@@ -168,9 +178,12 @@ export function EstudioCortes({
         body: JSON.stringify({
           // Só manda a janela de quem foi ajustado; o resto vai como id
           // simples e mantém o que a IA propôs.
-          cortes: [...escolhidos].map((id) =>
-            janelas[id] ? { id, ...janelas[id] } : id,
-          ),
+          cortes: [...escolhidos].map((id) => {
+            const mexeu = janelas[id] || formatos[id];
+            return mexeu
+              ? { id, ...janelas[id], ...(formatos[id] ? { estilo: formatos[id] } : {}) }
+              : id;
+          }),
         }),
       });
       if (!r.ok) {
@@ -291,17 +304,17 @@ export function EstudioCortes({
                       </p>
                     )}
 
-                    {/* O formato que a IA casou com ESTE trecho — sem isso a
-                        escolha automática fica invisível pro dono. */}
-                    {c.estilo && (
-                      <p className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 text-[11px] text-zinc-500">
-                        <span className="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-zinc-950/60 px-1.5 py-0.5 font-medium text-zinc-300">
-                          <Sparkle size={9} weight="fill" className="text-orange-500" />
-                          {acharFormato(c.estilo).nome}
-                        </span>
-                        {c.motivo_formato}
-                      </p>
-                    )}
+                    {/* A escolha da IA, com o motivo — e agora trocável. Só
+                        quem discorda abre a lista; discordar é a exceção. */}
+                    <SeletorFormatoCompacto
+                      valor={formatoDe(c)}
+                      motivo={
+                        formatos[c.id] ? "trocado por você" : c.motivo_formato
+                      }
+                      onEscolher={(id) =>
+                        setFormatos((prev) => ({ ...prev, [c.id]: id }))
+                      }
+                    />
 
                     {c.notas && <Diagnostico notas={c.notas} />}
 

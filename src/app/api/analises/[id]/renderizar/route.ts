@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { clienteSupabase } from "@/lib/supabase/servidor";
 import { aprovarCortes } from "@/lib/analises-db";
+import { IDS_FORMATO } from "@/lib/formatos";
 
 export const runtime = "nodejs";
 
@@ -15,13 +16,28 @@ const Escolhido = z.union([
   z
     .object({
       id: z.string().uuid(),
-      inicio_s: z.number().min(0),
-      fim_s: z.number().min(0),
+      inicio_s: z.number().min(0).optional(),
+      fim_s: z.number().min(0).optional(),
+      // Só id conhecido: formato inventado faria o worker cair no padrão em
+      // silêncio, e a pessoa veria um corte diferente do que escolheu.
+      estilo: z.enum(IDS_FORMATO as [string, ...string[]]).optional(),
     })
     // Validado no servidor porque o cliente é editável: janela invertida ou
     // longa demais faria o ffmpeg produzir lixo ou queimar minutos à toa.
-    .refine((c) => c.fim_s - c.inicio_s >= 3, "Corte curto demais.")
-    .refine((c) => c.fim_s - c.inicio_s <= 180, "Corte longo demais."),
+    .refine(
+      (c) =>
+        c.inicio_s === undefined ||
+        c.fim_s === undefined ||
+        c.fim_s - c.inicio_s >= 3,
+      "Corte curto demais.",
+    )
+    .refine(
+      (c) =>
+        c.inicio_s === undefined ||
+        c.fim_s === undefined ||
+        c.fim_s - c.inicio_s <= 180,
+      "Corte longo demais.",
+    ),
 ]);
 
 const Corpo = z.object({

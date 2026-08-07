@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Sparkle, Check, MagnifyingGlass, X } from "@phosphor-icons/react/dist/ssr";
+import {
+  Sparkle,
+  Check,
+  MagnifyingGlass,
+  X,
+  CaretDown,
+} from "@phosphor-icons/react/dist/ssr";
 import { FORMATOS, CATEGORIAS, acharFormato, type Formato } from "@/lib/formatos";
 
 /**
@@ -85,6 +91,102 @@ function Previa({ f }: { f: Formato }) {
           </span>
         ))}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Seletor compacto, pra trocar o formato de UM corte dentro do Estúdio.
+ *
+ * A galeria completa (SeletorFormato) é a escolha do envio: tem busca,
+ * filtro e prévia grande. Repetir aquilo em cada corte transformaria a lista
+ * de propostas numa página de rolagem infinita.
+ *
+ * Aqui o padrão é a etiqueta fechada, mostrando o que a IA escolheu e por
+ * quê. Só quem DISCORDA abre — e discordar é a exceção, não a regra.
+ */
+export function SeletorFormatoCompacto({
+  valor,
+  motivo,
+  onEscolher,
+}: {
+  valor: string;
+  /** Por que a IA escolheu este formato. Vira o argumento a favor dela. */
+  motivo?: string | null;
+  onEscolher: (id: string) => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const escolhido = acharFormato(valor);
+
+  return (
+    <div className="mt-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <button
+          type="button"
+          onClick={() => setAberto((v) => !v)}
+          aria-expanded={aberto}
+          className="inline-flex items-center gap-1.5 rounded-md border border-orange-900/60 bg-orange-950/30 px-2 py-1 text-[11px] font-medium text-orange-300 transition hover:border-orange-700 hover:bg-orange-950/60"
+        >
+          <Sparkle size={11} weight="fill" />
+          {escolhido.nome}
+          <CaretDown
+            size={10}
+            weight="bold"
+            className={"transition " + (aberto ? "rotate-180" : "")}
+          />
+        </button>
+        {motivo && !aberto && (
+          <span className="text-[11px] leading-snug text-zinc-500">{motivo}</span>
+        )}
+        {!motivo && !aberto && (
+          <span className="text-[11px] text-zinc-600">trocar formato</span>
+        )}
+      </div>
+
+      {aberto && (
+        <div className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950/70 p-1.5">
+          {FORMATOS.map((f) => {
+            const atual = f.id === escolhido.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => {
+                  onEscolher(f.id);
+                  setAberto(false);
+                }}
+                className={
+                  "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition " +
+                  (atual ? "bg-orange-600/15" : "hover:bg-white/[0.05]")
+                }
+              >
+                <span
+                  className="flex h-7 w-12 shrink-0 items-center justify-center overflow-hidden rounded bg-zinc-900 text-[9px] leading-none"
+                  style={{
+                    fontFamily: familia(f.legenda.fonte),
+                    fontWeight: f.legenda.peso,
+                    color: corDoTexto(f.legenda.cor),
+                    textShadow: contorno(f.legenda.stroke),
+                  }}
+                >
+                  {aplicarCaixa("Aa", f.legenda.caixa)}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12px] font-medium text-zinc-100">
+                    {f.nome}
+                  </span>
+                  <span className="block truncate text-[10px] text-zinc-500">
+                    {f.categoria} · {f.duracaoIdeal.minSeg}–{f.duracaoIdeal.maxSeg}s
+                  </span>
+                </span>
+                {atual && (
+                  <Check size={12} weight="bold" className="shrink-0 text-orange-400" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
