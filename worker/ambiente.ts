@@ -24,17 +24,34 @@ export const ambiente = {
   supabaseUrl: () => exigir("NEXT_PUBLIC_SUPABASE_URL"),
   // Chave de SERVIDOR: ignora RLS. É o que deixa o worker escrever nos jobs
   // de qualquer usuário. Nunca vai pro navegador nem pro repositório.
-  supabaseServico: () => exigir("SUPABASE_SERVICE_ROLE_KEY"),
-  anthropic: () => exigir("ANTHROPIC_API_KEY"),
-
+  // Aceita o formato novo (sb_secret_...) e cai pro JWT legado se preciso.
+  supabaseServico: () =>
+    process.env.SUPABASE_SECRET_KEY ?? exigir("SUPABASE_SERVICE_ROLE_KEY"),
   /** Qual provedor transcreve. Troca por env, sem mexer em código. */
   transcritor: () => process.env.TRANSCRITOR ?? "groq",
 
   /** Quantos segundos o worker dorme entre checagens da fila. */
   intervaloSegundos: () => Number(process.env.WORKER_INTERVALO_S ?? 5),
 
-  /** Modelo que escolhe os cortes. Sonnet dá conta e custa uma fração. */
-  modelo: () => process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
+  /**
+   * Cérebro que escolhe os cortes: deepseek (padrão, decisão do produto —
+   * custo baixo protege a margem) ou claude.
+   */
+  llm: () => {
+    const provedor = (process.env.LLM ?? "deepseek") as "deepseek" | "claude";
+    if (provedor === "claude") {
+      return {
+        provedor,
+        chave: exigir("ANTHROPIC_API_KEY"),
+        modelo: process.env.LLM_MODELO ?? "claude-sonnet-5",
+      };
+    }
+    return {
+      provedor: "deepseek" as const,
+      chave: exigir("DEEPSEEK_API_KEY"),
+      modelo: process.env.LLM_MODELO ?? "deepseek-chat",
+    };
+  },
 
   /** Máximo de cortes por vídeo. */
   maxCortes: () => Number(process.env.MAX_CORTES ?? 5),

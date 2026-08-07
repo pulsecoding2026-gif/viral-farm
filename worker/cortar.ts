@@ -1,13 +1,17 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { z } from "zod";
 import type { TranscricaoPalavras } from "./transcritor";
 
 /**
- * Seleção dos cortes — o coração do produto.
+ * Seleção dos cortes — o cérebro do produto, plugável como a transcrição.
  *
  * O modelo recebe a transcrição com timestamps e devolve blocos
  * SEMANTICAMENTE COMPLETOS: gancho no início, desenvolvimento, conclusão.
  * As regras (20–90s, funciona isolado, evita intro/despedida) vêm direto da
  * referência de como o Opus Clip opera.
+ *
+ * Provedores: `deepseek` (padrão — API compatível com OpenAI, custo baixo)
+ * e `claude`. Troca por env LLM, sem mexer no resto do worker.
  */
 
 export type CorteEscolhido = {
@@ -19,43 +23,24 @@ export type CorteEscolhido = {
   score: number;
 };
 
-const FERRAMENTA = {
-  name: "entregar_cortes",
-  description: "Entrega os cortes escolhidos do vídeo.",
-  input_schema: {
-    type: "object" as const,
-    properties: {
-      cortes: {
-        type: "array" as const,
-        items: {
-          type: "object" as const,
-          properties: {
-            inicio_s: { type: "number" as const },
-            fim_s: { type: "number" as const },
-            titulo: {
-              type: "string" as const,
-              description: "Título curto e clicável pro corte, em português.",
-            },
-            gancho: {
-              type: "string" as const,
-              description: "A primeira frase falada no corte, literal.",
-            },
-            motivo: {
-              type: "string" as const,
-              description: "Uma frase: por que este trecho segura atenção.",
-            },
-            score: {
-              type: "number" as const,
-              description: "0-100, adequação ao formato curto.",
-            },
-          },
-          required: ["inicio_s", "fim_s", "titulo", "gancho", "motivo", "score"],
-        },
-      },
-    },
-    required: ["cortes"],
-  },
+export type ConfigLlm = {
+  provedor: "deepseek" | "claude";
+  chave: string;
+  modelo: string;
 };
+
+const EsquemaCortes = z.object({
+  cortes: z.array(
+    z.object({
+      inicio_s: z.number(),
+      fim_s: z.number(),
+      titulo: z.string(),
+      gancho: z.string(),
+      motivo: z.string(),
+      score: z.number(),
+    }),
+  ),
+});
 
 function transcricaoComTempo(t: TranscricaoPalavras): string {
   // Uma marca de tempo a cada ~12 palavras: granular o bastante pra cortar,
@@ -69,16 +54,12 @@ function transcricaoComTempo(t: TranscricaoPalavras): string {
   return blocos.join("\n");
 }
 
-export async function escolherCortes(
-  chaveAnthropic: string,
-  modelo: string,
+function montarPrompt(
   transcricao: TranscricaoPalavras,
   duracaoVideo: number,
   maxCortes: number,
-): Promise<CorteEscolhido[]> {
-  const anthropic = new Anthropic({ apiKey: chaveAnthropic });
-
-  const prompt = `Você seleciona cortes virais de vídeos longos, no padrão dos melhores editores de shorts.
+): string {
+  return `Você seleciona cortes virais de vídeos longos, no padrão dos melhores editores de shorts.
 
 Transcrição com timestamps (vídeo tem ${Math.round(duracaoVideo)}s no total):
 
@@ -94,24 +75,93 @@ Escolha até ${maxCortes} trechos que:
 
 Pontue cada corte de 0 a 100 pesando: força do gancho (25%), clareza isolada (20%), potencial de retenção (15%), intensidade emocional (15%), conclusão (10%), novidade (10%), atividade (5%).
 
-Se o vídeo não render ${maxCortes} cortes BONS, entregue menos. Corte fraco não entra.`;
+Se o vídeo não render ${maxCortes} cortes BONS, entregue menos. Corte fraco não entra.
+
+Responda APENAS com JSON válido, sem markdown, exatamente neste formato:
+{"cortes":[{"inicio_s":12.4,"fim_s":58.9,"titulo":"...","gancho":"primeira frase falada, literal","motivo":"por que segura atenção","score":87}]}`;
+}
+
+/* --------------------------------------------------------------- deepseek */
+
+async function viaDeepseek(
+  config: ConfigLlm,
+  prompt: string,
+): Promise<unknown> {
+  const resposta = await fetch("https://api.deepseek.com/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.chave}`,
+    },
+    body: JSON.stringify({
+      model: config.modelo,
+      messages: [{ role: "user", content: prompt }],
+      // Trava a saída em JSON — junto com o "APENAS JSON" do prompt, que a
+      // própria doc do DeepSeek recomenda pra ancorar o formato.
+      response_format: { type: "json_object" },
+      max_tokens: 4096,
+    }),
+  });
+
+  if (!resposta.ok) {
+    const corpo = await resposta.text().catch(() => "");
+    throw new Error(
+      `DeepSeek respondeu ${resposta.status}: ${corpo.slice(0, 300)}`,
+    );
+  }
+
+  const dados = (await resposta.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const texto = dados.choices?.[0]?.message?.content;
+  if (!texto) throw new Error("DeepSeek devolveu resposta vazia.");
+
+  return JSON.parse(texto);
+}
+
+/* ----------------------------------------------------------------- claude */
+
+async function viaClaude(config: ConfigLlm, prompt: string): Promise<unknown> {
+  const anthropic = new Anthropic({ apiKey: config.chave });
 
   const resposta = await anthropic.messages.create({
-    model: modelo,
+    model: config.modelo,
     max_tokens: 4096,
-    tools: [FERRAMENTA],
-    tool_choice: { type: "tool", name: "entregar_cortes" },
     messages: [{ role: "user", content: prompt }],
   });
 
-  const uso = resposta.content.find((b) => b.type === "tool_use");
-  if (!uso || uso.type !== "tool_use") {
-    throw new Error("O modelo não devolveu os cortes no formato esperado.");
+  const bloco = resposta.content.find((b) => b.type === "text");
+  if (!bloco || bloco.type !== "text") {
+    throw new Error("Claude devolveu resposta vazia.");
+  }
+  // Tolera cerca de markdown que o prompt proíbe mas modelos às vezes põem.
+  const texto = bloco.text.replace(/^```(?:json)?\s*|\s*```$/g, "");
+  return JSON.parse(texto);
+}
+
+/* ------------------------------------------------------------------ público */
+
+export async function escolherCortes(
+  config: ConfigLlm,
+  transcricao: TranscricaoPalavras,
+  duracaoVideo: number,
+  maxCortes: number,
+): Promise<CorteEscolhido[]> {
+  const prompt = montarPrompt(transcricao, duracaoVideo, maxCortes);
+
+  const bruto =
+    config.provedor === "deepseek"
+      ? await viaDeepseek(config, prompt)
+      : await viaClaude(config, prompt);
+
+  const parsed = EsquemaCortes.safeParse(bruto);
+  if (!parsed.success) {
+    throw new Error(
+      `O modelo devolveu cortes num formato inesperado: ${parsed.error.issues[0]?.message}`,
+    );
   }
 
-  const { cortes } = uso.input as { cortes: CorteEscolhido[] };
-
-  return cortes
+  return parsed.data.cortes
     .filter(
       (c) =>
         c.fim_s > c.inicio_s &&

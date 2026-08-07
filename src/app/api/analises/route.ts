@@ -1,22 +1,29 @@
-import { after } from "next/server";
 import { z } from "zod";
-import { analisarLink } from "@/lib/analise/pipeline";
-import { ErroDeEntrada } from "@/lib/analise/extrair";
-import { criarJob, marcarEtapa, concluir, falhar, listarJobs } from "@/lib/jobs";
+import { clienteSupabase } from "@/lib/supabase/servidor";
+import { criarAnalise, listarAnalises } from "@/lib/analises-db";
+import { validarUrl, ErroDeEntrada } from "@/lib/analise/extrair";
 
-// O pipeline usa child_process e o sistema de arquivos — precisa de Node.
 export const runtime = "nodejs";
-// Download + frames + transcrição + IA. Na Vercel exige plano Pro.
-export const maxDuration = 300;
 
 const Corpo = z.object({
   link: z.string().min(1, "Cole o link do vídeo."),
   // Opcional: é uma dica pra IA, que identifica o nicho pelo material de
-  // qualquer forma. Ver src/lib/analise/prompt.ts.
+  // qualquer forma.
   nicho: z.string().max(120).optional(),
 });
 
+/**
+ * Cria o pedido de análise — e SÓ isso. Quem processa é o worker na VPS:
+ * a linha entra na fila (etapa na_fila) e a resposta volta na hora. A Vercel
+ * nunca baixa nem renderiza vídeo.
+ */
 export async function POST(req: Request) {
+  const supabase = await clienteSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return Response.json({ erro: "Faça login." }, { status: 401 });
+
   let corpo: unknown;
   try {
     corpo = await req.json();
@@ -32,40 +39,35 @@ export async function POST(req: Request) {
     );
   }
 
-  const { link, nicho } = parsed.data;
-  const id = criarJob(link, nicho ?? "");
-
-  // `after` roda depois da resposta ir embora, então o cliente recebe o id
-  // na hora e acompanha por polling em vez de segurar um request de 60s.
-  after(async () => {
-    try {
-      const resultado = await analisarLink(link, { nicho }, (etapa) =>
-        marcarEtapa(id, etapa),
-      );
-      concluir(id, resultado);
-    } catch (err) {
-      // ErroDeEntrada é culpa do input (link inválido, vídeo longo demais) e
-      // pode ir direto pro usuário. O resto vira mensagem genérica, com o
-      // detalhe só no log do servidor.
-      if (err instanceof ErroDeEntrada) {
-        falhar(id, err.message);
-      } else {
-        console.error(`[analise ${id}]`, err);
-        falhar(
-          id,
-          err instanceof Error
-            ? err.message
-            : "Algo quebrou durante a análise. Tente de novo.",
-        );
-      }
+  // Barra link inválido AQUI, antes de entrar na fila: erro na cara do
+  // usuário em vez de um job que nasce pra falhar na VPS.
+  try {
+    validarUrl(parsed.data.link);
+  } catch (err) {
+    if (err instanceof ErroDeEntrada) {
+      return Response.json({ erro: err.message }, { status: 400 });
     }
-  });
+    throw err;
+  }
+
+  const id = await criarAnalise(
+    supabase,
+    user.id,
+    parsed.data.link.trim(),
+    parsed.data.nicho ?? "",
+  );
 
   return Response.json({ id }, { status: 202 });
 }
 
 export async function GET() {
-  return Response.json(listarJobs(), {
+  const supabase = await clienteSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return Response.json({ erro: "Faça login." }, { status: 401 });
+
+  return Response.json(await listarAnalises(supabase), {
     headers: { "Cache-Control": "no-store" },
   });
 }

@@ -8,9 +8,9 @@ import {
   ClockCounterClockwise,
   Plus,
 } from "@phosphor-icons/react/dist/ssr";
-import type { Job } from "@/lib/jobs";
+import type { JobAnalise } from "@/lib/analises-db";
 
-function Status({ status }: { status: Job["status"] }) {
+function Status({ status }: { status: JobAnalise["status"] }) {
   if (status === "processando") {
     return (
       <SpinnerGap size={16} className="shrink-0 animate-spin text-orange-500" />
@@ -24,16 +24,15 @@ function Status({ status }: { status: Job["status"] }) {
   return <XCircle size={16} weight="fill" className="shrink-0 text-rose-500" />;
 }
 
-function titulo(job: Job): string {
-  if (job.status === "pronto") return job.resultado.metadados.titulo || job.link;
-  return job.link;
+function titulo(job: JobAnalise): string {
+  return job.resultado?.titulo || job.link;
 }
 
-function legenda(job: Job): string {
+function legenda(job: JobAnalise): string {
   if (job.status === "processando") return "Em andamento…";
   if (job.status === "erro") return job.mensagem ?? "Falhou";
-  const a = job.resultado.analise;
-  return `${a.nicho_identificado} · ${a.roteiros.length} roteiros`;
+  const qtd = job.resultado?.qtd_cortes ?? 0;
+  return qtd === 1 ? "1 corte pronto" : `${qtd} cortes prontos`;
 }
 
 function quando(ms: number): string {
@@ -51,7 +50,7 @@ export function HistoricoAnalises({
   onSelecionar,
   onNova,
 }: {
-  jobs: Job[];
+  jobs: JobAnalise[];
   idSelecionado: string | null;
   onSelecionar: (id: string) => void;
   onNova: () => void;

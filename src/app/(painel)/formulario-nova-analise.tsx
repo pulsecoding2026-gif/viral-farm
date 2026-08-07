@@ -55,9 +55,9 @@ const PLATAFORMAS: { id: string; rotulo: string; icone: Icon; exemplo: string; c
 ];
 
 const ETAPAS_DO_FLUXO: { icone: Icon; texto: string }[] = [
-  { icone: FilmSlate, texto: "Lê 10 frames do seu vídeo" },
-  { icone: Waveform, texto: "Transcreve o áudio com timestamps" },
-  { icone: Sparkle, texto: "Escreve três roteiros a partir disso" },
+  { icone: Waveform, texto: "Transcreve o áudio palavra por palavra" },
+  { icone: Sparkle, texto: "A IA escolhe os trechos com mais chance de segurar atenção" },
+  { icone: FilmSlate, texto: "Renderiza cortes 9:16 com legenda animada, prontos pra postar" },
 ];
 
 export function FormularioNovaAnalise({

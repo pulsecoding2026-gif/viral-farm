@@ -7,11 +7,11 @@ import {
   ClockCounterClockwise,
   ArrowLeft,
 } from "@phosphor-icons/react/dist/ssr";
-import type { Job } from "@/lib/jobs";
+import type { JobAnalise } from "@/lib/analises-db";
 import { HistoricoAnalises } from "./historico-analises";
 import { FormularioNovaAnalise } from "./formulario-nova-analise";
 import { PainelProgresso } from "./painel-progresso";
-import { ResultadoAnalise } from "./resultado-analise";
+import { ResultadoCortes } from "./resultado-cortes";
 
 type Aba = "nova" | "historico";
 
@@ -20,13 +20,13 @@ export function Dashboard({
   nichoInicial,
   linkInicial,
 }: {
-  jobsIniciais: Job[];
+  jobsIniciais: JobAnalise[];
   nichoInicial?: string;
   linkInicial?: string;
 }) {
   // Vem pronto do servidor. Antes isto era um fetch em useEffect na montagem:
   // a tela pintava vazia e só então mostrava o histórico.
-  const [jobs, setJobs] = useState<Job[]>(jobsIniciais);
+  const [jobs, setJobs] = useState<JobAnalise[]>(jobsIniciais);
   const [idSelecionado, setIdSelecionado] = useState<string | null>(null);
   const [aba, setAba] = useState<Aba>("nova");
   const pollAtualRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -62,7 +62,7 @@ export function Dashboard({
         cache: "no-store",
       });
       if (!r.ok) return;
-      const atualizado: Job = await r.json();
+      const atualizado: JobAnalise = await r.json();
       setJobs((prev) =>
         prev.some((j) => j.id === atualizado.id)
           ? prev.map((j) => (j.id === atualizado.id ? atualizado : j))
@@ -74,6 +74,27 @@ export function Dashboard({
       if (pollAtualRef.current) clearInterval(pollAtualRef.current);
     };
   }, [idSelecionado, jobAtual?.status]);
+
+  // Análise aberta pelo histórico chega sem os cortes (a lista é leve).
+  // Uma busca única no detalhe completa — e o mesmo cobre a transição
+  // processando → pronto, que o polling acima entrega já com cortes.
+  useEffect(() => {
+    if (!idSelecionado || jobAtual?.status !== "pronto" || jobAtual.cortes) {
+      return;
+    }
+    let cancelado = false;
+    (async () => {
+      const r = await fetch(`/api/analises/${idSelecionado}`, {
+        cache: "no-store",
+      });
+      if (!r.ok || cancelado) return;
+      const detalhe: JobAnalise = await r.json();
+      setJobs((prev) => prev.map((j) => (j.id === detalhe.id ? detalhe : j)));
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, [idSelecionado, jobAtual?.status, jobAtual?.cortes]);
 
   function abrirNova() {
     setIdSelecionado(null);
@@ -127,7 +148,7 @@ export function Dashboard({
             </div>
           </div>
         ) : (
-          <ResultadoAnalise saida={jobAtual.resultado} jobId={jobAtual.id} />
+          <ResultadoCortes job={jobAtual} />
         )}
       </div>
     );
@@ -199,8 +220,10 @@ export function Dashboard({
                 link: novo.link,
                 nicho: novo.nicho,
                 status: "processando",
-                etapa: "validando",
+                etapa: "na_fila",
                 criado_em: Date.now(),
+                mensagem: null,
+                resultado: null,
               },
               ...prev,
             ]);

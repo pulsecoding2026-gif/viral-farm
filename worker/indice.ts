@@ -51,8 +51,7 @@ async function processar(job: JobAnalise): Promise<void> {
 
     await marcarEtapa(job.id, "escolhendo_cortes");
     const cortes = await escolherCortes(
-      ambiente.anthropic(),
-      ambiente.modelo(),
+      ambiente.llm(),
       transcricao,
       duracao,
       ambiente.maxCortes(),
@@ -110,8 +109,9 @@ process.on("SIGINT", () => (vivo = false));
 process.on("SIGTERM", () => (vivo = false));
 
 async function main() {
+  const llm = ambiente.llm();
   console.log(
-    `[worker] de pé. transcritor=${ambiente.transcritor()} modelo=${ambiente.modelo()}`,
+    `[worker] de pé. transcritor=${ambiente.transcritor()} llm=${llm.provedor}/${llm.modelo}`,
   );
 
   while (vivo) {

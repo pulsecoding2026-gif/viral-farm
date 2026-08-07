@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Dashboard } from "../dashboard";
-import { listarJobs } from "@/lib/jobs";
+import { clienteSupabase } from "@/lib/supabase/servidor";
+import { listarAnalises } from "@/lib/analises-db";
 
 export const metadata: Metadata = { title: "Analisador" };
 
-// Lê o histórico de análises do disco a cada visita.
+// Histórico vem do banco a cada visita — nada de cache de outra pessoa.
 export const dynamic = "force-dynamic";
 
 export default async function AnalisadorPage({
@@ -13,6 +14,9 @@ export default async function AnalisadorPage({
   searchParams: Promise<{ nicho?: string; link?: string }>;
 }) {
   const { nicho, link } = await searchParams;
+
+  const supabase = await clienteSupabase();
+  const jobs = await listarAnalises(supabase);
 
   return (
     <div>
@@ -26,14 +30,14 @@ export default async function AnalisadorPage({
           Analisador
         </h1>
         <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-zinc-500">
-          Cole o link do seu material cru — sem edição, sem roteiro, sem
-          precisar ter views. A IA lê o que dá pra aproveitar e escreve três
-          roteiros a partir do que você já gravou.
+          Cole o link de um vídeo — seu ou uma live, um podcast, uma gravação
+          longa. A IA acha os melhores momentos e devolve cortes 9:16 com
+          legenda animada, prontos pra postar.
         </p>
       </header>
 
       <Dashboard
-        jobsIniciais={listarJobs()}
+        jobsIniciais={jobs}
         nichoInicial={nicho}
         linkInicial={link}
       />

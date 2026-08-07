@@ -1,78 +1,75 @@
 import {
   Check,
   CircleNotch,
-  Link as LinkIcon,
-  Info,
+  Clock,
   DownloadSimple,
-  FilmStrip,
   Waveform,
   Sparkle,
-  Broom,
+  FilmStrip,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
-import type { Etapa } from "@/lib/analise/pipeline";
 
-const ETAPAS: { chave: Etapa; rotulo: string; detalhe: string; icone: Icon }[] = [
+/**
+ * Progresso de uma análise processada pelo worker na VPS.
+ *
+ * As chaves espelham as etapas que o worker grava na tabela (worker/indice.ts).
+ * A renderização vem como `renderizando_2_de_5` — o sufixo vira o rótulo
+ * "corte 2 de 5" sem precisar de uma etapa por corte aqui.
+ */
+const ETAPAS: { chave: string; rotulo: string; detalhe: string; icone: Icon }[] = [
   {
-    chave: "validando",
-    rotulo: "Validando o link",
-    detalhe: "Confere se a origem é aceita",
-    icone: LinkIcon,
-  },
-  {
-    chave: "lendo-metadados",
-    rotulo: "Lendo os dados do vídeo",
-    detalhe: "Duração, autor e métricas públicas",
-    icone: Info,
+    chave: "na_fila",
+    rotulo: "Na fila do estúdio",
+    detalhe: "O servidor de cortes pega o próximo da fila em segundos",
+    icone: Clock,
   },
   {
     chave: "baixando",
     rotulo: "Baixando o vídeo",
-    detalhe: "Em 720p, direto para memória temporária",
+    detalhe: "Direto da plataforma pro servidor de processamento",
     icone: DownloadSimple,
   },
   {
-    chave: "extraindo-frames",
-    rotulo: "Extraindo frames",
-    detalhe: "10 quadros, metade nos primeiros 25%",
-    icone: FilmStrip,
-  },
-  {
     chave: "transcrevendo",
-    rotulo: "Transcrevendo o áudio",
-    detalhe: "Whisper, com marcação de tempo",
+    rotulo: "Transcrevendo palavra por palavra",
+    detalhe: "Cada palavra com seu tempo exato — é o que guia corte e legenda",
     icone: Waveform,
   },
   {
-    chave: "analisando",
-    rotulo: "Analisando com a IA",
-    detalhe: "A etapa mais longa — é aqui que os roteiros nascem",
+    chave: "escolhendo_cortes",
+    rotulo: "Escolhendo os melhores trechos",
+    detalhe: "Gancho forte, contexto completo, conclusão — e um score por corte",
     icone: Sparkle,
   },
   {
-    chave: "limpando",
-    rotulo: "Finalizando",
-    detalhe: "Apagando o vídeo baixado",
-    icone: Broom,
+    chave: "renderizando",
+    rotulo: "Renderizando os cortes",
+    detalhe: "9:16, 1080p, legenda animada queimada no vídeo",
+    icone: FilmStrip,
   },
 ];
 
-// "pronto" é emitido um instante antes de "limpando" (ver o finally em
-// pipeline.ts): pro painel, as duas etapas marcam o mesmo ponto final.
-function indiceAtual(etapa: Etapa): number {
-  if (etapa === "pronto") return ETAPAS.length - 1;
-  return ETAPAS.findIndex((e) => e.chave === etapa);
+function decompor(etapa: string): { indice: number; detalheVivo?: string } {
+  const render = etapa.match(/^renderizando_(\d+)_de_(\d+)$/);
+  if (render) {
+    return {
+      indice: ETAPAS.length - 1,
+      detalheVivo: `Corte ${render[1]} de ${render[2]} — 9:16, legenda animada`,
+    };
+  }
+  const i = ETAPAS.findIndex((e) => e.chave === etapa);
+  return { indice: i === -1 ? 0 : i };
 }
 
-export function PainelProgresso({ etapa }: { etapa: Etapa }) {
-  const atual = indiceAtual(etapa);
+export function PainelProgresso({ etapa }: { etapa: string | null }) {
+  const { indice: atual, detalheVivo } = decompor(etapa ?? "na_fila");
   const pct = Math.round(((atual + 1) / ETAPAS.length) * 100);
 
   return (
     <div className="surgir overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40">
       <div className="border-b border-zinc-800 px-5 py-4 sm:px-6">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-medium text-zinc-100">Analisando o material</p>
+          <p className="text-sm font-medium text-zinc-100">Fazendo seus cortes</p>
           <span className="font-mono text-xs tabular-nums text-zinc-500">
             {pct}%
           </span>
@@ -143,7 +140,9 @@ export function PainelProgresso({ etapa }: { etapa: Etapa }) {
                   {e.rotulo}
                 </p>
                 {estado === "atual" && (
-                  <p className="mt-0.5 text-xs text-zinc-500">{e.detalhe}</p>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    {detalheVivo ?? e.detalhe}
+                  </p>
                 )}
               </div>
             </li>
@@ -152,8 +151,8 @@ export function PainelProgresso({ etapa }: { etapa: Etapa }) {
       </ol>
 
       <p className="border-t border-zinc-800 px-5 py-3.5 text-xs leading-relaxed text-zinc-500 sm:px-6">
-        Leva de 40 a 90 segundos. Pode fechar esta aba ou abrir outra análise
-        pelo histórico — ela continua rodando no servidor.
+        Vídeo longo leva alguns minutos. Pode fechar esta aba — o trabalho
+        continua no servidor e os cortes ficam salvos no histórico.
       </p>
     </div>
   );

@@ -40,11 +40,14 @@ if [[ ! -f /opt/viral-farm/.env ]]; then
   cat > /opt/viral-farm/.env <<'FIM'
 # ===== PREENCHA E RODE DE NOVO: bash worker/vps/instalar.sh =====
 NEXT_PUBLIC_SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-ANTHROPIC_API_KEY=
+SUPABASE_SECRET_KEY=
+# Cérebro dos cortes (LLM=deepseek é o padrão; LLM=claude usa ANTHROPIC_API_KEY)
+DEEPSEEK_API_KEY=
 # Transcrição (TRANSCRITOR=groq exige GROQ_API_KEY)
 TRANSCRITOR=groq
 GROQ_API_KEY=
+# Cortes servem pra vídeo LONGO — o limite de 3min era do produto antigo.
+MAX_DURACAO_SEGUNDOS=5400
 FIM
   echo ""
   echo "!! Criei /opt/viral-farm/.env vazio."
