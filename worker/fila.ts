@@ -28,7 +28,12 @@ export type JobAnalise = {
   user_id: string;
   link: string;
   nicho: string;
-  etapa: "na_fila" | "renderizar_aprovados";
+  /**
+   * Derivado de ETAPAS_DA_FILA, não escrito à mão: a lista literal aqui já
+   * ficou desatualizada quando a terceira etapa nasceu, e o TypeScript
+   * acusou uma comparação impossível no laço principal.
+   */
+  etapa: EtapaDaFila;
   opcoes: OpcoesJob;
 };
 
@@ -42,6 +47,29 @@ export function supabase(): SupabaseClient {
 }
 
 /**
+ * As etapas que significam "tem trabalho esperando".
+ *
+ * Uma lista só, usada tanto pra pegar job quanto pra reconhecer órfão. Eram
+ * duas listas literais espalhadas, e a terceira etapa (projeto do Editor)
+ * mostrou o custo: esquecer de atualizar uma delas faria o job novo ou nunca
+ * ser pego, ou ser tratado como órfão e devolvido à fila pra sempre.
+ */
+export const ETAPAS_DA_FILA = [
+  "na_fila",
+  "renderizar_aprovados",
+  "renderizar_projeto",
+] as const;
+
+export type EtapaDaFila = (typeof ETAPAS_DA_FILA)[number];
+
+/** O que cada etapa da fila vira quando um worker a assume. */
+const AO_ASSUMIR: Record<string, string> = {
+  na_fila: "baixando",
+  renderizar_aprovados: "preparando_render",
+  renderizar_projeto: "montando_projeto",
+};
+
+/**
  * Pega o trabalho mais antigo da fila e o assume.
  *
  * A troca de etapa com o filtro `.in("etapa", ...)` é a trava: se dois
@@ -53,7 +81,7 @@ export async function pegarProximoJob(): Promise<JobAnalise | null> {
     .from("analises")
     .select("id, user_id, link, nicho, etapa, opcoes")
     .eq("status", "processando")
-    .in("etapa", ["na_fila", "renderizar_aprovados"])
+    .in("etapa", ETAPAS_DA_FILA)
     .order("criado_em", { ascending: true })
     .limit(1);
 
@@ -63,7 +91,7 @@ export async function pegarProximoJob(): Promise<JobAnalise | null> {
 
   const { data: assumido, error: erroTrava } = await supabase()
     .from("analises")
-    .update({ etapa: job.etapa === "na_fila" ? "baixando" : "preparando_render" })
+    .update({ etapa: AO_ASSUMIR[job.etapa ?? "na_fila"] ?? "baixando" })
     .eq("id", job.id)
     .eq("etapa", job.etapa)
     .select("id");
@@ -138,7 +166,7 @@ export async function recuperarOrfaos(): Promise<number> {
     .from("analises")
     .select("id")
     .eq("status", "processando")
-    .not("etapa", "in", '("na_fila","renderizar_aprovados")');
+    .not("etapa", "in", `(${ETAPAS_DA_FILA.map((e) => `"${e}"`).join(",")})`);
 
   if (error) throw new Error(`Não li os órfãos: ${error.message}`);
   if (!orfaos || orfaos.length === 0) return 0;

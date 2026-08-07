@@ -31,6 +31,7 @@ import {
 } from "./fila";
 import { Cancelado } from "../src/lib/proc";
 import { gerarProxy, subirProxy } from "./proxy";
+import { renderizarProjeto } from "./renderizar-projeto";
 import {
   registrarCorte,
   subirVideoDoCorte,
@@ -479,7 +480,9 @@ async function main() {
     });
 
     try {
-      if (job.etapa === "renderizar_aprovados") {
+      if (job.etapa === "renderizar_projeto") {
+        await renderizarProjeto(job, controlador.signal);
+      } else if (job.etapa === "renderizar_aprovados") {
         await renderizarAprovados(job, controlador.signal);
       } else {
         await analisar(job, controlador.signal);
