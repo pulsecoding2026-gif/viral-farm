@@ -37,6 +37,76 @@ function espessura(stroke: string): number {
   return m ? Number(m[1]) : 0;
 }
 
+/**
+ * A cor de ANTES de a palavra ser dita, no karaokê.
+ *
+ * O ASS pinta cada sílaba de secundária → primária conforme o \k avança. A
+ * secundária estava fixa em branco, e como quase todo preset tem legenda
+ * branca a transição virava branco → branco: INVISÍVEL. Resultado: nenhum
+ * preset "word-by-word" acendia palavra por palavra — a frase inteira
+ * aparecia pronta, e os 15 formatos ficavam indistinguíveis nesse ponto.
+ *
+ * Escurecer a própria cor (em vez de usar cinza fixo) preserva a identidade
+ * do preset: o Dark Luxury acende dourado sobre dourado apagado, não sobre
+ * cinza.
+ */
+function corApagada(hex: string, fator = 0.42): string {
+  const h = hex.replace("#", "").trim();
+  if (h.length !== 6) return "&H00777777";
+  const canal = (i: number) =>
+    Math.round(parseInt(h.slice(i, i + 2), 16) * fator)
+      .toString(16)
+      .padStart(2, "0");
+  return `&H00${canal(4)}${canal(2)}${canal(0)}`.toUpperCase();
+}
+
+/** "0 6px 0 rgba(0,0,0,.55)" → 6. "nenhuma" → 0. */
+function deslocamentoSombra(sombra: string): number {
+  if (!sombra || /nenhum/i.test(sombra)) return 0;
+  // O segundo número do atalho CSS é o deslocamento vertical, que é o que o
+  // ASS sabe representar (ele desloca na diagonal, sem raio de desfoque).
+  const nums = [...(sombra.match(/-?\d+(?:\.\d+)?/g) ?? [])].map(Number);
+  return nums.length >= 2 ? Math.min(6, Math.abs(nums[1])) : 0;
+}
+
+/**
+ * O preset pede caixa atrás do texto?
+ *
+ * Três formatos declaram fundo (pill, faixa, cor sólida) e o gerador
+ * ignorava os três — eles saíam com texto solto sobre o vídeo, que é
+ * exatamente o oposto do que o preset promete.
+ */
+function fundoDoPreset(fundo: string): { tem: boolean; alpha: number } {
+  if (!fundo || /nenhum/i.test(fundo)) return { tem: false, alpha: 0 };
+  const pct = /(\d+)\s*%/.exec(fundo);
+  const opacidade = pct ? Number(pct[1]) / 100 : 0.85;
+  // ASS: 00 é opaco e FF é transparente — o inverso do CSS.
+  return { tem: true, alpha: Math.round((1 - opacidade) * 255) };
+}
+
+/** Alpha do ASS (00 opaco, FF transparente) a partir da opacidade CSS. */
+function alphaAss(opacidade: number): string {
+  const a = Math.round((1 - Math.max(0, Math.min(1, opacidade))) * 255);
+  return a.toString(16).padStart(2, "0").toUpperCase();
+}
+
+/** Aplica opacidade a uma cor &H00BBGGRR já convertida. */
+function comOpacidade(corAssHex: string, opacidade: number): string {
+  return opacidade >= 1
+    ? corAssHex
+    : `&H${alphaAss(opacidade)}${corAssHex.replace("&H00", "")}`;
+}
+
+/** O preset anima por FRASE (fade) em vez de palavra por palavra? */
+function fadeDaFrase(animacao: string): number {
+  const a = (animacao ?? "").toLowerCase();
+  if (!a.includes("fade")) return 0;
+  // "Fade por frase, 200 ms" traz a duração; sem número, 180ms é o padrão
+  // que os presets que declaram fade sem tempo esperam.
+  const ms = /(\d+)\s*ms/.exec(a);
+  return ms ? Math.min(600, Number(ms[1])) : 180;
+}
+
 function tempoAss(s: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -262,9 +332,32 @@ function cabecalho(f: Formato): string {
   const tamanho = corpoDaFonte(f);
   const m = margens(f);
   const contorno = espessura(l.stroke);
-  // Secundária é a cor "antes de falar" no karaokê. Sem karaokê ela nunca
-  // aparece, mas o formato ASS exige o campo preenchido.
-  const secundaria = "&H00FFFFFF";
+  const fundo = fundoDoPreset(l.fundo);
+  const opacidade = typeof l.opacidade === "number" ? l.opacidade : 1;
+
+  // Secundária = a cor de ANTES de a palavra ser dita. Escurecer a própria
+  // cor é o que faz o karaokê aparecer; branco fixo (como estava) some em
+  // legenda branca, que é a maioria dos presets.
+  const secundaria = corApagada(l.cor);
+
+  /**
+   * BorderStyle 3 desenha uma CAIXA opaca atrás do texto, com a cor do campo
+   * de contorno. É como o ASS representa o "fundo" que três presets pedem
+   * (pill, faixa, cor sólida) e que antes era simplesmente ignorado.
+   *
+   * Com caixa, o contorno some (não faz sentido contornar letra dentro de
+   * bloco sólido) e o preenchimento vira a margem interna da caixa.
+   */
+  const borda = fundo.tem ? 3 : 1;
+  const corContorno = fundo.tem
+    ? `&H${fundo.alpha.toString(16).padStart(2, "0").toUpperCase()}0A0A0A`
+    : "&H00000000";
+  const larguraBorda = fundo.tem ? Math.max(6, contorno) : contorno;
+
+  // Sombra do preset em vez de número fixo: os presets pedem de 0 a 6px, e
+  // "0 6px 0 #000" (Hormozi) é visualmente muito diferente de "nenhuma"
+  // (Minimal Premium). Tratar todos igual apagava metade da identidade.
+  const sombra = fundo.tem ? 0 : deslocamentoSombra(l.sombra);
 
   return `[Script Info]
 ScriptType: v4.00+
@@ -274,7 +367,7 @@ WrapStyle: 2
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Fala,${fontePrincipal(l.fonte)},${tamanho},${corAss(l.cor)},${secundaria},&H00000000,&H96000000,${l.peso >= 700 ? -1 : 0},0,0,0,100,100,0,0,1,${contorno},${contorno > 0 ? 2 : 3},${alinhamentoAss(l.alinhamento)},${m.esquerda},${m.direita},60,1
+Style: Fala,${fontePrincipal(l.fonte)},${tamanho},${comOpacidade(corAss(l.cor), opacidade)},${secundaria},${corContorno},&H96000000,${l.peso >= 700 ? -1 : 0},0,0,0,100,100,0,0,${borda},${larguraBorda},${sombra},${alinhamentoAss(l.alinhamento)},${m.esquerda},${m.direita},60,1
 ${CABECALHO_TITULO}
 
 [Events]
@@ -330,6 +423,7 @@ function quebrarLinhas(
   corpo: number,
   caixa: string,
   fonte: string,
+  maxLinhas = 2,
 ): string {
   const porChar = corpo * fatorLargura(caixa, fonte);
   // Comprimento visível ignora as tags {\k..} e {\c..}.
@@ -339,7 +433,12 @@ function quebrarLinhas(
   let linha = "";
   for (const pedaco of pedacos) {
     const candidata = linha ? `${linha} ${pedaco}` : pedaco;
-    if (linha && visivel(candidata).length * porChar > larguraUtil) {
+    // Na ÚLTIMA linha permitida a quebra é proibida: o preset diz quantas
+    // linhas o bloco pode ter, e estourar isso empurra a legenda pra cima da
+    // safe zone. Antes o limite era declarado e ignorado, então um bloco
+    // podia virar 4 linhas num preset que pede 1.
+    const naUltima = linhas.length >= Math.max(1, maxLinhas) - 1;
+    if (linha && !naUltima && visivel(candidata).length * porChar > larguraUtil) {
       linhas.push(linha);
       linha = pedaco;
     } else {
@@ -418,10 +517,14 @@ export function gerarAss(
       });
 
       const texto = quebrarLinhas(
-        pedacos, m.util, corpo, l.caixa, fontePrincipal(l.fonte),
+        pedacos, m.util, corpo, l.caixa, fontePrincipal(l.fonte), l.maxLinhas,
       );
+      // \fad é por FRASE e vem antes do \pos: os presets que pedem "fade por
+      // frase" antes renderizavam com corte seco, iguais aos de karaokê.
+      const fade = fadeDaFrase(l.animacao);
+      const entrada = fade > 0 ? `{\\fad(${fade},0)}` : "";
       linhas.push(
-        `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,{\\pos(${centroX},${centroY})}${texto}`,
+        `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,${entrada}{\\pos(${centroX},${centroY})}${texto}`,
       );
     }
   }
