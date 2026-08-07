@@ -34,7 +34,22 @@ export function Dashboard({
 
   const carregarLista = useCallback(async () => {
     const r = await fetch("/api/analises", { cache: "no-store" });
-    if (r.ok) setJobs(await r.json());
+    if (!r.ok) return;
+    const lista: JobAnalise[] = await r.json();
+    // A lista vem LEVE, sem os cortes (são carregados só no detalhe). Fundir
+    // preservando os cortes que já temos em memória: substituir cegamente
+    // apagava os cortes do vídeo aberto, o detalhe recarregava, e a lista
+    // apagava de novo no próximo ciclo — a tela piscava em loop.
+    setJobs((prev) => {
+      const cortesCarregados = new Map(
+        prev.filter((j) => j.cortes).map((j) => [j.id, j.cortes]),
+      );
+      return lista.map((j) =>
+        cortesCarregados.has(j.id)
+          ? { ...j, cortes: cortesCarregados.get(j.id) }
+          : j,
+      );
+    });
   }, []);
 
   const jobAtual = jobs.find((j) => j.id === idSelecionado) ?? null;
