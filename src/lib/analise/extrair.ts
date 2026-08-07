@@ -81,12 +81,52 @@ type YtDlpJson = {
   extractor_key?: string;
 };
 
+/**
+ * Clients de player tentados em ordem, tanto na leitura de metadados quanto
+ * no download.
+ *
+ * O YouTube devolve 403 ou "Sign in to confirm you're not a bot" de forma
+ * intermitente dependendo do client que o yt-dlp usa e da reputação do IP —
+ * datacenter (a VPS) apanha bem mais que residencial. `null` é o padrão do
+ * yt-dlp; `android_vr` e `tv` são os fallbacks que passam onde o padrão
+ * é barrado. Sem a cascata, ~1 em cada N análises falharia por um motivo
+ * que não tem nada a ver com o usuário.
+ */
+const CLIENTS: (string | null)[] = [null, "android_vr", "tv"];
+
 export async function lerMetadados(url: URL): Promise<Metadados> {
-  const saida = await run(
-    bin.ytdlp(),
-    ["-J", "--no-warnings", "--no-playlist", url.toString()],
-    { timeoutMs: 60_000 },
-  );
+  // Mesma cascata de clients do download. Esta chamada roda ANTES do
+  // download — sem a cascata aqui, o job morria na porta de entrada sem
+  // nem chegar no fallback.
+  let saida: string | null = null;
+  let ultimoErro: unknown;
+
+  for (const client of CLIENTS) {
+    try {
+      saida = await run(
+        bin.ytdlp(),
+        [
+          ...(client
+            ? ["--extractor-args", `youtube:player_client=${client}`]
+            : []),
+          "-J",
+          "--no-warnings",
+          "--no-playlist",
+          url.toString(),
+        ],
+        { timeoutMs: 60_000 },
+      );
+      break;
+    } catch (err) {
+      ultimoErro = err;
+    }
+  }
+
+  if (saida === null) {
+    throw ultimoErro instanceof Error
+      ? ultimoErro
+      : new Error("Não consegui ler os dados desse vídeo.");
+  }
 
   let j: YtDlpJson;
   try {
@@ -140,17 +180,6 @@ export async function lerMetadados(url: URL): Promise<Metadados> {
  * O arquivo é apagado pelo pipeline no `finally` — ver `pipeline.ts`.
  * Nunca persistimos vídeo de terceiro (ver PLANO_MVP.md seção 1).
  */
-/**
- * Clients de player tentados em ordem.
- *
- * O YouTube devolve 403 de forma intermitente dependendo do client que o
- * yt-dlp usa pra pedir as URLs de mídia. `null` é o padrão do yt-dlp, que
- * funciona na maior parte das vezes; `android_vr` foi o fallback que se
- * mostrou mais estável nos testes. Sem essa cascata, ~1 em cada N análises
- * falharia por um motivo que não tem nada a ver com o usuário.
- */
-const CLIENTS: (string | null)[] = [null, "android_vr", "tv"];
-
 async function limparDiretorio(dir: string) {
   const restos = await fs.readdir(dir).catch(() => [] as string[]);
   await Promise.all(
