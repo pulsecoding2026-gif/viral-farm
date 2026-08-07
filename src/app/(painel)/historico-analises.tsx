@@ -73,7 +73,7 @@ export function HistoricoAnalises({
           Nenhuma análise ainda
         </p>
         <p className="mt-1 max-w-[42ch] text-sm text-zinc-500">
-          Cole o link de um material bruto e a primeira análise aparece aqui.
+          Cole o link de um vídeo e os primeiros cortes aparecem aqui.
         </p>
         <button
           type="button"

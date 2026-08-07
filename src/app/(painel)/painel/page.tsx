@@ -19,7 +19,7 @@ export default function DashboardPage() {
           Dashboard
         </h1>
         <p className="mt-1.5 text-sm text-zinc-500">
-          Do material bruto ao vídeo publicado — tudo num lugar só.
+          Do vídeo longo ao corte publicado — tudo num lugar só.
         </p>
       </header>
 
@@ -30,9 +30,10 @@ export default function DashboardPage() {
           💡
         </span>
         <p className="max-w-[70ch]">
-          Como funciona: o link entra, a IA lê os frames e a transcrição do seu
-          material e escreve três roteiros. O vídeo é processado e descartado —
-          fica só a análise, nunca o arquivo.
+          Como funciona: o link entra, a IA transcreve palavra por palavra,
+          escolhe os melhores trechos e renderiza cortes 9:16 com legenda
+          animada. O vídeo original fica no máximo 24h no servidor e é apagado —
+          ficam só os cortes.
         </p>
       </div>
 

@@ -62,7 +62,7 @@ export function MaqueteAnalisador({ titulo = "Analisador" }: { titulo?: string }
       <div className="p-3">
         <div className="rounded-lg border border-zinc-800 bg-gradient-to-br from-orange-600/12 to-transparent p-2.5">
           <p className="text-[9px] font-medium text-zinc-400">
-            Link do material bruto
+            Link do vídeo
           </p>
           <div className="mt-1.5 flex gap-1.5">
             <div className="flex min-w-0 flex-1 items-center rounded-md border border-zinc-700 bg-zinc-950/60 px-2 py-1.5">

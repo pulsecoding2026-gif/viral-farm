@@ -77,8 +77,8 @@ export function ChamadaFinal() {
 
             <p className="mt-5 max-w-[46ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
               Está parado no rolo da câmera agora. Cola o link e a IA devolve{" "}
-              <b className="font-semibold text-zinc-100">três roteiros</b> — cada
-              um com um ângulo diferente pro mesmo material.
+              <b className="font-semibold text-zinc-100">vários cortes 9:16</b> —
+              legendados e prontos pra postar.
             </p>
 
             <HeroEntrada alinhamento="esquerda" />

@@ -117,19 +117,22 @@ export function Monetizacao() {
         <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/30">
           <div className="border-b border-zinc-800 px-6 py-5 text-center">
             <h3 className="text-lg font-semibold tracking-tight text-zinc-50">
-              O que cada roteiro custa
+              O que cada corte custa
             </h3>
             <p className="mx-auto mt-1.5 max-w-[54ch] text-sm leading-relaxed text-zinc-500">
-              Uma análise devolve três roteiros. Dividindo a mensalidade pelo
+              Uma análise devolve até 8 cortes. Dividindo a mensalidade pelo
               número de análises do plano, dá pra ver o custo real de cada
-              ideia que sai daqui.
+              vídeo que sai daqui.
             </p>
           </div>
 
           <div className="grid divide-y divide-zinc-800 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
             {PLANOS_CUSTO.map((p) => {
               const porAnalise = p.mensal / p.analises;
-              const porRoteiro = porAnalise / 3;
+              // 8 cortes é o teto do plano de entrada — o divisor mais
+              // conservador. Prometer o custo dos 15 do Creator inflaria a
+              // conta pra quem entra pelo Lite.
+              const porCorte = porAnalise / 8;
               return (
                 <div
                   key={p.nome}
@@ -141,11 +144,11 @@ export function Monetizacao() {
                     {p.nome}
                   </p>
                   <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums text-zinc-50">
-                    R$ {brl(porRoteiro)}
+                    R$ {brl(porCorte)}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500">por roteiro</p>
+                  <p className="mt-1 text-xs text-zinc-500">por corte</p>
                   <p className="mt-3 text-[11px] tabular-nums text-zinc-600">
-                    R$ {brl(p.mensal)} ÷ {p.analises} análises ÷ 3 roteiros
+                    R$ {brl(p.mensal)} ÷ {p.analises} análises ÷ 8 cortes
                   </p>
                 </div>
               );

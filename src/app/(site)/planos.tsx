@@ -33,10 +33,10 @@ const PLANOS: Plano[] = [
     mensal: 59.9,
     analises: 60,
     recursos: [
-      "3 roteiros por análise",
-      "Vídeos de até 3 minutos",
+      "Até 8 cortes por análise",
+      "Vídeos de até 90 minutos",
+      "Legenda animada e título na tela",
       "Radar Viral, Trends e Lives",
-      "Biblioteca com coleções",
       "Sem marca d'água",
     ],
   },
@@ -49,9 +49,9 @@ const PLANOS: Plano[] = [
     destaque: true,
     recursos: [
       "Tudo do Lite",
-      "Histórico completo de análises",
-      "Filtros avançados no Radar",
-      "Exportar roteiro pronto",
+      "Até 15 cortes por análise",
+      "Estúdio: você aprova antes de renderizar",
+      "Reeditar corte quantas vezes quiser",
       "Suporte prioritário",
     ],
   },
@@ -91,8 +91,8 @@ export function Planos() {
             <span className="text-orange-500 italic">grava</span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-400">
-            Cada análise lê um vídeo inteiro e devolve três roteiros. Cancele
-            quando quiser.
+            Cada análise lê um vídeo inteiro e devolve vários cortes prontos.
+            Cancele quando quiser.
           </p>
         </div>
 

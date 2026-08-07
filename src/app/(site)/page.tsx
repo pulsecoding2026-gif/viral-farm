@@ -18,12 +18,12 @@ import { Logo } from "../logo";
 
 /** Chips de capacidade sob o hero — o que o produto faz, em uma palavra cada. */
 const CAPACIDADES = [
-  "Leitura de frames",
-  "Transcrição com tempo",
-  "3 roteiros por análise",
-  "Trechos marcados",
+  "Transcrição palavra a palavra",
+  "Cortes 9:16 prontos",
+  "Legenda animada",
+  "Título na tela",
+  "Limpeza de silêncios",
   "Radar por plataforma",
-  "Acervo em coleções",
 ];
 
 

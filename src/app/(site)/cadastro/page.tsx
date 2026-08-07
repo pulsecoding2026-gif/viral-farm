@@ -7,7 +7,7 @@ import { mandarLogadoProPainel } from "../acesso-guarda";
 export const metadata: Metadata = {
   title: "Criar conta",
   description:
-    "Crie sua conta no Viral Farm e transforme seu material bruto em roteiro.",
+    "Crie sua conta no Viral Farm e transforme vídeo longo em cortes prontos.",
 };
 
 export default async function CadastroPage() {

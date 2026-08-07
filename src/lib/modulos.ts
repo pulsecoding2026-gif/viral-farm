@@ -79,7 +79,7 @@ export const SECOES: Secao[] = [
       {
         slug: "analisador",
         rotulo: "Analisador",
-        resumo: "Seu material bruto vira três roteiros originais",
+        resumo: "Seu vídeo longo vira cortes 9:16 prontos pra postar",
         icone: "MagnifyingGlass",
         cor: "from-orange-500 to-amber-600",
         pronto: true,

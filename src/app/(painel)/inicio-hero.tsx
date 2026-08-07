@@ -68,11 +68,11 @@ export function InicioHero() {
   return (
     <div className="rounded-3xl bg-gradient-to-br from-orange-400 via-orange-500 to-amber-600 p-6 sm:p-8">
       <h2 className="text-lg font-semibold text-white sm:text-xl">
-        Cole o link do seu material bruto
+        Cole o link de um vídeo
       </h2>
       <p className="mt-1 max-w-[52ch] text-sm text-white/85">
-        A gravação crua, sem edição. A IA lê o que aparece e devolve três
-        roteiros a partir dela.
+        Seu ou uma live, um podcast, uma gravação longa. A IA acha os melhores
+        momentos e devolve cortes 9:16 com legenda animada.
       </p>
 
       <div
@@ -117,7 +117,7 @@ export function InicioHero() {
           value={link}
           onChange={(e) => setLink(e.target.value)}
           placeholder={plataforma.exemplo}
-          aria-label={`Link do material bruto no ${plataforma.rotulo}`}
+          aria-label={`Link do vídeo no ${plataforma.rotulo}`}
           className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-white placeholder:text-zinc-500 outline-none"
         />
         <button
@@ -125,7 +125,7 @@ export function InicioHero() {
           className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-orange-500 active:scale-[0.98]"
         >
           <MagnifyingGlass size={17} weight="bold" />
-          Analisar material
+          Gerar cortes
         </button>
       </form>
     </div>

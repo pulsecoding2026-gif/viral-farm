@@ -100,14 +100,14 @@ export function AcessoLayout({
           </p>
           <p className="mt-3 max-w-[20ch] text-3xl leading-[1.1] font-semibold tracking-tight text-zinc-50">
             O vídeo que você já gravou vira{" "}
-            <span className="text-orange-500 italic">três roteiros.</span>
+            <span className="text-orange-500 italic">vários cortes.</span>
           </p>
 
           <ul className="mt-6 space-y-2.5">
             {[
-              ["10 frames lidos", "metade nos primeiros 25%"],
-              ["Áudio transcrito", "com marcação de tempo"],
-              ["3 roteiros", "com gancho, blocos e chamada"],
+              ["Transcrição por palavra", "cada uma com seu tempo"],
+              ["Melhores momentos", "escolhidos e pontuados"],
+              ["Cortes 9:16", "com legenda animada"],
             ].map(([titulo, detalhe]) => (
               <li key={titulo} className="flex items-start gap-2.5">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-blue-400">

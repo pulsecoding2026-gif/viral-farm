@@ -15,35 +15,35 @@ import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 const PERGUNTAS = [
   {
     p: "O que é o Viral Farm?",
-    r: "É um painel que parte do material que você já gravou. A IA assiste ao vídeo cru — sem edição, sem roteiro — entende o que dá pra aproveitar e escreve três roteiros a partir dele. Junto vêm as ferramentas de descoberta: o que está em alta, o que estão pesquisando e quem está com audiência ao vivo.",
+    r: "É um painel que transforma vídeo longo em cortes prontos pra postar. Você cola um link — uma live, um podcast, uma gravação sua — e a IA transcreve, acha os melhores momentos e renderiza cortes verticais com legenda animada. Junto vêm as ferramentas de descoberta: o que está em alta, o que estão pesquisando e quem está com audiência ao vivo.",
   },
   {
     p: "Preciso ter audiência pra usar?",
-    r: "Não. A análise lê o vídeo em si — o que aparece, o que é falado, quais trechos prendem. Um vídeo com zero visualização funciona igual a um com um milhão. É justamente pra quem ainda não emplacou.",
+    r: "Não. A análise lê o vídeo em si — o que é falado, quais trechos prendem, onde está o gancho. Um vídeo com zero visualização funciona igual a um com um milhão. É justamente pra quem ainda não emplacou.",
   },
   {
     p: "De onde posso mandar o link?",
-    r: "YouTube, TikTok, Instagram e Facebook. O vídeo precisa estar público ou não listado, e ter até 3 minutos. Se quiser testar sem publicar pra ninguém, suba como não listado no YouTube e cole o link.",
+    r: "YouTube, TikTok, Instagram e Facebook. O vídeo precisa estar público ou não listado, e ter até 90 minutos. Se quiser testar sem publicar pra ninguém, suba como não listado no YouTube e cole o link.",
   },
   {
     p: "Meu vídeo fica guardado?",
-    r: "Não. O arquivo é baixado, processado e apagado no fim da análise. O que fica guardado é só o resultado em texto — os roteiros, os trechos marcados e o diagnóstico. Nunca o vídeo.",
+    r: "O arquivo original fica no máximo 24 horas no servidor de processamento — só o tempo de você revisar e reeditar os cortes — e depois é apagado automaticamente. O que fica guardado são os cortes gerados e a transcrição, na sua conta.",
   },
   {
     p: "Quanto tempo demora?",
-    r: "De 40 a 90 segundos, dependendo da duração do vídeo. A etapa mais longa é a própria análise da IA. Você pode fechar a aba: o processamento continua no servidor e o resultado aparece no histórico.",
+    r: "Depende da duração: alguns minutos pra um vídeo curto, mais tempo pra uma live longa. A renderização de cada corte é a etapa mais pesada. Você pode fechar a aba — o processamento continua no servidor e os cortes aparecem no histórico.",
   },
   {
     p: "Qual IA vocês usam?",
-    r: "Claude, da Anthropic, para a análise dos frames e a escrita dos roteiros. A transcrição do áudio é feita com Whisper. Os frames e a transcrição são lidos juntos, e não separadamente — é isso que permite amarrar o roteiro ao segundo exato do que acontece.",
+    r: "A transcrição é feita com Whisper, que devolve o tempo exato de cada palavra falada. A seleção dos trechos é feita por um modelo de linguagem que lê essa transcrição e pontua cada corte em quatro dimensões: gancho, fluxo, valor e tendência.",
   },
   {
-    p: "O que vem em cada roteiro?",
-    r: "Um gancho para os primeiros segundos, blocos com o que falar e o que aparece na tela em cada trecho, duração estimada e a chamada final. São três roteiros por análise, cada um com um ângulo diferente sobre o mesmo material.",
+    p: "O que vem em cada corte?",
+    r: "Um vídeo 9:16 em 1080p com legenda animada queimada, título na tela nos primeiros segundos, e uma legenda pronta pra postar. Cada corte vem com o motivo da escolha e a nota nas quatro dimensões, pra você entender por que aquele trecho foi selecionado.",
   },
   {
-    p: "A IA escreve por mim?",
-    r: "Ela escreve a partir do que você gravou, não do nada. O roteiro sai amarrado ao seu material, com os trechos aproveitáveis marcados por tempo. O texto é ponto de partida para você ajustar com a sua voz — não um roteiro genérico que serviria para qualquer um.",
+    p: "Eu escolho os cortes ou a IA decide?",
+    r: "Você escolhe. No modo Estúdio a IA propõe os cortes e para: você vê o gancho, a nota e o trecho falado de cada um, aprova os que valem e descarta o resto — só o aprovado é renderizado. Se preferir, o modo Automático entrega tudo pronto de uma vez.",
   },
 ];
 

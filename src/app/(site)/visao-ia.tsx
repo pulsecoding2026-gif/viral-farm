@@ -136,14 +136,15 @@ export function VisaoIA() {
               ))}
             </div>
 
-            {/* E o que sai disso: os três roteiros. */}
+            {/* E o que sai disso: os cortes prontos. */}
             <div className="mt-6 flex items-center gap-3 rounded-xl border border-orange-900/50 bg-orange-600/8 px-4 py-3.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-600 text-white">
                 <Sparkle size={15} weight="fill" />
               </span>
               <p className="text-sm text-zinc-200">
-                <b className="font-semibold text-zinc-50">Três roteiros</b>{" "}
-                escritos a partir disso — cada um com um ângulo diferente.
+                <b className="font-semibold text-zinc-50">Cortes 9:16</b>{" "}
+                renderizados a partir disso — com legenda animada e título na
+                tela.
               </p>
             </div>
           </div>
@@ -151,9 +152,9 @@ export function VisaoIA() {
 
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
           {[
-            { icone: FilmStrip, t: "10 frames", d: "metade nos primeiros 25%" },
-            { icone: Waveform, t: "Áudio transcrito", d: "com marcação de tempo" },
+            { icone: Waveform, t: "Palavra a palavra", d: "cada uma com seu tempo exato" },
             { icone: Scissors, t: "Trechos marcados", d: "com início e fim exatos" },
+            { icone: FilmStrip, t: "Cortes renderizados", d: "9:16, prontos pra postar" },
           ].map(({ icone: Icone, t, d }) => (
             <div
               key={t}
