@@ -94,6 +94,24 @@ type YtDlpJson = {
  */
 const CLIENTS: (string | null)[] = [null, "android_vr", "tv"];
 
+/**
+ * Argumentos comuns a toda chamada de yt-dlp.
+ *
+ * YTDLP_COOKIES aponta pra um cookies.txt de conta logada (descartável, não
+ * pessoal — o YouTube pode punir a conta). É o que destrava vídeo de
+ * gravadora, que o YouTube exige login pra servir a IP de datacenter mesmo
+ * com PO token e client alternativo.
+ */
+function argsBase(client: string | null): string[] {
+  const cookies = process.env.YTDLP_COOKIES;
+  return [
+    ...(client
+      ? ["--extractor-args", `youtube:player_client=${client}`]
+      : []),
+    ...(cookies ? ["--cookies", cookies] : []),
+  ];
+}
+
 export async function lerMetadados(url: URL): Promise<Metadados> {
   // Mesma cascata de clients do download. Esta chamada roda ANTES do
   // download — sem a cascata aqui, o job morria na porta de entrada sem
@@ -106,9 +124,7 @@ export async function lerMetadados(url: URL): Promise<Metadados> {
       saida = await run(
         bin.ytdlp(),
         [
-          ...(client
-            ? ["--extractor-args", `youtube:player_client=${client}`]
-            : []),
+          ...argsBase(client),
           "-J",
           "--no-warnings",
           "--no-playlist",
@@ -196,9 +212,7 @@ export async function baixarVideo(url: URL, dir: string): Promise<string> {
       const stdout = await run(
         bin.ytdlp(),
         [
-          ...(client
-            ? ["--extractor-args", `youtube:player_client=${client}`]
-            : []),
+          ...argsBase(client),
           // Sem isto o yt-dlp não junta vídeo e áudio (ver bin.ffmpegDir).
           ...(bin.ffmpegDir() ? ["--ffmpeg-location", bin.ffmpegDir()!] : []),
           "-f",
