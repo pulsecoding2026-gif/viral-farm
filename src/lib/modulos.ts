@@ -138,14 +138,10 @@ export const SECOES: Secao[] = [
         resumo: "Converse e resolva qualquer peça do vídeo na hora",
         icone: "ChatCircleDots",
         cor: "from-orange-500 to-rose-600",
-        recursos: [
-          "Conversa aberta sobre crescimento, nicho e o que gravar",
-          "Títulos e descrição por intenção de busca",
-          "CTA por objetivo: seguir, comentar, comprar",
-          "Legendas e hashtags prontos para colar",
-          "Conceitos de capa a partir dos seus frames",
-          "Analisar o seu canal ou o de um concorrente na conversa",
-        ],
+        // "Analisar o canal na conversa" saiu da lista: o agente não navega,
+        // e prometer scraping que não existe é mentira que a pessoa descobre
+        // na segunda pergunta. Ele PEDE os dados colados e analisa em cima.
+        pronto: true,
       },
       {
         slug: "roteiros",
@@ -153,13 +149,7 @@ export const SECOES: Secao[] = [
         resumo: "Roteiro completo a partir de um tema ou referência",
         icone: "Scroll",
         cor: "from-amber-500 to-orange-600",
-        recursos: [
-          "Estrutura gancho, desenvolvimento e chamada para ação",
-          "Variações de ângulo para o mesmo tema",
-          "Marcação do que aparece na tela em cada bloco",
-          "Duração estimada por bloco, pra caber no formato",
-          "Biblioteca dos roteiros que você já salvou",
-        ],
+        pronto: true,
       },
       {
         slug: "hooks",
@@ -167,12 +157,7 @@ export const SECOES: Secao[] = [
         resumo: "Os primeiros segundos que seguram o dedo",
         icone: "Lightning",
         cor: "from-yellow-400 to-amber-500",
-        recursos: [
-          "Variações de gancho para o mesmo conteúdo",
-          "Padrões de abertura que funcionam no seu nicho",
-          "Comparação entre hooks para testar qual segura mais",
-          "Coleção de ganchos que já deram certo, por categoria",
-        ],
+        pronto: true,
       },
     ],
   },
