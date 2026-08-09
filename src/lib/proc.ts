@@ -122,12 +122,15 @@ export function run(
 export function runBinario(
   bin: string,
   args: string[],
-  opts: { timeoutMs?: number } = {},
+  // `cwd` existe pelo mesmo motivo do run(): filtro do ffmpeg que referencia
+  // arquivo (ass=...) precisa de caminho RELATIVO, porque o "C:" de um
+  // caminho absoluto do Windows é lido como separador pelo parser de filtro.
+  opts: { timeoutMs?: number; cwd?: string } = {},
 ): Promise<Buffer> {
-  const { timeoutMs = 60_000 } = opts;
+  const { timeoutMs = 60_000, cwd } = opts;
 
   return new Promise((resolve, reject) => {
-    const p = spawn(bin, args, { windowsHide: true });
+    const p = spawn(bin, args, { windowsHide: true, cwd });
     const pedacos: Buffer[] = [];
     let stderr = "";
     let matouPorTimeout = false;
