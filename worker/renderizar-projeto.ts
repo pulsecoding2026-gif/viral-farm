@@ -5,12 +5,18 @@ import { randomUUID } from "node:crypto";
 import { run, bin } from "../src/lib/proc";
 import { validarUrl, baixarVideo } from "../src/lib/analise/extrair";
 import { gerarAss } from "./legendas";
-import { planejarRender, argumentosDeRender } from "./render-projeto";
+import {
+  planejarRender,
+  planejarTransicoes,
+  argumentosDeRender,
+  type PlanoDeTransicoes,
+} from "./render-projeto";
 import { supabase } from "./fila";
 import { subirVideoDoCorte } from "./armazenar";
 import {
   trilhaDe,
   type ItemLegenda,
+  type ItemVideo,
   type Projeto,
 } from "../src/lib/editor/projeto";
 import type { Palavra } from "./transcritor";
@@ -62,6 +68,53 @@ async function dimensoesDaFonte(video: string) {
  * que é aproximação — mas é o que preserva o karaokê. Sem isso a legenda
  * apareceria de uma vez, perdendo justamente o efeito que os formatos usam.
  */
+/**
+ * Legendas a partir da TRANSCRIÇÃO original, mapeadas pro tempo do projeto.
+ *
+ * É o caminho padrão, e existe porque o contrário perdia qualidade: se o
+ * editor guardasse blocos de texto e o worker os re-fatiasse em palavras, o
+ * tempo de cada palavra viraria estimativa e o karaokê sairia fora de
+ * sincronia. Aqui a palavra mantém o tempo MEDIDO na transcrição.
+ *
+ * O mapeamento é o coração: cada palavra vive no tempo da FONTE, e o vídeo
+ * final é a costura dos clipes. Uma palavra em 40s da fonte pode acabar em 8s
+ * do resultado — ou não aparecer, se o trecho dela ficou de fora. Sem essa
+ * conversão a legenda apareceria no instante errado em todo clipe que não
+ * fosse o primeiro.
+ *
+ * A sobreposição das transições entra no acumulado: com xfade os clipes se
+ * encavalam, e ignorar isso empurraria a legenda pra frente um pouco mais a
+ * cada junção.
+ */
+function palavrasDaTranscricao(
+  cru: [string, number, number][],
+  videos: ItemVideo[],
+  plano: PlanoDeTransicoes,
+): Palavra[] {
+  const palavras: Palavra[] = [];
+  let inicioNaSaida = 0;
+
+  videos.forEach((v, i) => {
+    // A transição encavala este clipe no anterior: ele começa mais cedo.
+    inicioNaSaida -= plano.porClipe[i]?.duracao_s ?? 0;
+
+    for (const [texto, ini, fim] of cru) {
+      // A palavra precisa caber INTEIRA no trecho: uma cortada ao meio
+      // apareceria sem a sílaba que o espectador ouve.
+      if (ini < v.fonteInicio_s || fim > v.fonteFim_s) continue;
+      palavras.push({
+        texto,
+        inicio_s: inicioNaSaida + (ini - v.fonteInicio_s),
+        fim_s: inicioNaSaida + (fim - v.fonteInicio_s),
+      });
+    }
+
+    inicioNaSaida += v.fonteFim_s - v.fonteInicio_s;
+  });
+
+  return palavras.sort((a, b) => a.inicio_s - b.inicio_s);
+}
+
 function palavrasDasLegendas(itens: ItemLegenda[]): Palavra[] {
   const palavras: Palavra[] = [];
   for (const item of itens) {
@@ -87,7 +140,7 @@ export async function renderizarProjeto(
 
   const { data: linha, error } = await supabase()
     .from("cortes")
-    .select("id, ordem, projeto")
+    .select("id, ordem, projeto, analises(transcricao)")
     .eq("analise_id", job.id)
     .not("projeto", "is", null)
     .order("renderizado_em", { ascending: false })
@@ -116,17 +169,37 @@ export async function renderizarProjeto(
 
     const fonte = await dimensoesDaFonte(video);
 
+    /**
+     * De onde saem as palavras da legenda.
+     *
+     * A trilha de legenda do projeto GANHA quando existe: ela é a edição
+     * manual da pessoa. Vazia, cai na transcrição original — que é o padrão,
+     * porque hoje o editor não cria itens de legenda e sem esse retorno um
+     * corte reeditado sairia MUDO de legenda, perdendo o que o Analisador já
+     * tinha entregue. Regressão silenciosa é a pior espécie: o vídeo sai, só
+     * sai pior.
+     */
+    const videos = (trilhaDe(projeto, "video").itens as ItemVideo[])
+      .slice()
+      .sort((a, b) => a.inicio_s - b.inicio_s);
+    const legendas = trilhaDe(projeto, "legenda").itens as ItemLegenda[];
+    const cru =
+      ((linha.analises as { transcricao?: { palavras?: [string, number, number][] } } | null)
+        ?.transcricao?.palavras) ?? [];
+
+    const palavras =
+      legendas.length > 0
+        ? palavrasDasLegendas(legendas)
+        : palavrasDaTranscricao(cru, videos, planejarTransicoes(videos));
+
     // ASS num nome relativo + cwd no run(): caminho absoluto do Windows tem
     // "C:", o parser de filtro do ffmpeg divide no ":" e nenhum escape é
     // portátil. Mesmo motivo do renderizar.ts.
-    const legendas = trilhaDe(projeto, "legenda").itens as ItemLegenda[];
-    const nomeAss = legendas.length > 0 ? "projeto.ass" : null;
+    const nomeAss = palavras.length > 0 ? "projeto.ass" : null;
     if (nomeAss) {
-      const ass = gerarAss(
-        palavrasDasLegendas(legendas),
-        0,
-        legendas[0].formato ?? projeto.formato,
-      );
+      // legendas[0] pode não existir: no caminho padrão as palavras vêm da
+      // transcrição e a trilha está vazia. Indexar direto quebrava aqui.
+      const ass = gerarAss(palavras, 0, legendas[0]?.formato ?? projeto.formato);
       if (ass) await fs.writeFile(path.join(dir, nomeAss), ass, "utf-8");
     }
 
