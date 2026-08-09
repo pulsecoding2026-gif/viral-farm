@@ -258,6 +258,33 @@ function fontePrincipal(fonte: string): string {
   return (fonte ?? "Arial").split("/")[0].trim() || "Arial";
 }
 
+/**
+ * Onde ancorar o bloco horizontalmente.
+ *
+ * Centrar na ÁREA ÚTIL (como era) garantia que nada encostasse no rail do
+ * TikTok — mas jogava TODA legenda 119px à esquerda do centro do quadro, e
+ * isso salta aos olhos em qualquer lugar que não seja o feed do TikTok: no
+ * Estúdio, no player do navegador, no arquivo baixado.
+ *
+ * Centrar no quadro e limitar a largura resolveria o visual e custaria um
+ * terço da linha (713px viram 476), o que empurra texto pra mais linhas ou
+ * fonte menor em TODO bloco — inclusive nos curtos, que são a maioria.
+ *
+ * Então: centro do QUADRO por padrão, e desvio só quando a linha realmente
+ * alcançar o rail. Bloco curto — o caso comum — sai perfeitamente centrado;
+ * bloco largo escorrega o mínimo necessário pra não ficar atrás dos botões.
+ */
+function ancoraX(larguraDoTexto: number, m: ReturnType<typeof margens>): number {
+  const centroQuadro = LARGURA / 2;
+  const meia = larguraDoTexto / 2;
+  const limiteDireito = LARGURA - m.direita;
+
+  let x = centroQuadro;
+  if (x + meia > limiteDireito) x = limiteDireito - meia;
+  if (x - meia < m.esquerda) x = m.esquerda + meia;
+  return Math.round(x);
+}
+
 /** O estilo é karaokê? Fade por frase não acende palavra por palavra. */
 function temKaraoke(animacao: string): boolean {
   const a = (animacao ?? "").toLowerCase();
@@ -479,11 +506,8 @@ export function gerarAss(
   }
 
   if (!semLegenda) {
-    // \pos ancora no centro horizontal da ÁREA ÚTIL (não do quadro): com o
-    // rail direito ocupado, o centro visual fica à esquerda do centro real.
     const m = margens(f);
     const corpo = corpoDaFonte(f);
-    const centroX = Math.round(m.esquerda + m.util / 2);
     const centroY = Math.round((posicaoPct(l.posicao) / 100) * ALTURA);
     const corDestaque = corAss(f.destaque?.cores?.[0] ?? "#FFD400");
     const corPrimaria = corAss(l.cor);
@@ -523,8 +547,16 @@ export function gerarAss(
       // frase" antes renderizavam com corte seco, iguais aos de karaokê.
       const fade = fadeDaFrase(l.animacao);
       const entrada = fade > 0 ? `{\\fad(${fade},0)}` : "";
+      // A âncora é POR BLOCO: depende da largura da linha mais longa dele.
+      // Uma âncora fixa pro formato inteiro teria que supor o pior caso e
+      // desalinharia os blocos curtos, que são a maioria.
+      const maisLarga = Math.max(
+        ...texto.split("\\N").map((li) => li.replace(/\{[^}]*\}/g, "").length),
+      );
+      const larguraDoTexto =
+        maisLarga * corpo * fatorLargura(l.caixa, fontePrincipal(l.fonte));
       linhas.push(
-        `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,${entrada}{\\pos(${centroX},${centroY})}${texto}`,
+        `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,${entrada}{\\pos(${ancoraX(larguraDoTexto, m)},${centroY})}${texto}`,
       );
     }
   }
