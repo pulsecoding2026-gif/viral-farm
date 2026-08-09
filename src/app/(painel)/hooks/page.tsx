@@ -12,11 +12,19 @@ export const metadata: Metadata = { title: "Hooks" };
  * decisão do Editor Viral. Se o banco falhar, a página abre sem histórico em
  * vez de quebrar: gerar hooks novos continua funcionando.
  */
-export default async function HooksPage() {
+export default async function HooksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tema?: string }>;
+}) {
   const supabase = await clienteSupabase();
   const historico = await listarPlanejamentos(supabase, "hooks").catch(
     () => [],
   );
+  // ?tema= vem do Trends: o termo em alta chega com o campo já preenchido.
+  const { tema } = await searchParams;
 
-  return <GeradorHooks historicoInicial={historico} />;
+  return (
+    <GeradorHooks historicoInicial={historico} temaInicial={tema ?? ""} />
+  );
 }

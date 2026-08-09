@@ -10,11 +10,17 @@ export const metadata: Metadata = { title: "Roteiros" };
  * Editor: buscar no cliente deixaria a lista piscando vazia, e roteiro
  * antigo é justamente o que a pessoa volta pra consultar antes de gravar.
  */
-export default async function RoteirosPage() {
+export default async function RoteirosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tema?: string }>;
+}) {
   const supabase = await clienteSupabase();
   const historico = await listarPlanejamentos(supabase, "roteiro").catch(
     () => [],
   );
+  // ?tema= vem do Trends: o termo em alta chega com o campo já preenchido.
+  const { tema } = await searchParams;
 
   return (
     <div>
@@ -28,7 +34,7 @@ export default async function RoteirosPage() {
         </p>
       </header>
 
-      <GeradorRoteiro historicoInicial={historico} />
+      <GeradorRoteiro historicoInicial={historico} temaInicial={tema ?? ""} />
     </div>
   );
 }

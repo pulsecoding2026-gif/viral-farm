@@ -200,13 +200,16 @@ type Pendencia = { alvo: string | null; texto: string };
 
 export function ChatAgente({
   conversasIniciais,
+  rascunhoInicial = "",
 }: {
   conversasIniciais: ItemPlanejamento[];
+  /** Vem do Trends: o campo chega preenchido, mas quem envia é a pessoa. */
+  rascunhoInicial?: string;
 }) {
   const [conversas, setConversas] = useState(conversasIniciais);
   const [abertaId, setAbertaId] = useState<string | null>(null);
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
-  const [rascunho, setRascunho] = useState("");
+  const [rascunho, setRascunho] = useState(rascunhoInicial);
   const [pendencia, setPendencia] = useState<Pendencia | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 

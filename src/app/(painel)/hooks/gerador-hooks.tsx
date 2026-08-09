@@ -121,10 +121,13 @@ function CartaoHook({ hook }: { hook: Hook }) {
 
 export function GeradorHooks({
   historicoInicial,
+  temaInicial = "",
 }: {
   historicoInicial: ItemPlanejamento[];
+  /** Vem do Trends: clicar num termo em alta chega aqui com o campo pronto. */
+  temaInicial?: string;
 }) {
-  const [tema, setTema] = useState("");
+  const [tema, setTema] = useState(temaInicial);
   const [nicho, setNicho] = useState("");
   const [quantidade, setQuantidade] = useState(8);
 

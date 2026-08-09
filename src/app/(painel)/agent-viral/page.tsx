@@ -13,11 +13,22 @@ export const metadata: Metadata = { title: "Agent Viral" };
  * Se o banco falhar, a lista nasce vazia e o chat segue funcionando: conversar
  * não depende de conseguir ler o passado.
  */
-export default async function AgentViralPage() {
+export default async function AgentViralPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tema?: string }>;
+}) {
   const supabase = await clienteSupabase();
   const conversas = await listarPlanejamentos(supabase, "agente").catch(
     () => [],
   );
 
-  return <ChatAgente conversasIniciais={conversas} />;
+  // ?tema= vem do Trends. Vira um rascunho pronto no campo — quem decide
+  // enviar é a pessoa; chat que fala sozinho assusta.
+  const { tema } = await searchParams;
+  const rascunho = tema
+    ? `"${tema}" está em alta no Google agora. Que vídeo eu faço sobre isso no meu nicho?`
+    : "";
+
+  return <ChatAgente conversasIniciais={conversas} rascunhoInicial={rascunho} />;
 }

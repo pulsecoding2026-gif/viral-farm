@@ -82,11 +82,14 @@ function textoDoRoteiro(r: Roteiro): string {
 
 export function GeradorRoteiro({
   historicoInicial,
+  temaInicial = "",
 }: {
   historicoInicial: ItemPlanejamento[];
+  /** Vem do Trends: clicar num termo em alta chega aqui com o campo pronto. */
+  temaInicial?: string;
 }) {
   // ------------------------------------------------------------- formulário
-  const [tema, setTema] = useState("");
+  const [tema, setTema] = useState(temaInicial);
   const [duracao, setDuracao] = useState(45);
   const [tom, setTom] = useState<EntradaRoteiro["tom"]>("educativo");
   const [formato, setFormato] = useState("auto");
