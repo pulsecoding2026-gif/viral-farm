@@ -153,27 +153,47 @@ function margens(f: Formato) {
  * Valores medidos nas fontes que instalamos (worker/vps/instalar-fontes.sh).
  * Família fora da lista cai no genérico por caixa, que é conservador.
  */
-const LARGURA_POR_FONTE: Record<string, number> = {
-  anton: 0.40,
-  "archivo black": 0.60,
-  archivo: 0.52,
-  montserrat: 0.58,
-  poppins: 0.58,
-  inter: 0.52,
-  "inter tight": 0.48,
-  "space grotesk": 0.53,
-  "playfair display": 0.48,
-  "ibm plex sans": 0.52,
-  "jetbrains mono": 0.60,
+/**
+ * MEDIDO, não estimado — worker/calibrar-fontes.ts renderiza uma frase de
+ * português em cada família e lê a caixa de pixels do resultado.
+ *
+ * A tabela anterior era palpite meu e errava MUITO pra cima: Montserrat em
+ * caixa alta dizia 0,65 contra 0,427 reais, 52% a mais. E esse número entra
+ * em três decisões, todas estragadas pelo mesmo excesso:
+ *
+ *   corpoDaFonte()        acha que não cabe e encolhe a fonte
+ *   caracteresPorLinha()  quebra a linha antes da hora
+ *   ancoraX()             desvia do centro achando que vai bater no rail
+ *
+ * O piso de legibilidade que precisei criar era, em boa parte, remendo deste
+ * erro — a fonte só ficava pequena porque a conta dizia que não cabia.
+ *
+ * Regenerar depois de trocar de fonte: `npx tsx worker/calibrar-fontes.ts`
+ * na VPS (é lá que as tipografias existem).
+ */
+const LARGURA_POR_FAMILIA: Record<string, { baixa: number; alta: number }> = {
+  // Anton é desenhada só em caixa alta: as duas medidas batem porque são os
+  // mesmos glifos.
+  anton: { baixa: 0.254, alta: 0.256 },
+  archivo: { baixa: 0.335, alta: 0.418 },
+  "ibm plex sans": { baixa: 0.36, alta: 0.431 },
+  inter: { baixa: 0.367, alta: 0.437 },
+  "inter tight": { baixa: 0.346, alta: 0.415 },
+  montserrat: { baixa: 0.365, alta: 0.427 },
+  "playfair display": { baixa: 0.351, alta: 0.434 },
+  poppins: { baixa: 0.319, alta: 0.347 },
+  "space grotesk": { baixa: 0.358, alta: 0.397 },
 };
 
 function fatorLargura(caixa: string, fonte?: string): number {
   const familia = (fonte ?? "").toLowerCase().trim();
-  const medido = LARGURA_POR_FONTE[familia];
-  // Caixa alta some com as pernas estreitas (i, l, t), então engorda a média.
   const alta = (caixa ?? "").toUpperCase().includes("UPPER");
-  if (medido !== undefined) return alta ? medido * 1.12 : medido;
-  return alta ? 0.62 : 0.52;
+  const medido = LARGURA_POR_FAMILIA[familia];
+  if (medido) return alta ? medido.alta : medido.baixa;
+  // Família não calibrada (fonte nova, ou nome que o fontconfig resolveu pra
+  // outra coisa): a média das medidas, um pouco pra cima. Errar pra mais aqui
+  // só custa uma quebra de linha extra; errar pra menos corta o texto.
+  return alta ? 0.44 : 0.37;
 }
 
 /**
