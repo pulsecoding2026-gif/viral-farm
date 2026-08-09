@@ -27,9 +27,19 @@ import fs from "node:fs/promises";
 import { run, runBinario, bin } from "../src/lib/proc";
 import { FORMATOS } from "../src/lib/formatos";
 
-const LARGURA = 1080;
-const ALTURA = 400;
-const CORPO = 100;
+/**
+ * A tela de medição precisa ser MUITO mais larga que o texto.
+ *
+ * Na primeira tentativa usei 1080x400 com corpo 100 e todas as nove famílias
+ * mediram 0,255 — Anton (condensada) igual a Playfair Display (serifada
+ * larga), o que é impossível. O número era 1079px: eu estava medindo a
+ * MOLDURA, porque o texto transbordava e era cortado nela.
+ *
+ * 4000px de largura com corpo 60 deixa folga até pra serifada em caixa alta.
+ */
+const LARGURA = 4000;
+const ALTURA = 300;
+const CORPO = 60;
 
 /**
  * Amostra representativa de português, não "AAAA".
@@ -95,7 +105,17 @@ Dialogue: 0,0:00:00.00,0:00:02.00,M,,0,0,0,,{\\pos(${LARGURA / 2},${ALTURA / 2})
       }
     }
   }
-  return x1 < 0 ? 0 : x1 - x0 + 1;
+  const largura = x1 < 0 ? 0 : x1 - x0 + 1;
+  // Encostar na borda significa que o texto foi cortado e a medida vale a
+  // moldura, não a fonte. Foi assim que a primeira calibração deu o mesmo
+  // número pra nove famílias diferentes.
+  if (x0 <= 1 || x1 >= LARGURA - 2) {
+    throw new Error(
+      `${familia}: o texto encostou na borda (${x0}..${x1} de ${LARGURA}). ` +
+        `Aumente LARGURA ou diminua CORPO — a medida seria da tela.`,
+    );
+  }
+  return largura;
 }
 
 async function main() {
