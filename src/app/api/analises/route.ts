@@ -3,8 +3,20 @@ import { clienteSupabase } from "@/lib/supabase/servidor";
 import { criarAnalise, listarAnalises } from "@/lib/analises-db";
 import { validarUrl, ErroDeEntrada } from "@/lib/analise/extrair";
 import { ehEscolhaDeFormato } from "@/lib/formatos";
+import { podeCriarAnalise, type Uso } from "@/lib/planos/uso";
 
 export const runtime = "nodejs";
+
+/** O que o cliente precisa saber sobre o consumo, sem expor a assinatura. */
+function resumoDoUso(uso: Uso) {
+  return {
+    plano: uso.assinatura.plano.id,
+    plano_nome: uso.assinatura.plano.nome,
+    usadas: uso.analisesUsadas,
+    limite: uso.assinatura.plano.analisesMes,
+    renova_em: uso.renovaEm.toISOString(),
+  };
+}
 
 const Corpo = z.object({
   link: z.string().min(1, "Cole o link do vídeo."),
@@ -64,6 +76,27 @@ export async function POST(req: Request) {
     throw err;
   }
 
+  /**
+   * O PORTÃO do plano, antes de a linha existir.
+   *
+   * Aqui é o único lugar por onde uma análise nasce, e é depois deste ponto
+   * que o dinheiro começa a sair: download, transcrição no Groq, escolha de
+   * cortes no DeepSeek e minutos de CPU da VPS. Checar adiante — na fila ou
+   * no worker — significaria já ter gastado tudo isso pra então recusar.
+   *
+   * 402 e não 403: o problema não é permissão, é cobrança. O cliente usa o
+   * código pra abrir a tela de planos em vez da de erro.
+   */
+  const veredito = await podeCriarAnalise(supabase, user.id, {
+    qtdCortes: parsed.data.opcoes?.qtd ?? 5,
+  });
+  if (!veredito.pode) {
+    return Response.json(
+      { erro: veredito.motivo, codigo: veredito.codigo, uso: resumoDoUso(veredito.uso) },
+      { status: 402 },
+    );
+  }
+
   const id = await criarAnalise(
     supabase,
     user.id,
@@ -82,6 +115,10 @@ export async function GET() {
   } = await supabase.auth.getUser();
   if (!user) return Response.json({ erro: "Faça login." }, { status: 401 });
 
+  // Devolve o ARRAY puro. O uso do plano mora em /api/planos/uso: enfiá-lo
+  // aqui dentro trocaria o formato de uma rota que o painel já consome, e
+  // quebrar contrato existente por conveniência de quem escreve o servidor
+  // é o tipo de mudança que aparece como tela em branco pro usuário.
   return Response.json(await listarAnalises(supabase), {
     headers: { "Cache-Control": "no-store" },
   });

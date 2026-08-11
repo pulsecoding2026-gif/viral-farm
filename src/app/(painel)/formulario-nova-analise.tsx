@@ -18,6 +18,7 @@ import {
 import type { Icon } from "@phosphor-icons/react";
 import type { OpcoesAnalise } from "@/lib/analises-db";
 import { SeletorFormato } from "./seletor-formato";
+import { LimiteAtingido } from "./limite-atingido";
 
 const NICHOS = [
   "curiosidades",
@@ -81,6 +82,10 @@ export function FormularioNovaAnalise({
   const [plataforma, setPlataforma] = useState(PLATAFORMAS[0]);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  /** Recusa por plano (402). Separada do erro: é estado normal, não falha. */
+  const [limite, setLimite] = useState<{ motivo: string; codigo?: string } | null>(
+    null,
+  );
 
   // As escolhas do Estúdio.
   const [modo, setModo] = useState<"auto" | "manual">("manual");
@@ -123,6 +128,14 @@ export function FormularioNovaAnalise({
 
       const dados = await res.json();
       if (!res.ok) {
+        // 402 é limite de plano, não erro: em vez do texto vermelho de
+        // falha, mostra o cartão âmbar com o caminho pra resolver. Tratar
+        // "acabaram suas análises" como defeito faria a pessoa achar que o
+        // produto quebrou, e não que o plano dela chegou ao fim.
+        if (res.status === 402) {
+          setLimite({ motivo: dados.erro ?? "Limite do plano atingido.", codigo: dados.codigo });
+          return;
+        }
         setErro(dados.erro ?? "Não consegui iniciar a análise.");
         return;
       }
@@ -454,6 +467,12 @@ export function FormularioNovaAnalise({
             </p>
           </div>
         </div>
+
+        {limite && (
+          <div className="mt-4">
+            <LimiteAtingido motivo={limite.motivo} codigo={limite.codigo} />
+          </div>
+        )}
 
         {erro && (
           <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-rose-900/60 bg-rose-950/30 p-4 text-sm text-rose-300">
