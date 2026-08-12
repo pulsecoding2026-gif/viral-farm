@@ -1,4 +1,5 @@
 import type { Palavra } from "./transcritor";
+import larguras from "../src/lib/larguras-fonte.json";
 import { acharFormato, type Formato } from "../src/lib/formatos";
 
 /**
@@ -171,29 +172,78 @@ function margens(f: Formato) {
  * Regenerar depois de trocar de fonte: `npx tsx worker/calibrar-fontes.ts`
  * na VPS (é lá que as tipografias existem).
  */
-const LARGURA_POR_FAMILIA: Record<string, { baixa: number; alta: number }> = {
-  // Anton é desenhada só em caixa alta: as duas medidas batem porque são os
-  // mesmos glifos.
-  anton: { baixa: 0.254, alta: 0.256 },
-  archivo: { baixa: 0.335, alta: 0.418 },
-  "ibm plex sans": { baixa: 0.36, alta: 0.431 },
-  inter: { baixa: 0.367, alta: 0.437 },
-  "inter tight": { baixa: 0.346, alta: 0.415 },
-  montserrat: { baixa: 0.365, alta: 0.427 },
-  "playfair display": { baixa: 0.351, alta: 0.434 },
-  poppins: { baixa: 0.319, alta: 0.347 },
-  "space grotesk": { baixa: 0.358, alta: 0.397 },
-};
+/**
+ * Largura de CADA caractere, por família, em fração do corpo.
+ *
+ * Gerado por worker/calibrar-fontes.ts, que renderiza "HcH" pra cada letra
+ * e mede o avanço real que o libass usa.
+ *
+ * A tabela anterior guardava uma MÉDIA por família — e média é a resposta
+ * certa pra pergunta errada. A pergunta é "quanto ESTA frase ocupa", e em
+ * legenda de short a frase é curta demais pra as letras se compensarem: em
+ * Space Grotesk o "m" é 3,3x o "i", e "porque não" (só letra larga) mede 6%
+ * mais que a média previa. Em corpo 187 isso deu 40px de texto pra fora do
+ * quadro no Kinetic Typography.
+ */
+const LARGURAS: Record<string, Record<string, number>> = larguras;
 
+/** Média da família, pra caractere fora do alfabeto calibrado (emoji, símbolo). */
+const MEDIA_POR_FAMILIA: Record<string, number> = Object.fromEntries(
+  Object.entries(LARGURAS).map(([familia, mapa]) => {
+    const vs = Object.values(mapa);
+    return [familia, vs.reduce((a, b) => a + b, 0) / vs.length];
+  }),
+);
+
+/**
+ * Quanto o texto ocupa, em MÚLTIPLOS do corpo da fonte.
+ *
+ * Somar caractere a caractere é exato: sem erro acumulado e sem folga
+ * inventada. Multiplique pelo corpo em pixels e você tem a largura que o
+ * libass vai desenhar.
+ */
+function larguraRelativa(texto: string, fonte: string, caixa: string): number {
+  const familia = (fonte ?? "").split("/")[0].trim().toLowerCase();
+  const mapa = LARGURAS[familia];
+  // Família não calibrada: 0,45 por caractere é generoso de propósito —
+  // errar pra mais custa uma quebra de linha extra, errar pra menos corta
+  // o texto na borda, que é irreversível pra quem assiste.
+  if (!mapa) return texto.length * 0.45;
+
+  const media = MEDIA_POR_FAMILIA[familia] ?? 0.42;
+  const aplicado = (caixa ?? "").toUpperCase().includes("UPPER")
+    ? texto.toUpperCase()
+    : texto;
+
+  let total = 0;
+  for (const c of aplicado) total += mapa[c] ?? media;
+  return total;
+}
+
+/** A largura em PIXELS, que é o que as decisões de layout comparam. */
+function larguraEmPx(
+  texto: string,
+  corpo: number,
+  fonte: string,
+  caixa: string,
+): number {
+  return larguraRelativa(texto, fonte, caixa) * corpo;
+}
+
+/**
+ * Fator MÉDIO da família — ainda usado pra escolher o corpo da fonte.
+ *
+ * Escolher o corpo é uma decisão por FORMATO, não por bloco: acontece antes
+ * de existir texto. A média serve aqui, e o estouro que ela poderia causar
+ * é contido pela quebra de linha, que mede o texto de verdade.
+ */
 function fatorLargura(caixa: string, fonte?: string): number {
-  const familia = (fonte ?? "").toLowerCase().trim();
+  const familia = (fonte ?? "").split("/")[0].trim().toLowerCase();
+  const media = MEDIA_POR_FAMILIA[familia];
   const alta = (caixa ?? "").toUpperCase().includes("UPPER");
-  const medido = LARGURA_POR_FAMILIA[familia];
-  if (medido) return alta ? medido.alta : medido.baixa;
-  // Família não calibrada (fonte nova, ou nome que o fontconfig resolveu pra
-  // outra coisa): a média das medidas, um pouco pra cima. Errar pra mais aqui
-  // só custa uma quebra de linha extra; errar pra menos corta o texto.
-  return alta ? 0.44 : 0.37;
+  if (media === undefined) return alta ? 0.45 : 0.4;
+  // Caixa alta some com as pernas estreitas e engorda a média em ~12%.
+  return alta ? media * 1.12 : media;
 }
 
 /**
@@ -480,12 +530,25 @@ function quebrarLinhas(
   let linha = "";
   for (const pedaco of pedacos) {
     const candidata = linha ? `${linha} ${pedaco}` : pedaco;
-    // Na ÚLTIMA linha permitida a quebra é proibida: o preset diz quantas
-    // linhas o bloco pode ter, e estourar isso empurra a legenda pra cima da
-    // safe zone. Antes o limite era declarado e ignorado, então um bloco
-    // podia virar 4 linhas num preset que pede 1.
-    const naUltima = linhas.length >= Math.max(1, maxLinhas) - 1;
-    if (linha && !naUltima && visivel(candidata).length * porChar > larguraUtil) {
+    /**
+     * A quebra decide pela LARGURA REAL do texto, não por contagem.
+     *
+     * Contar caracteres e multiplicar pela média é o que deixava "porque
+     * não" (dez letras largas) estourar o quadro enquanto a conta dizia que
+     * cabia. Agora cada letra vale o que ela mede.
+     *
+     * E a largura GANHA do limite de linhas. Eu tinha feito o contrário —
+     * a última linha permitida não quebrava — e o resultado foi texto
+     * saindo pela borda em 4 dos 15 formatos. Estourar `maxLinhas` custa
+     * uma linha a mais, que é feio; cortar a frase na borda custa a
+     * informação, que é irrecuperável pra quem assiste.
+     *
+     * O `maxLinhas` do preset continua valendo onde ele decide de verdade:
+     * no tamanho do bloco (agruparPalavras) e no corpo da fonte, que
+     * encolhe justamente pra tentar caber nas linhas pedidas.
+     */
+    const cabe = larguraEmPx(visivel(candidata), corpo, fonte, caixa) <= larguraUtil;
+    if (linha && !cabe) {
       linhas.push(linha);
       linha = pedaco;
     } else {
@@ -570,13 +633,36 @@ export function gerarAss(
       // A âncora é POR BLOCO: depende da largura da linha mais longa dele.
       // Uma âncora fixa pro formato inteiro teria que supor o pior caso e
       // desalinharia os blocos curtos, que são a maioria.
-      const maisLarga = Math.max(
-        ...texto.split("\\N").map((li) => li.replace(/\{[^}]*\}/g, "").length),
+      /**
+       * O corpo ENCOLHE quando o bloco não cabe — por bloco, não por formato.
+       *
+       * O limite de linhas do preset é rígido (estourar empurra a legenda
+       * pra fora da safe zone vertical), então a última linha permitida não
+       * pode quebrar. Sem esta redução, um bloco comprido simplesmente saía
+       * pela borda: o teste flagrou 4 dos 15 formatos assim, com "ACONTECEU
+       * COM ELE DEPOIS DISSO" vazando 278px no Dark Luxury.
+       *
+       * Encolher só o bloco problemático preserva a identidade do formato —
+       * a legenda inteira não fica menor por causa de uma frase longa. O
+       * piso de 78% evita o outro extremo: texto que encolhe tanto que
+       * ninguém lê, quando o certo seria a IA ter cortado a frase.
+       */
+      const linhasDoTexto = texto.split("\\N").map((li) => li.replace(/\{[^}]*\}/g, ""));
+      const maisLargaRel = Math.max(
+        ...linhasDoTexto.map((li) =>
+          larguraRelativa(li, fontePrincipal(l.fonte), l.caixa),
+        ),
       );
-      const larguraDoTexto =
-        maisLarga * corpo * fatorLargura(l.caixa, fontePrincipal(l.fonte));
+      const corpoQueCabe = maisLargaRel > 0 ? m.util / maisLargaRel : corpo;
+      const corpoDoBloco = Math.max(
+        Math.round(corpo * 0.78),
+        Math.min(corpo, Math.floor(corpoQueCabe)),
+      );
+      const ajusteDeCorpo = corpoDoBloco < corpo ? `\\fs${corpoDoBloco}` : "";
+
+      const larguraDoTexto = maisLargaRel * corpoDoBloco;
       linhas.push(
-        `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,${entrada}{\\pos(${ancoraX(larguraDoTexto, m)},${centroY})}${texto}`,
+        `Dialogue: 0,${tempoAss(Math.max(0, inicio))},${tempoAss(fim)},Fala,,0,0,0,,${entrada}{\\pos(${ancoraX(larguraDoTexto, m)},${centroY})${ajusteDeCorpo}}${texto}`,
       );
     }
   }
