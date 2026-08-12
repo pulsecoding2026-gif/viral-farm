@@ -46,9 +46,18 @@ export async function lerAssinatura(
   sb: SupabaseClient,
   userId: string,
 ): Promise<Assinatura> {
+  /**
+   * `select("*")` e não a lista de colunas.
+   *
+   * Nomear as colunas faz o PostgREST recusar a consulta INTEIRA enquanto a
+   * migração de assinatura não rodou — e o erro não vem como exceção aqui,
+   * vem como `data` nulo, que silenciosamente rebaixa todo mundo pro
+   * gratuito. Com `*` a leitura funciona antes e depois da migração: o que
+   * ainda não existe simplesmente chega indefinido, e o código já trata.
+   */
   const { data } = await sb
     .from("perfis")
-    .select("plano, assinatura_status, ciclo_inicio, ciclo_fim")
+    .select("*")
     .eq("id", userId)
     .maybeSingle();
 
@@ -62,10 +71,29 @@ export async function lerAssinatura(
   const fim = data?.ciclo_fim ? new Date(data.ciclo_fim as string) : null;
   const vencida = fim !== null && fim.getTime() < Date.now();
   const status = (data?.assinatura_status as string) ?? "nenhuma";
-  const ativa = status === "ativa" && !vencida;
+  const plano = (data?.plano as string) ?? "gratuito";
+
+  /**
+   * Plano pago SEM assinatura no Stripe é concessão manual — e vale.
+   *
+   * É o caso da conta do dono, do beta fechado e da cortesia de suporte:
+   * alguém com acesso de serviço gravou o plano direto, sem passar por
+   * cobrança. Exigir `status = 'ativa'` pra todo mundo tornaria isso
+   * impossível e obrigaria a inventar uma assinatura falsa no Stripe só
+   * pra liberar a própria conta.
+   *
+   * Não é buraco de segurança porque quem grava `plano` é só a chave de
+   * serviço: o trigger `perfis_travar_plano` (migração 0012) reverte
+   * qualquer tentativa vinda de sessão de usuário. É ESSE trigger que
+   * sustenta a regra — sem ele aplicado, o campo fica editável pelo
+   * cliente, que é o motivo de a migração ser obrigatória antes de abrir
+   * cadastro público.
+   */
+  const concedido = plano !== "gratuito" && status === "nenhuma" && fim === null;
+  const ativa = (status === "ativa" && !vencida) || concedido;
 
   return {
-    plano: acharPlano(ativa ? (data?.plano as string) : "gratuito"),
+    plano: acharPlano(ativa ? plano : "gratuito"),
     status,
     cicloInicio: data?.ciclo_inicio ? new Date(data.ciclo_inicio as string) : null,
     cicloFim: fim,

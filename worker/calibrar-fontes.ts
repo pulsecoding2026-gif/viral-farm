@@ -1,73 +1,63 @@
 /**
- * Mede a largura REAL de cada tipografia, renderizando e olhando os pixels.
+ * Mede a largura REAL de cada CARACTERE em cada tipografia.
  *
  *   npx tsx worker/calibrar-fontes.ts        (precisa rodar na VPS)
  *
- * POR QUE ISTO EXISTE
+ * POR QUE POR CARACTERE, E NÃO UMA MÉDIA
  *
- * `fatorLargura()` em legendas.ts carrega uma tabela de "quanto um caractere
- * ocupa, em fração do corpo da fonte" que eu escrevi de cabeça. Medindo um
- * frame renderizado, a conta errou 57% pra Montserrat em caixa alta: estimei
- * 529px onde o texto ocupa 336.
+ * A versão anterior media uma frase inteira e guardava a média por letra.
+ * Isso funciona pra texto longo, onde as letras se compensam, e ERRA FEIO
+ * em legenda de short: "porque não" no Kinetic (corpo 187) estourava o
+ * quadro porque a frase é curta e cheia de letras largas — "p", "q", "o",
+ * "ã" — enquanto a média foi calculada num texto com "i", "l" e espaços.
  *
- * Esse número é usado em TRÊS decisões, e errar pra cima estraga as três:
- *   · corpoDaFonte()      — acha que não cabe e encolhe a fonte
- *   · caracteresPorLinha() — quebra a linha antes da hora
- *   · ancoraX()           — desvia do centro achando que vai bater no rail
+ * Média é o número certo pra pergunta errada. A pergunta é "quanto ESTA
+ * frase ocupa", e a resposta é a soma das letras dela.
  *
- * O piso de legibilidade que eu precisei criar era, em boa parte, remendo
- * deste erro.
- *
- * A medição: desenha uma régua de caracteres num quadro preto, lê o frame em
- * cinza e acha a caixa dos pixels claros. Largura ÷ (nº de caracteres × corpo)
- * é o fator real da família.
+ * O resultado é uma tabela por família com a largura de cada caractere em
+ * fração do corpo. Somar é exato: sem erro acumulado, sem folga inventada,
+ * e a quebra de linha, o corpo da fonte e a âncora passam a concordar com
+ * o que o libass realmente desenha.
  */
 import path from "node:path";
 import fs from "node:fs/promises";
 import { run, runBinario, bin } from "../src/lib/proc";
 import { FORMATOS } from "../src/lib/formatos";
 
-/**
- * A tela de medição precisa ser MUITO mais larga que o texto.
- *
- * Na primeira tentativa usei 1080x400 com corpo 100 e todas as nove famílias
- * mediram 0,255 — Anton (condensada) igual a Playfair Display (serifada
- * larga), o que é impossível. O número era 1079px: eu estava medindo a
- * MOLDURA, porque o texto transbordava e era cortado nela.
- *
- * 4000px de largura com corpo 60 deixa folga até pra serifada em caixa alta.
- */
 const LARGURA = 4000;
 const ALTURA = 300;
-const CORPO = 60;
+const CORPO = 100;
 
 /**
- * Amostra representativa de português, não "AAAA".
+ * O alfabeto que a legenda usa de verdade.
  *
- * Largura média depende da mistura de letras: um texto de "iiii" mediria
- * metade de um de "MMMM". Esta frase tem a distribuição aproximada do que as
- * legendas realmente exibem, incluindo acento e espaço.
+ * Português com acento, dígitos e a pontuação que sobrevive à transcrição.
+ * Caractere fora desta lista cai numa média no gerador — é o caso raro
+ * (emoji, símbolo), e ali a média é aceitável porque não domina a linha.
  */
-const AMOSTRA = "as regras do jogo mudaram e ninguem avisou";
+const ALFABETO =
+  "abcdefghijklmnopqrstuvwxyz" +
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+  "0123456789" +
+  "áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ" +
+  ".,!?:;-—'\"()% ";
 
 function familias(): string[] {
   const vistas = new Set<string>();
-  for (const f of FORMATOS) {
-    vistas.add((f.legenda.fonte ?? "Arial").split("/")[0].trim());
-  }
+  for (const f of FORMATOS) vistas.add((f.legenda.fonte ?? "Arial").split("/")[0].trim());
   return [...vistas].sort();
 }
 
-/** Caixa dos pixels claros do frame, em pixels. */
-async function larguraRenderizada(
+/** Escreve o ASS de medição com o texto dado e devolve a largura em pixels. */
+async function medir(
   familia: string,
   texto: string,
   negrito: boolean,
   dir: string,
 ): Promise<number> {
-  const ass = path.join(dir, "m.ass");
+  const escapado = texto.replaceAll("\\", "").replaceAll("{", "").replaceAll("}", "");
   await fs.writeFile(
-    ass,
+    path.join(dir, "m.ass"),
     `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${LARGURA}
@@ -80,7 +70,7 @@ Style: M,${familia},${CORPO},&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,${negri
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-Dialogue: 0,0:00:00.00,0:00:02.00,M,,0,0,0,,{\\pos(${LARGURA / 2},${ALTURA / 2})}${texto}
+Dialogue: 0,0:00:00.00,0:00:02.00,M,,0,0,0,,{\\pos(${LARGURA / 2},${ALTURA / 2})}${escapado}
 `,
     "utf-8",
   );
@@ -105,57 +95,63 @@ Dialogue: 0,0:00:00.00,0:00:02.00,M,,0,0,0,,{\\pos(${LARGURA / 2},${ALTURA / 2})
       }
     }
   }
-  const largura = x1 < 0 ? 0 : x1 - x0 + 1;
-  // Encostar na borda significa que o texto foi cortado e a medida vale a
-  // moldura, não a fonte. Foi assim que a primeira calibração deu o mesmo
-  // número pra nove famílias diferentes.
+  if (x1 < 0) return 0;
   if (x0 <= 1 || x1 >= LARGURA - 2) {
-    throw new Error(
-      `${familia}: o texto encostou na borda (${x0}..${x1} de ${LARGURA}). ` +
-        `Aumente LARGURA ou diminua CORPO — a medida seria da tela.`,
-    );
+    throw new Error(`${familia}: texto encostou na borda — medida seria da tela.`);
   }
-  return largura;
+  return x1 - x0 + 1;
+}
+
+/**
+ * Largura de UM caractere, isolando o avanço dele.
+ *
+ * Medir a letra sozinha daria a tinta, não o AVANÇO (o quanto o cursor anda,
+ * incluindo o respiro lateral). A diferença importa: "i" tem tinta estreita
+ * e avanço bem maior.
+ *
+ * O truque é medir "HH" e "HcH": a diferença é exatamente o avanço de `c`
+ * mais o kerning com H dos dois lados — que é o que acontece numa palavra
+ * real. O espaço, que não tem tinta nenhuma, só existe nessa forma.
+ */
+async function larguraDoCaractere(
+  familia: string,
+  c: string,
+  negrito: boolean,
+  baseHH: number,
+  dir: string,
+): Promise<number> {
+  const comLetra = await medir(familia, `H${c}H`, negrito, dir);
+  return Math.max(0, comLetra - baseHH);
 }
 
 async function main() {
   const dir = path.join(process.cwd(), "saidas", "calibracao");
   await fs.mkdir(dir, { recursive: true });
 
-  console.log(`corpo ${CORPO}px · amostra de ${AMOSTRA.length} caracteres\n`);
-  console.log(
-    "familia".padEnd(20) +
-      "minusc.".padStart(9) +
-      "MAIUSC.".padStart(9) +
-      "  (fator por caractere)",
-  );
-
-  const tabela: Record<string, { baixa: number; alta: number }> = {};
+  const tabela: Record<string, Record<string, number>> = {};
 
   for (const familia of familias()) {
-    const baixaPx = await larguraRenderizada(familia, AMOSTRA, true, dir);
-    const altaPx = await larguraRenderizada(
-      familia, AMOSTRA.toUpperCase(), true, dir,
-    );
-    const baixa = baixaPx / (AMOSTRA.length * CORPO);
-    const alta = altaPx / (AMOSTRA.length * CORPO);
-    tabela[familia.toLowerCase()] = {
-      baixa: Number(baixa.toFixed(3)),
-      alta: Number(alta.toFixed(3)),
-    };
+    console.log(`medindo ${familia}…`);
+    const baseHH = await medir(familia, "HH", true, dir);
+    const larguras: Record<string, number> = {};
+
+    for (const c of ALFABETO) {
+      const px = await larguraDoCaractere(familia, c, true, baseHH, dir);
+      larguras[c] = Number((px / CORPO).toFixed(4));
+    }
+
+    tabela[familia.toLowerCase()] = larguras;
+    const media =
+      Object.values(larguras).reduce((a, b) => a + b, 0) / Object.keys(larguras).length;
     console.log(
-      familia.padEnd(20) +
-        baixa.toFixed(3).padStart(9) +
-        alta.toFixed(3).padStart(9),
+      `  ${familia.padEnd(18)} média ${media.toFixed(3)} | ` +
+        `i=${larguras["i"]} m=${larguras["m"]} M=${larguras["M"]} espaço=${larguras[" "]}`,
     );
   }
 
-  console.log("\n--- cole em legendas.ts ---\n");
-  console.log("const LARGURA_POR_FAMILIA: Record<string, { baixa: number; alta: number }> = {");
-  for (const [nome, v] of Object.entries(tabela)) {
-    console.log(`  "${nome}": { baixa: ${v.baixa}, alta: ${v.alta} },`);
-  }
-  console.log("};");
+  const saida = path.join(process.cwd(), "src", "lib", "larguras-fonte.json");
+  await fs.writeFile(saida, JSON.stringify(tabela, null, 1), "utf-8");
+  console.log(`\ntabela gravada em ${saida}`);
 }
 
 main().catch((e) => {
