@@ -129,6 +129,50 @@ async function main() {
     );
   }
 
+  /**
+   * QUEM SOBROU, uma por uma.
+   *
+   * Chegou a hora em que a taxa agregada parou de ensinar: 81% é "8 amostras
+   * erradas", e 8 casos concretos dizem o que 19% não diz. As colunas são as
+   * três perguntas que separam as causas possíveis:
+   *
+   *   dist > meia+algo, com 1 rosto  →  a câmera não chegou (problema de
+   *                                     trajetória, dá para consertar)
+   *   preso na borda                 →  o rosto está a menos de meia largura
+   *                                     da margem do vídeo; NENHUMA posição
+   *                                     alcança (não é consertável aqui)
+   *   2+ rostos                      →  o "principal" pode ter trocado de
+   *                                     pessoa entre amostras, e a câmera
+   *                                     está certa sobre o alvo anterior
+   */
+  if (process.env.DETALHE === "1") {
+    const posicao = (t: number) => centroEm(porCena, t);
+    console.log("\n  amostras que a câmera POR CENA errou (régua principal):");
+    console.log("     t     câmera    rosto    dist   rostos  nota");
+    for (const a of amostras) {
+      if (a.rostos.length === 0) continue;
+      if (acerta(a, posicao(a.t), meia, "principal")) continue;
+      const r = a.rostos[0];
+      const c = r.x + r.w / 2;
+      const x = posicao(a.t);
+      const alcancavel = c >= meia && c <= fonte.largura - meia;
+      const outroDentro = a.rostos.some(
+        (q) => Math.abs(q.x + q.w / 2 - x) <= meia,
+      );
+      const nota = !alcancavel
+        ? "fora de alcance (colado na borda do vídeo)"
+        : outroDentro
+          ? "outro rosto está no quadro — trocou o principal?"
+          : "a câmera não chegou";
+      console.log(
+        `  ${a.t.toFixed(1).padStart(5)}  ${x.toFixed(0).padStart(6)}  ` +
+          `${c.toFixed(0).padStart(6)}  ${Math.abs(c - x).toFixed(0).padStart(5)}  ` +
+          `${String(a.rostos.length).padStart(5)}   ${nota}`,
+      );
+    }
+    console.log();
+  }
+
   const fixo = taxa(amostras, () => fonte.largura / 2, meia, "principal");
   const cena = taxa(amostras, (t) => centroEm(porCena, t), meia, "principal");
   console.log();
