@@ -3,6 +3,9 @@ import { spawn } from "node:child_process";
 import { Cancelado } from "../src/lib/proc";
 import {
   planejarTrajetoria,
+  centroEm,
+  escolherPrincipal,
+  larguraDoCrop,
   type Amostra,
 } from "../src/lib/enquadramento/trajetoria";
 import { planejarTrajetoriaPorCena } from "../src/lib/enquadramento/trajetoria-cenas";
@@ -121,6 +124,16 @@ function detectar(
   });
 }
 
+/**
+ * Quanto seguir precisa ganhar do crop central para ser aplicado, em fração
+ * das amostras avaliadas.
+ *
+ * 8% ≈ 3 amostras num trecho de 30 s a 2 Hz. Abaixo disso o ganho não se
+ * distingue do erro do próprio detector — que perde e reencontra rosto entre
+ * quadros vizinhos — e estaríamos mexendo a câmera com base em ruído.
+ */
+const MARGEM = 0.08;
+
 export type Rastreio = {
   /** A cadeia de filtro pronta pro -vf, já com escala e recorte. */
   filtro: string;
@@ -131,6 +144,10 @@ export type Rastreio = {
   /** Amostras em que havia alguém — a medida de "valeu a pena rastrear". */
   comRosto: number;
   amostras: number;
+  /** O placar que autorizou o rastreio, para o log poder mostrar a conta. */
+  acertosFixo: number;
+  acertosSeguindo: number;
+  avaliadas: number;
 };
 
 /**
@@ -213,11 +230,53 @@ export async function rastrearRosto(
   ) as Ponto[];
   if (pontos.length === 0) return null;
 
+  /**
+   * A PROVA ANTES DE USAR: a trajetória tem que GANHAR do crop central, neste
+   * vídeo, ou ela não é aplicada.
+   *
+   * Isto existe porque medir desmentiu a expectativa. Num trailer de cinema o
+   * crop central acerta 74% das amostras e a trajetória rastreada, 72% — o
+   * rastreamento PERDE. E não é defeito dele: um diretor de fotografia já
+   * compôs o assunto perto do centro do quadro, então a câmera fixa herda um
+   * enquadramento pensado por uma pessoa, e mexer nele só pode piorar. O
+   * rastreamento vale onde não houve essa composição: podcast com câmera
+   * parada e o convidado fora do centro, gravação de celular, gameplay.
+   *
+   * "Depende do material" não é motivo para chutar — é motivo para MEDIR o
+   * material. As amostras e a trajetória já estão na mão aqui; comparar as
+   * duas custa um laço e responde a pergunta para este vídeo específico, em
+   * vez de para a média de todos os vídeos do mundo.
+   *
+   * A margem existe para que empate mantenha o crop fixo: movimento tem custo
+   * para quem assiste, e ganhar por uma amostra não paga esse custo.
+   */
+  const meia = larguraDoCrop(fonte, saida) / 2;
+  const dentro = (a: Amostra, x: number) => {
+    const r = escolherPrincipal(a.rostos);
+    return r !== null && Math.abs(r.x + r.w / 2 - x) <= meia;
+  };
+  const avaliadas = amostras.filter((a) => a.rostos.length > 0);
+  const acertosFixo = avaliadas.filter((a) => dentro(a, fonte.largura / 2)).length;
+  const acertosSeguindo = avaliadas.filter((a) =>
+    dentro(a, centroEm(pontos, a.t)),
+  ).length;
+
+  if (acertosSeguindo < acertosFixo + Math.max(1, avaliadas.length * MARGEM)) {
+    console.log(
+      `[worker] sem rastreio: seguir acerta ${acertosSeguindo}/${avaliadas.length} ` +
+        `e o crop central acerta ${acertosFixo} — não compensa mexer a câmera`,
+    );
+    return null;
+  }
+
   return {
     filtro: filtroDeCropAnimado(pontos, fonte, saida),
     pontos: pontos.length,
     cenas: cortes.length + 1,
     comRosto,
     amostras: amostras.length,
+    acertosFixo,
+    acertosSeguindo,
+    avaliadas: avaliadas.length,
   };
 }
