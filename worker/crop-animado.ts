@@ -324,7 +324,12 @@ function montarExpressao(amostras: Amostra[], xMaximo: number): string {
 
   // Um ponto só é enquadramento ESTÁTICO deslocado — nada de expressão. O
   // ffmpeg pula a avaliação por frame inteira, e o filtro fica legível no log.
-  if (amostras.length === 1) {
+  //
+  // Vários pontos no MESMO x caem aqui também, e não é caso raro: alguém
+  // sentado falando pra câmera produz trajetória reta, e a simplificação a
+  // reduz a duas pontas iguais. Não faz sentido pagar avaliação por frame
+  // pra devolver sempre o mesmo número.
+  if (amostras.every((a) => a.x === amostras[0].x)) {
     return String(Math.round(limite(amostras[0].x, 0, xMaximo)));
   }
 

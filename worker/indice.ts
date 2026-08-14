@@ -32,6 +32,7 @@ import {
 import { Cancelado } from "../src/lib/proc";
 import { gerarProxy, subirProxy, ProxyNaoCabe } from "./proxy";
 import { renderizarProjeto } from "./renderizar-projeto";
+import { rastrearRosto } from "./rastrear-rosto";
 import {
   registrarCorte,
   subirVideoDoCorte,
@@ -153,17 +154,42 @@ async function escolherEnquadramento(
   corte: { inicio_s: number; fim_s: number },
   fonteVertical: boolean,
   rotulo: string,
-): Promise<Enquadramento> {
-  if (fonteVertical) return "preencher";
+  sinal?: AbortSignal,
+): Promise<{ enquadramento: Enquadramento; filtroDeCrop: string | null }> {
+  if (fonteVertical) return { enquadramento: "preencher", filtroDeCrop: null };
+
+  let enquadramento: Enquadramento = "preencher";
   try {
     const medida = await medirQuadro(video, corte.inicio_s, corte.fim_s);
-    const { enquadramento, motivo } = decidirEnquadramento(medida);
-    console.log(`[worker] ${rotulo}: ${enquadramento} — ${motivo}`);
-    return enquadramento;
+    const decisao = decidirEnquadramento(medida);
+    enquadramento = decisao.enquadramento;
+    console.log(`[worker] ${rotulo}: ${enquadramento} — ${decisao.motivo}`);
   } catch (e) {
     console.error(`[worker] ${rotulo}: medição falhou, usando crop central:`, e);
-    return "preencher";
   }
+
+  /**
+   * Rastrear rosto só faz sentido em "preencher".
+   *
+   * Em "ajustar" o quadro inteiro cabe na largura e o resto é fundo
+   * desfocado — não existe recorte lateral pra movimentar, então detectar
+   * seria gastar CPU pra não usar o resultado.
+   */
+  if (enquadramento !== "preencher") return { enquadramento, filtroDeCrop: null };
+
+  const rastreio = await rastrearRosto(
+    video,
+    corte,
+    { largura: 1080, altura: 1920 },
+    sinal,
+  );
+  if (rastreio) {
+    console.log(
+      `[worker] ${rotulo}: seguindo rosto — ${rastreio.pontos} pontos, ` +
+        `rosto em ${rastreio.comRosto}/${rastreio.amostras} amostras`,
+    );
+  }
+  return { enquadramento, filtroDeCrop: rastreio?.filtro ?? null };
 }
 
 async function guardarFonte(video: string, analiseId: string): Promise<void> {
@@ -264,8 +290,8 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
         job.id, job.user_id, i + 1, corte, "renderizando",
       );
       try {
-        const enquadramento = await escolherEnquadramento(
-          video, corte, vertical, `corte ${i + 1}`,
+        const { enquadramento, filtroDeCrop } = await escolherEnquadramento(
+          video, corte, vertical, `corte ${i + 1}`, sinal,
         );
         const mp4 = await renderizarCorte(
           video,
@@ -275,6 +301,7 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
           `corte-${i + 1}`,
           {
             enquadramento,
+            filtroDeCrop,
             sinal,
             // O formato vem por corte: a IA casou cada trecho com o preset
             // que combina com aquele conteúdo. Escolha fixa do usuário já
@@ -388,8 +415,8 @@ async function renderizarAprovados(
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${aprovados.length}`);
       await marcarCorteRenderizando(corte.id);
       try {
-        const enquadramento = await escolherEnquadramento(
-          video, corte, vertical, `corte ${corte.ordem}`,
+        const { enquadramento, filtroDeCrop } = await escolherEnquadramento(
+          video, corte, vertical, `corte ${corte.ordem}`, sinal,
         );
         const mp4 = await renderizarCorte(
           video,
@@ -399,6 +426,7 @@ async function renderizarAprovados(
           `corte-${corte.ordem}`,
           {
             enquadramento,
+            filtroDeCrop,
             sinal,
             // Reedição pode trocar o formato só deste corte.
             estilo: corte.estilo ?? formatoDaAnalise,

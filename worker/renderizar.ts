@@ -31,6 +31,15 @@ export type OpcoesRender = {
    * histórico. Quem mede e escolhe é worker/enquadramento.ts.
    */
   enquadramento?: Enquadramento;
+  /**
+   * Cadeia de escala + crop que SEGUE O ROSTO, vinda de rastrearRosto().
+   *
+   * Chega pronta em vez de o render chamar o detector: a detecção é lenta,
+   * best-effort e precisa acontecer uma vez por corte — deixá-la aqui
+   * dentro faria cada re-render pagar de novo, e amarraria o renderizador a
+   * Python e a um modelo em disco.
+   */
+  filtroDeCrop?: string | null;
   /** Cancelamento: mata o ffmpeg em vez de esperar o render terminar. */
   sinal?: AbortSignal;
   /** Palavras que a IA marcou pra ganhar a cor de destaque na legenda. */
@@ -50,6 +59,7 @@ export async function renderizarCorte(
     tituloTela,
     limparSilencio = false,
     enquadramento = "preencher",
+    filtroDeCrop = null,
     sinal,
     destaques = [],
   } = opcoes;
@@ -88,7 +98,21 @@ export async function renderizarCorte(
    * saída implícitas, o que permite prefixar um rótulo de entrada e colar a
    * legenda com vírgula no fim — que é o que os dois caminhos abaixo fazem.
    */
-  const grafoVideo = filtroDeEnquadramento(enquadramento) + sufixoLegenda;
+  /**
+   * O rastreamento de rosto SUBSTITUI o crop central quando existe.
+   *
+   * Só entra no lugar de "preencher": em "ajustar" o quadro inteiro cabe na
+   * largura e não há o que seguir — não existe recorte lateral pra
+   * movimentar. Rastrear ali seria trabalho jogado fora.
+   *
+   * Quando não há rastreio (sem rosto no trecho, detector indisponível,
+   * trecho longo demais), `filtroDeCrop` é nulo e a cadeia é exatamente a
+   * de antes.
+   */
+  const grafoVideo =
+    (filtroDeCrop && enquadramento === "preencher"
+      ? filtroDeCrop
+      : filtroDeEnquadramento(enquadramento)) + sufixoLegenda;
 
   const args: string[] = [];
 

@@ -44,10 +44,23 @@ function centroVerdadeiro(t: number): number {
   return 640 + 300 * Math.sin(OMEGA * t);
 }
 
-/** Banda de 8 linhas que atravessa o objeto no quadro de saída. O objeto vive
- *  na metade vertical da fonte, que vira a metade vertical da saída. */
-const BANDA_Y = 956;
+/** Banda de 8 linhas que atravessa o objeto. O objeto vive na metade vertical
+ *  da fonte, que vira a metade vertical da saída. */
 const BANDA_H = 8;
+const BANDA_Y_FONTE = 356;
+const BANDA_Y_SAIDA = 956;
+
+/**
+ * Tolerância da medição, em px de saída.
+ *
+ * NÃO é folga arbitrária, é a soma dos arredondamentos conhecidos:
+ *   · o ffmpeg passa o `x` da expressão por lrint e depois derruba pro par
+ *     abaixo (croma do yuv420p) — até 1,5px de deslocamento;
+ *   · a coluna da borda do objeto pode cruzar o limiar de claro/escuro pra
+ *     um lado ou pro outro — ±0,5px.
+ * Tudo que passar disso é a trajetória tendo errado o alvo.
+ */
+const TOLERANCIA = 4;
 
 let falhas = 0;
 
@@ -148,7 +161,7 @@ type Medida = {
 };
 
 /**
- * Lê UM frame exato e acha o objeto.
+ * Lê UM frame exato e acha o que é claro nele.
  *
  * O `-ss` vai DEPOIS do `-i` (busca exata, sem pular pro keyframe) e mira meio
  * frame antes do alvo: o ffmpeg descarta tudo com pts menor que o -ss, então
@@ -156,25 +169,29 @@ type Medida = {
  * cravado. Medir "por volta de 2,5s" não serviria — a conta esperada depende
  * do instante EXATO que o filtro viu.
  */
-async function medir(video: string, quadro: number): Promise<Medida | null> {
+async function medirBanda(
+  video: string,
+  largura: number,
+  y: number,
+  quadro: number,
+): Promise<Medida | null> {
   const buf = await runBinario(
     bin.ffmpeg(),
     [
       "-i", video,
       "-ss", ((quadro - 0.5) / FPS).toFixed(6),
       "-frames:v", "1",
-      "-vf", `crop=${SAIDA.largura}:${BANDA_H}:0:${BANDA_Y}`,
+      "-vf", `crop=${largura}:${BANDA_H}:0:${y}`,
       "-pix_fmt", "gray", "-f", "rawvideo", "-",
     ],
     { timeoutMs: 60_000 },
   );
-  const esperado = SAIDA.largura * BANDA_H;
-  if (buf.length < esperado) return null;
+  if (buf.length < largura * BANDA_H) return null;
 
   const claras: { i: number; v: number }[] = [];
-  for (let x = 0; x < SAIDA.largura; x++) {
+  for (let x = 0; x < largura; x++) {
     let soma = 0;
-    for (let y = 0; y < BANDA_H; y++) soma += buf[y * SAIDA.largura + x];
+    for (let y2 = 0; y2 < BANDA_H; y2++) soma += buf[y2 * largura + x];
     const media = soma / BANDA_H;
     if (media > 128) claras.push({ i: x, v: media });
   }
@@ -187,6 +204,40 @@ async function medir(video: string, quadro: number): Promise<Medida | null> {
     direita: claras[claras.length - 1].i,
     colunas: claras.length,
   };
+}
+
+/** No vídeo de saída (1080 de largura). */
+const medir = (video: string, quadro: number) =>
+  medirBanda(video, SAIDA.largura, BANDA_Y_SAIDA, quadro);
+
+/**
+ * Onde o objeto REALMENTE está na fonte, medido em vez de deduzido.
+ *
+ * O `overlay` trunca o x pro inteiro e um quadrado de 80px tem centro em
+ * x+39,5, não x+40 — dois deslocamentos de até 1,5px da FONTE, que viram 4px
+ * na saída depois da escala. Deduzir a posição pela fórmula em vez de medir
+ * jogaria esse erro da fonte sintética na conta do crop e obrigaria a afrouxar
+ * a tolerância até ela não provar mais nada.
+ */
+const medirNaFonte = (video: string, quadro: number) =>
+  medirBanda(video, FONTE.largura, BANDA_Y_FONTE, quadro);
+
+/**
+ * Coluna da saída onde cai um ponto da fonte.
+ *
+ * O `scale` mapeia CENTRO DE PIXEL pra centro de pixel: destino =
+ * (origem + 0,5) × fator − 0,5. Ignorar o meio pixel deixa um viés fixo de
+ * ~0,8px em toda medição — pequeno, mas é exatamente o tipo de erro que se
+ * disfarça de tolerância necessária.
+ */
+function naSaida(posFonte: number, fator: number, x: number): number {
+  return (posFonte + 0.5) * fator - 0.5 - x;
+}
+
+/** O ffmpeg passa `x` por lrint e depois alinha ao croma (par, pra baixo). */
+function xUsadoPeloFfmpeg(x: number): number {
+  const r = Math.round(x);
+  return r - (r % 2);
 }
 
 /** O `scale=` que o gerador escolheu, lido da saída dele — assim o esperado
@@ -202,11 +253,6 @@ function xEstaticoDo(filtro: string): number {
   const m = /crop=\d+:\d+:(\d+):\d+$/.exec(filtro);
   if (!m) throw new Error(`filtro não é estático: ${filtro}`);
   return Number(m[1]);
-}
-
-/** O ffmpeg alinha `x` ao croma: em yuv420p ele cai pro par abaixo. */
-function alinhado(x: number): number {
-  return x - (x % 2);
 }
 
 /** Trajetória amostrada da lei verdadeira. */
@@ -237,7 +283,7 @@ async function casoMovimento(dir: string, fonte: string) {
 
   // Controle: o mesmo material com o crop central FIXO. Serve pra provar que
   // o número do caso animado não é coincidência do enquadramento.
-  const centralX = alinhado(Math.round(plano.xMaximo / 2));
+  const centralX = xUsadoPeloFfmpeg(plano.xMaximo / 2);
   const controle = path.join(dir, "controle-central.mp4");
   await renderizar(
     fonte,
@@ -246,29 +292,37 @@ async function casoMovimento(dir: string, fonte: string) {
     controle,
   );
 
+  const fator = plano.escalado.largura / FONTE.largura;
   const meio = SAIDA.largura / 2;
-  const quadros = [20, 45, 75, 110, 160];
+  const quadros = [20, 45, 75, 110, 130];
   let piorAnimado = 0;
   let piorControle = 0;
 
   for (const q of quadros) {
     const t = q / FPS;
+    const naFonte = await medirNaFonte(fonte, q);
     const a = await medir(mp4, q);
     const c = await medir(controle, q);
-    if (!a) {
-      conferir(false, `t=${t.toFixed(3)}s · objeto não encontrado no animado`);
+    if (!a || !naFonte) {
+      conferir(false, `t=${t.toFixed(3)}s · objeto não encontrado`);
       continue;
     }
-    const erro = Math.abs(a.centro - meio);
+    // O alvo é o CENTRO dos 1080px. Os dois termos de correção não são folga:
+    // um é o meio pixel do `scale`, o outro é a diferença entre onde o overlay
+    // desenhou o quadrado e onde a trajetória acreditou que ele estivesse —
+    // erro da fonte sintética, medido, não estimado.
+    const alvo =
+      meio + (naFonte.centro - centroVerdadeiro(t)) * fator + 0.5 * fator - 0.5;
+    const erro = Math.abs(a.centro - alvo);
     piorAnimado = Math.max(piorAnimado, erro);
     const desvioControle = c ? Math.abs(c.centro - meio) : Infinity;
     if (Number.isFinite(desvioControle)) {
       piorControle = Math.max(piorControle, desvioControle);
     }
     conferir(
-      erro <= 6,
-      `t=${t.toFixed(3)}s · centro fonte ${centroVerdadeiro(t).toFixed(0)}px → ` +
-        `saiu na coluna ${a.centro.toFixed(1)} (alvo ${meio}, erro ${erro.toFixed(1)}px) · ` +
+      erro <= TOLERANCIA,
+      `t=${t.toFixed(3)}s · objeto em ${naFonte.centro.toFixed(1)}px da fonte → ` +
+        `saiu na coluna ${a.centro.toFixed(1)} (alvo ${alvo.toFixed(1)}, erro ${erro.toFixed(1)}px) · ` +
         `crop fixo teria errado ${desvioControle === Infinity ? "o quadro inteiro" : desvioControle.toFixed(0) + "px"}`,
     );
   }
@@ -296,16 +350,21 @@ async function casoUmPonto(dir: string, fonte: string) {
   conferir((await dimensoes(mp4)) === "1080,1920", "um ponto · saída 1080x1920");
 
   const fator = escalaDo(filtro);
-  const x = alinhado(xEstaticoDo(filtro));
+  const x = xUsadoPeloFfmpeg(xEstaticoDo(filtro));
 
   for (const q of [6, 15]) {
     const t = q / FPS;
+    const naFonte = await medirNaFonte(fonte, q);
     const m = await medir(mp4, q);
+    if (!naFonte) {
+      conferir(false, `t=${t.toFixed(3)}s · objeto não encontrado na fonte`);
+      continue;
+    }
     // Crop parado: o objeto passeia, e onde ele cai é conta fechada.
-    const esperado = centroVerdadeiro(t) * fator - x;
+    const esperado = naSaida(naFonte.centro, fator, x);
     const erro = m ? Math.abs(m.centro - esperado) : Infinity;
     conferir(
-      erro <= 6,
+      erro <= TOLERANCIA,
       `t=${t.toFixed(3)}s · esperado na coluna ${esperado.toFixed(1)}, ` +
         `medido ${m ? m.centro.toFixed(1) : "nada"} (erro ${erro.toFixed(1)}px)`,
     );
@@ -355,12 +414,23 @@ async function casoDesordenado(dir: string, fonte: string) {
   await renderizar(fonte, bagunca.filtro, mp4);
   conferir((await dimensoes(mp4)) === "1080,1920", "desordenado · saída 1080x1920");
 
+  const fator = bagunca.escalado.largura / FONTE.largura;
   const meio = SAIDA.largura / 2;
   for (const q of [45, 110]) {
     const t = q / FPS;
+    const naFonte = await medirNaFonte(fonte, q);
     const m = await medir(mp4, q);
-    const erro = m ? Math.abs(m.centro - meio) : Infinity;
-    conferir(erro <= 6, `t=${t.toFixed(3)}s · segue igual (erro ${erro.toFixed(1)}px)`);
+    if (!naFonte) {
+      conferir(false, `t=${t.toFixed(3)}s · objeto não encontrado na fonte`);
+      continue;
+    }
+    const alvo =
+      meio + (naFonte.centro - centroVerdadeiro(t)) * fator + 0.5 * fator - 0.5;
+    const erro = m ? Math.abs(m.centro - alvo) : Infinity;
+    conferir(
+      erro <= TOLERANCIA,
+      `t=${t.toFixed(3)}s · segue igual (erro ${erro.toFixed(1)}px)`,
+    );
   }
 }
 
@@ -429,11 +499,16 @@ async function casoSegurar(dir: string, fonte: string) {
     [165, ultimo.x, "depois do último ponto (t=5.500s > 4s)"],
   ] as [number, number, string][]) {
     const t = q / FPS;
+    const naFonte = await medirNaFonte(fonte, q);
     const m = await medir(mp4, q);
-    const esperado = centroVerdadeiro(t) * fator - alinhado(Math.round(seguro));
+    if (!naFonte) {
+      conferir(false, `${rotulo} · objeto não encontrado na fonte`);
+      continue;
+    }
+    const esperado = naSaida(naFonte.centro, fator, xUsadoPeloFfmpeg(seguro));
     const erro = m ? Math.abs(m.centro - esperado) : Infinity;
     conferir(
-      erro <= 8,
+      erro <= TOLERANCIA,
       `${rotulo} · x seguro em ${Math.round(seguro)}, objeto esperado na ` +
         `coluna ${esperado.toFixed(0)}, medido ${m ? m.centro.toFixed(0) : "nada"} ` +
         `(erro ${erro.toFixed(1)}px)`,
@@ -488,6 +563,15 @@ async function casoDegenerado() {
   const vazio = filtroDeCropAnimado([], FONTE, SAIDA);
   console.log(`     sem ponto: ${vazio}`);
   conferir(!vazio.includes("if("), "sem ponto → crop central estático, como antes do rastreamento");
+
+  // Rosto parado: vários pontos, um x só. Não vale pagar avaliação por frame.
+  const parado = filtroDeCropAnimado(
+    Array.from({ length: 60 }, (_, i) => ({ t: i * 0.1, centroX: 700 })),
+    FONTE,
+    SAIDA,
+  );
+  console.log(`     60 pontos no mesmo lugar: ${parado}`);
+  conferir(!parado.includes("if("), "trajetória parada → crop fixo, sem expressão");
 
   // Fonte já 9:16: cobrir não deixa nada de sobra na horizontal.
   const semFolga = filtroDeCropAnimado(
