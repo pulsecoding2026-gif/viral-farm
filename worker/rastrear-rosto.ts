@@ -29,6 +29,28 @@ const PY = process.env.PY_VISAO ?? "/opt/viral-farm/.venv-visao/bin/python";
 const MODELO = process.env.MODELO_YUNET ?? "/opt/viral-farm/.venv-visao/yunet.onnx";
 
 /**
+ * DESLIGADO POR PADRÃO — e a razão está medida.
+ *
+ * Num trailer (corte de cena a cada 2–3s) o rastreamento entregou o rosto
+ * dentro do recorte em 44% das amostras, contra 65% do crop central fixo.
+ * Pior que não fazer nada.
+ *
+ * A causa não é bug de conta: a escala e o filtro estão certos, e o teste
+ * sintético segue objeto com 1,3px de erro. É o MATERIAL. A trajetória foi
+ * calibrada pra movimento contínuo — pessoa sentada num podcast, que é onde
+ * seguir rosto vale ouro. Corte de cena teleporta o rosto, a suavização
+ * trata isso como movimento e a câmera sai atrás, chegando atrasada e no
+ * lugar de onde a pessoa já saiu.
+ *
+ * O que falta pra ligar: DETECTAR CORTE DE CENA e reiniciar a trajetória em
+ * cada um, em vez de interpolar por cima. Enquanto isso não existe, ligar
+ * seria trocar um enquadramento honesto por uma câmera perseguindo fantasma.
+ *
+ * Ligue com RASTREAR_ROSTO=1 pra medir em material seu.
+ */
+const LIGADO = process.env.RASTREAR_ROSTO === "1";
+
+/**
  * Amostras por segundo.
  *
  * 2 Hz é o ponto de equilíbrio medido: a 640px custa ~7% do tempo real na VPS
@@ -121,6 +143,8 @@ export async function rastrearRosto(
   saida: { largura: number; altura: number },
   sinal?: AbortSignal,
 ): Promise<Rastreio | null> {
+  if (!LIGADO) return null;
+
   const duracao = janela.fim_s - janela.inicio_s;
   if (duracao <= 0 || duracao > MAXIMO_S) return null;
 
