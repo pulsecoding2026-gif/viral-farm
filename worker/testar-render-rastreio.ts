@@ -52,16 +52,18 @@ async function desvioDoCentro(mp4: string): Promise<{
   pior: number;
   perdidos: number;
   amostras: number;
+  /** Em que instantes o detector não achou ninguém — para cruzar os dois. */
+  vazios: number[];
 }> {
   const { largura, amostras } = await detectar(mp4);
   const centro = largura / 2;
   const desvios: number[] = [];
-  let perdidos = 0;
+  const vazios: number[] = [];
 
   for (const a of amostras) {
     const r = a.rostos[0];
     if (!r) {
-      perdidos += 1;
+      vazios.push(a.t);
       continue;
     }
     desvios.push(Math.abs(r.x + r.w / 2 - centro) / largura);
@@ -72,8 +74,9 @@ async function desvioDoCentro(mp4: string): Promise<{
       ? (desvios.reduce((s, d) => s + d, 0) / desvios.length) * 100
       : 0,
     pior: desvios.length ? Math.max(...desvios) * 100 : 0,
-    perdidos,
+    perdidos: vazios.length,
     amostras: amostras.length,
+    vazios,
   };
 }
 
@@ -118,6 +121,25 @@ async function main() {
 
   console.log(linha("crop fixo", sem));
   console.log(linha("seguindo", com));
+
+  /**
+   * QUEM PERDEU O ROSTO, e só quem o OUTRO manteve.
+   *
+   * O número agregado ("20 contra 18") não diz se são os mesmos instantes com
+   * dois a mais, ou dois conjuntos diferentes que por acaso têm tamanhos
+   * parecidos. A pergunta útil é a assimétrica: em que instantes o crop fixo
+   * mostrou alguém e o rastreamento não? Só esses são regressão; o resto é o
+   * detector falhando igual nos dois, ou trecho que não tinha ninguém desde a
+   * origem — e o trecho medido tem 17 amostras assim.
+   */
+  const soNoFixo = com.vazios.filter((t) => !sem.vazios.includes(t));
+  const soNoSeguindo = sem.vazios.filter((t) => !com.vazios.includes(t));
+  console.log(
+    `\n  perdeu SÓ com rastreamento: ${soNoFixo.length ? soNoFixo.map((t) => t.toFixed(1)).join(", ") + "s" : "nenhum"}`,
+  );
+  console.log(
+    `  perdeu SÓ com crop fixo:    ${soNoSeguindo.length ? soNoSeguindo.map((t) => t.toFixed(1)).join(", ") + "s" : "nenhum"}`,
+  );
 
   console.log();
   let falhas = 0;
