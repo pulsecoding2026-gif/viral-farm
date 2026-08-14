@@ -287,25 +287,23 @@ export function pontuacao(r: Rosto): number {
  * Rosto desfocado não é descartado, só descontado: em plano aberto tudo pode
  * estar meio mole, e ali o desconto se aplica por igual e não muda nada.
  */
+export function notaNoFrame(r: Rosto, rostos: Rosto[]): number {
+  const focoMax = Math.max(
+    0,
+    ...rostos.map((q) => Math.max(0, finito(q.nitidez ?? 0, 0))),
+  );
+  // Sem nitidez medida, o fator é 1 e a decisão volta a ser só a pontuação.
+  const relativo =
+    focoMax > 0 ? Math.max(0, finito(r.nitidez ?? 0, 0)) / focoMax : 1;
+  return pontuacao(r) * (0.5 + 0.5 * relativo);
+}
+
 export function escolherPrincipal(rostos: Rosto[]): Rosto | null {
   if (rostos.length === 0) return null;
   if (rostos.length === 1) return rostos[0];
-
-  const focos = rostos.map((r) => Math.max(0, finito(r.nitidez ?? 0, 0)));
-  const focoMax = Math.max(...focos);
-
-  let melhor = rostos[0];
-  let melhorNota = -Infinity;
-  for (let i = 0; i < rostos.length; i++) {
-    // Sem nitidez medida, o fator é 1 e a decisão volta a ser só a pontuação.
-    const relativo = focoMax > 0 ? focos[i] / focoMax : 1;
-    const nota = pontuacao(rostos[i]) * (0.5 + 0.5 * relativo);
-    if (nota > melhorNota) {
-      melhorNota = nota;
-      melhor = rostos[i];
-    }
-  }
-  return melhor;
+  return rostos.reduce((a, b) =>
+    notaNoFrame(b, rostos) > notaNoFrame(a, rostos) ? b : a,
+  );
 }
 
 function centroDe(r: Rosto): number {
@@ -404,7 +402,18 @@ export function planejarTrajetoria(
     let observado: number | null = null;
 
     if (rostos.length > 0) {
-      const melhor = rostos.reduce((a, b) => (pontuacao(b) > pontuacao(a) ? b : a));
+      /**
+       * `escolherPrincipal`, e não o máximo de `pontuacao`.
+       *
+       * A diferença é a nitidez, que só existe comparando rostos do MESMO
+       * frame e por isso não cabe dentro de `pontuacao`. Ela decide
+       * exatamente o caso que estava errado no vídeo entregue: no frame de
+       * 24 s, o ator em primeiro plano mede 179 px de largura com nitidez
+       * 3,4, e a atriz em foco mede 100 px com nitidez 32,9 — dez vezes mais
+       * nítida. Por `pontuacao` sozinha o primeiro plano ganhava e a câmera
+       * ia para a nuca dele; comparando o foco dentro do frame, ganha ela.
+       */
+      const melhor = escolherPrincipal(rostos) as Rosto;
 
       if (alvo === null) {
         // Sem histórico não há continuidade a preservar: pega o mais evidente.
@@ -426,8 +435,11 @@ export function planejarTrajetoria(
 
         const desafiaComVantagem =
           melhor !== continuador &&
+          // Mesma nota que elegeu `melhor`: comparar por uma régua e trocar
+          // por outra deixaria a troca acontecer contra a própria escolha.
           (continuador === null ||
-            pontuacao(melhor) >= o.vantagemTroca * pontuacao(continuador));
+            notaNoFrame(melhor, rostos) >=
+              o.vantagemTroca * notaNoFrame(continuador, rostos));
 
         if (desafiaComVantagem) {
           const cx = centroDe(melhor);
