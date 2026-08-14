@@ -110,6 +110,24 @@ export type OpcoesTrajetoriaPorCena = OpcoesTrajetoria & {
    * parada, que é a preferência — mover só quando parar custa o rosto.
    */
   folgaDaBorda: number;
+
+  /**
+   * Quanto tempo a câmera leva para executar uma correção dentro da cena
+   * curta, em segundos.
+   *
+   * A correção é AGENDADA PARA TRÁS: sabendo em que amostra o rosto vai
+   * escapar, a rampa começa este tanto antes dela e termina exatamente nela.
+   * A câmera chega no lugar no instante em que o lugar passa a importar, em
+   * vez de sair atrás depois do fato — que é o defeito que derrubou a
+   * trajetória contínua para 58%.
+   *
+   * 0,4 s: rápido o bastante para caber numa cena de 1,6 s sem ocupar a cena
+   * inteira, lento o bastante para ler como movimento de câmera e não como
+   * corte. Coincide com o τ do filtro contínuo por construção — é a mesma
+   * pergunta ("em quanto tempo uma câmera se reposiciona sem chamar
+   * atenção?") respondida duas vezes.
+   */
+  rampaDaCorrecao_s: number;
 };
 
 export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
@@ -118,6 +136,7 @@ export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
   minAmostrasParaSeguir: 4,
   saltoEpsilon_s: 0.001,
   folgaDaBorda: 0.9,
+  rampaDaCorrecao_s: 0.4,
 };
 
 function limitar(v: number, min: number, max: number): number {
@@ -436,25 +455,44 @@ export function planejarTrajetoriaPorCena(
           .filter((x): x is { t: number; r: Rosto } => x.r !== undefined)
           .sort((a, b) => a.t - b.t);
 
-        const escapa = foco.some(
-          (x) => Math.abs(centroDe(x.r) - fixa) > meia * o.folgaDaBorda,
-        );
+        /**
+         * CORRIGE ONDE ESCAPA, não entre as pontas.
+         *
+         * A primeira versão disto fazia um pan reto do primeiro ao último
+         * rosto da cena, e não mudou NADA na medição — 79% antes e depois.
+         * O motivo é geométrico: a régua avalia amostra a amostra, e uma reta
+         * ligando as pontas passa POR CIMA das amostras do meio sem nenhuma
+         * obrigação de acertá-las. Movimento que não é ancorado no que se quer
+         * enquadrar é só movimento.
+         *
+         * Então a câmera anda quando, e só quando, o rosto passa da folga — e
+         * ela chega no lugar ANTES disso acontecer, via uma rampa que termina
+         * na amostra problemática. Assim as amostras anteriores continuam
+         * atendidas pela posição antiga e a que escapava é atendida pela nova.
+         * Cada ponto emitido cai exatamente sobre um `t` de amostra, que é o
+         * que faz a interpolação linear acertar em vez de passar perto.
+         */
+        const seq: Ponto[] = [{ t: ini, centroX: fixa }];
+        let atual = fixa;
 
-        if (!escapa || foco.length < 2) {
-          daCenaPontos = [{ t: ini, centroX: fixa }];
-        } else {
-          // Pan entre as pontas, cada uma presa aos limites do quadro.
-          const de = limitar(centroDe(foco[0].r), min, max);
-          const ate = limitar(centroDe(foco[foco.length - 1].r), min, max);
+        for (const { t, r } of foco) {
+          const c = centroDe(r);
+          if (Math.abs(c - atual) <= meia * o.folgaDaBorda) continue;
 
-          daCenaPontos =
-            Math.abs(ate - de) < 1
-              ? [{ t: ini, centroX: de }]
-              : [
-                  { t: ini, centroX: de },
-                  { t: Math.max(foco[foco.length - 1].t, ini + 0.05), centroX: ate },
-                ];
+          const destino = limitar(c, min, max);
+          if (Math.abs(destino - atual) < 1) continue;
+
+          // A rampa começa no instante anterior possível, sem nunca recuar
+          // atrás do último ponto já emitido nem do início da cena.
+          const anteriorT = seq[seq.length - 1].t;
+          const comeco = Math.max(anteriorT, ini, t - o.rampaDaCorrecao_s);
+          if (comeco > anteriorT) seq.push({ t: comeco, centroX: atual });
+
+          seq.push({ t: Math.max(t, comeco + 1e-3), centroX: destino });
+          atual = destino;
         }
+
+        daCenaPontos = seq;
       }
     }
 
