@@ -14,12 +14,17 @@ USO
 
 SAÍDA (stdout, uma linha, JSON):
     {"largura":1920,"altura":1080,"amostras":[
-       {"t":12.5,"rostos":[{"x":820,"y":300,"w":180,"h":220,"conf":0.94}]}]}
+       {"t":12.5,"rostos":[{"x":820,"y":300,"w":180,"h":220,"conf":0.94,
+                            "frontal":0.87,"nitidez":142.5}]}]}
 
     - `largura`/`altura` são do vídeo ORIGINAL, e as caixas dos rostos estão
       nessa mesma escala (a detecção roda menor, mas reescalamos de volta).
-    - `rostos` vem ordenado por ÁREA, maior primeiro. O rosto maior costuma ser
-      quem fala / está em foco.
+    - `rostos` vem ordenado por ÁREA, maior primeiro — ordem objetiva, NÃO um
+      palpite sobre importância. O maior rosto não é o assunto num plano
+      over-the-shoulder, onde quem está de costas em primeiro plano é o maior.
+    - `frontal` (0..1) diz se o rosto olha para a câmera ou está de perfil;
+      `nitidez` diz se está em foco, e só faz sentido comparado com os outros
+      rostos do MESMO frame. Juntos, separam o assunto do figurante grande.
     - Amostra sem rosto devolve `"rostos": []`. Ela NÃO é omitida: o consumidor
       precisa distinguir "não tinha ninguém aqui" de "não medi aqui" — a
       primeira exige soltar a câmera, a segunda exige interpolar.
@@ -262,15 +267,67 @@ def dimensao_deteccao(largura: int, altura: int, largura_max: int) -> tuple[int,
     return larg, alt
 
 
+def frontalidade(f) -> float:
+    """
+    O quanto este rosto está VIRADO PARA A CÂMERA, de 0 (perfil) a 1 (de frente).
+
+    POR QUE ISTO PASSOU A EXISTIR
+
+    O reenquadramento seguia o maior rosto do quadro, e num plano
+    over-the-shoulder — dois personagens conversando, um de costas em primeiro
+    plano — o maior rosto é justamente o que NÃO é o assunto. Extraindo o frame
+    do vídeo renderizado dá para ver o erro inteiro: o crop fixo mostrava a
+    atriz em foco, e o rastreamento tinha ido atrás da nuca escura e desfocada
+    do outro ator, que era maior. Tamanho não é importância.
+
+    COMO SE MEDE
+
+    O YuNet entrega cinco landmarks, e os dois olhos bastam. De frente, eles
+    ficam separados por perto de 45% da largura da caixa; de perfil, um se
+    esconde atrás do nariz e a separação despenca para menos de 15%. A razão
+    entre a separação e a largura é a medida, esticada para que 0,45 vire 1.
+
+    Cada linha do YuNet é [x, y, w, h, olho_dir(x,y), olho_esq(x,y), nariz(x,y),
+    boca_dir(x,y), boca_esq(x,y), score] — daí os índices.
+    """
+    largura_caixa = float(f[2])
+    if largura_caixa <= 0:
+        return 0.0
+    separacao = abs(float(f[4]) - float(f[6]))
+    return max(0.0, min(1.0, (separacao / largura_caixa) / 0.45))
+
+
+def nitidez(quadro, x: int, y: int, w: int, h: int) -> float:
+    """
+    O quanto este rosto está EM FOCO — variância do Laplaciano na caixa.
+
+    Serve à mesma pergunta da frontalidade, pelo outro lado: numa composição com
+    profundidade de campo, o assunto está nítido e o primeiro plano borrado. O
+    valor é cru e só faz sentido COMPARADO com os outros rostos do mesmo frame:
+    a variância absoluta depende de iluminação e textura, mas dentro de um mesmo
+    quadro o rosto em foco vence o desfocado com folga.
+
+    Custa pouco porque roda só na caixa do rosto, não no quadro inteiro.
+    """
+    if w <= 1 or h <= 1:
+        return 0.0
+    recorte = quadro[y:y + h, x:x + w]
+    if recorte.size == 0:
+        return 0.0
+    cinza = cv2.cvtColor(recorte, cv2.COLOR_BGR2GRAY)
+    return float(cv2.Laplacian(cinza, cv2.CV_64F).var())
+
+
 def extrair_rostos(
-    faces, escala_x: float, escala_y: float, largura: int, altura: int
+    faces, escala_x: float, escala_y: float, largura: int, altura: int,
+    quadro=None,
 ) -> list[dict]:
     """
     Converte a matriz Nx15 do YuNet em caixas na escala do vídeo original.
 
-    Cada linha é [x, y, w, h, 10 valores de landmark, score]. Landmarks (olhos,
-    nariz, cantos da boca) são descartados: o reenquadramento só precisa da
-    caixa, e carregar 10 números por rosto por amostra incharia o JSON à toa.
+    Cada linha é [x, y, w, h, 10 valores de landmark, score]. Os landmarks não
+    saem no JSON — o consumidor não sabe o que fazer com dez números soltos —
+    mas viram `frontal`, que é a pergunta que eles respondem bem.
     """
     if faces is None or len(faces) == 0:
         return []
@@ -292,6 +349,19 @@ def extrair_rostos(
         if x1 - x0 <= 0 or y1 - y0 <= 0:
             continue
 
+        # A nitidez é medida no quadro PEQUENO (o que foi detectado), então as
+        # coordenadas voltam para aquela escala. Medir no original exigiria
+        # carregar o quadro grande aqui só para isso.
+        foco = 0.0
+        if quadro is not None:
+            foco = nitidez(
+                quadro,
+                max(0, int(round(float(f[0])))),
+                max(0, int(round(float(f[1])))),
+                max(0, int(round(float(f[2])))),
+                max(0, int(round(float(f[3])))),
+            )
+
         rostos.append(
             {
                 "x": x0,
@@ -299,10 +369,15 @@ def extrair_rostos(
                 "w": x1 - x0,
                 "h": y1 - y0,
                 "conf": round(float(f[14]), 3),
+                "frontal": round(frontalidade(f), 3),
+                "nitidez": round(foco, 1),
             }
         )
 
-    # Maior primeiro: quem ocupa mais quadro costuma ser quem fala.
+    # Maior primeiro. Continua sendo a ordem do JSON porque ela é objetiva e
+    # todo o histórico de medição deste trabalho se apoia nela; QUEM SEGUIR é
+    # decisão de quem consome, agora com `frontal` e `nitidez` para decidir
+    # melhor do que "o maior ganha".
     rostos.sort(key=lambda r: r["w"] * r["h"], reverse=True)
     return rostos
 
@@ -389,7 +464,8 @@ def amostrar(
         pequeno = cv2.resize(quadro, (larg_det, alt_det), interpolation=cv2.INTER_AREA)
         _, faces = detector.detect(pequeno)
         rostos = extrair_rostos(
-            faces, largura / float(larg_det), altura / float(alt_det), largura, altura
+            faces, largura / float(larg_det), altura / float(alt_det),
+            largura, altura, pequeno,
         )
 
         amostras.append({"t": round(alvo(idx), 3), "rostos": rostos})

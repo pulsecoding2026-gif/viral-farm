@@ -24,6 +24,7 @@ import { spawn } from "node:child_process";
 import {
   planejarTrajetoria,
   centroEm,
+  escolherPrincipal,
   larguraDoCrop,
   type Amostra,
 } from "../src/lib/enquadramento/trajetoria";
@@ -83,7 +84,10 @@ function acerta(a: Amostra, x: number, meia: number, regua: Regua): boolean {
   const centroDentro = (r: { x: number; w: number }) =>
     Math.abs(r.x + r.w / 2 - x) <= meia;
   if (regua === "algum") return a.rostos.some(centroDentro);
-  const r = a.rostos[0];
+  // O ASSUNTO, não o maior. A régua tem que perguntar pela mesma pessoa que o
+  // algoritmo persegue, senão mede a discordância entre as duas definições em
+  // vez de medir a câmera.
+  const r = escolherPrincipal(a.rostos) ?? undefined;
   if (r === undefined) return false;
   if (regua === "inteiro") return r.x >= x - meia && r.x + r.w <= x + meia;
   return centroDentro(r);
@@ -207,9 +211,12 @@ async function main() {
     const dt = b.t - a.t;
     if (dt > 1.0) continue; // amostras distantes não são vizinhas
     vizinhos += 1;
-    const ca = a.rostos[0].x + a.rostos[0].w / 2;
-    const cb = b.rostos[0].x + b.rostos[0].w / 2;
-    if (Math.abs(cb - ca) > meia) teleportes += 1;
+    // Com `escolherPrincipal`, e não com o maior: se levar frontalidade e foco
+    // em conta torna o alvo mais estável, é aqui que aparece.
+    const ra = escolherPrincipal(a.rostos);
+    const rb = escolherPrincipal(b.rostos);
+    if (!ra || !rb) continue;
+    if (Math.abs(rb.x + rb.w / 2 - (ra.x + ra.w / 2)) > meia) teleportes += 1;
   }
   console.log(
     `\n  o alvo "principal" salta mais de ${meia.toFixed(0)}px entre amostras ` +
@@ -248,7 +255,8 @@ async function main() {
     for (const a of amostras) {
       if (a.rostos.length === 0) continue;
       if (acerta(a, posicao(a.t), meia, "principal")) continue;
-      const r = a.rostos[0];
+      const r = escolherPrincipal(a.rostos);
+      if (!r) continue;
       const c = r.x + r.w / 2;
       const x = posicao(a.t);
       /**

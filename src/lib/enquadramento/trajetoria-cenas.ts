@@ -45,6 +45,7 @@
 import {
   planejarTrajetoria,
   centroEm,
+  escolherPrincipal,
   larguraDoCrop,
   limitesDoCentro,
   PADROES,
@@ -211,7 +212,10 @@ function garantirEnquadramento(
   // O rosto em foco de cada amostra — `rostos.py` entrega ordenado por área,
   // então o primeiro válido é o principal.
   const foco = daCena
-    .map((a) => ({ t: a.t, r: rostosValidos(a, o.confMinima)[0] }))
+    .map((a) => ({
+      t: a.t,
+      r: escolherPrincipal(rostosValidos(a, o.confMinima)) ?? undefined,
+    }))
     .filter((x): x is { t: number; r: Rosto } => x.r !== undefined)
     .sort((a, b) => a.t - b.t);
   if (foco.length === 0 || base.length === 0) return base;

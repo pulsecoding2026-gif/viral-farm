@@ -35,7 +35,21 @@
  * que dá a sensação de tripé.
  */
 
-export type Rosto = { x: number; y: number; w: number; h: number; conf: number };
+export type Rosto = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  conf: number;
+  /**
+   * 0 = perfil, 1 = olhando para a câmera. Vem dos landmarks do YuNet.
+   * Opcional porque detecções gravadas antes deste campo existir continuam
+   * válidas — sem ele a pontuação cai no comportamento anterior.
+   */
+  frontal?: number;
+  /** Variância do Laplaciano na caixa. Só comparável DENTRO do mesmo frame. */
+  nitidez?: number;
+};
 export type Amostra = { t: number; rostos: Rosto[] };
 /** Centro do recorte, em PIXEL DA FONTE (não fração: quem consome é o crop). */
 export type Ponto = { t: number; centroX: number };
@@ -228,15 +242,70 @@ export function limitesDoCentro(
 }
 
 /**
- * "Quanto rosto" cada detecção oferece: largura × confiança.
+ * "Quanto rosto" cada detecção oferece: largura × confiança × estar de frente.
  *
  * Largura (e não área) porque só o eixo X é rastreado, e porque a altura da
  * caixa do YuNet varia com a inclinação da cabeça de um jeito que a largura
  * não varia. Confiança entra multiplicando para que um rosto grande e duvidoso
  * não ganhe automaticamente de um pequeno e certo.
+ *
+ * A FRONTALIDADE ENTROU DEPOIS, e por um erro visível no vídeo entregue.
+ *
+ * Com largura × confiança apenas, o maior rosto vencia sempre — e num plano
+ * over-the-shoulder o maior rosto é o ator de costas em primeiro plano, não o
+ * assunto da cena. Extraindo o frame renderizado dava para ver os dois lados do
+ * erro no mesmo instante: o crop fixo enquadrava a atriz em foco, e o
+ * rastreamento tinha ido atrás de uma nuca escura e desfocada, que era maior.
+ * Uma métrica que aprova isso está medindo tamanho e chamando de importância.
+ *
+ * O peso não zera o perfil: alguém falando de lado continua sendo o assunto, e
+ * um rosto três vezes maior ainda ganha de um frontal pequeno. Ele só desempata
+ * quando os tamanhos são comparáveis — que é exatamente o caso do
+ * over-the-shoulder.
+ *
+ * `nitidez` NÃO entra aqui de propósito: ela só é comparável entre rostos do
+ * mesmo frame, e esta função pontua um rosto isoladamente. Quem compara rostos
+ * de um frame é `escolherPrincipal`.
  */
+const PESO_PERFIL = 0.45;
+
 function pontuacao(r: Rosto): number {
-  return Math.max(0, finito(r.w, 0)) * limitar(finito(r.conf, 0), 0, 1);
+  const base =
+    Math.max(0, finito(r.w, 0)) * limitar(finito(r.conf, 0), 0, 1);
+  if (r.frontal === undefined) return base;
+  return base * (PESO_PERFIL + (1 - PESO_PERFIL) * limitar(finito(r.frontal, 1), 0, 1));
+}
+
+/**
+ * Qual dos rostos deste frame é O ASSUNTO.
+ *
+ * Aqui a nitidez pode entrar, porque há com quem comparar: numa cena com
+ * profundidade de campo o assunto está em foco e o primeiro plano borrado, e
+ * essa diferença dentro do mesmo frame é grande e confiável — bem mais do que o
+ * valor absoluto da variância, que muda com iluminação e textura.
+ *
+ * Rosto desfocado não é descartado, só descontado: em plano aberto tudo pode
+ * estar meio mole, e ali o desconto se aplica por igual e não muda nada.
+ */
+export function escolherPrincipal(rostos: Rosto[]): Rosto | null {
+  if (rostos.length === 0) return null;
+  if (rostos.length === 1) return rostos[0];
+
+  const focos = rostos.map((r) => Math.max(0, finito(r.nitidez ?? 0, 0)));
+  const focoMax = Math.max(...focos);
+
+  let melhor = rostos[0];
+  let melhorNota = -Infinity;
+  for (let i = 0; i < rostos.length; i++) {
+    // Sem nitidez medida, o fator é 1 e a decisão volta a ser só a pontuação.
+    const relativo = focoMax > 0 ? focos[i] / focoMax : 1;
+    const nota = pontuacao(rostos[i]) * (0.5 + 0.5 * relativo);
+    if (nota > melhorNota) {
+      melhorNota = nota;
+      melhor = rostos[i];
+    }
+  }
+  return melhor;
 }
 
 function centroDe(r: Rosto): number {
