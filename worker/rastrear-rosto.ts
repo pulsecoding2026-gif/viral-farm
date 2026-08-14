@@ -261,7 +261,14 @@ export async function rastrearRosto(
     dentro(a, centroEm(pontos, a.t)),
   ).length;
 
-  if (acertosSeguindo < acertosFixo + Math.max(1, avaliadas.length * MARGEM)) {
+  // Escape para exercitar o caminho de render em material que a prova recusa.
+  // É de teste, não de produção: pular a prova é pedir para entregar pior.
+  const forcado = process.env.FORCAR_RASTREIO === "1";
+
+  if (
+    !forcado &&
+    acertosSeguindo < acertosFixo + Math.max(1, avaliadas.length * MARGEM)
+  ) {
     console.log(
       `[worker] sem rastreio: seguir acerta ${acertosSeguindo}/${avaliadas.length} ` +
         `e o crop central acerta ${acertosFixo} — não compensa mexer a câmera`,

@@ -90,13 +90,31 @@ async function main() {
   console.log("planejando o rastreamento…");
   const t0 = Date.now();
   const rastreio = await rastrearRosto(video, JANELA, SAIDA);
+  if (!rastreio) {
+    /**
+     * RECUSAR NÃO É FALHAR.
+     *
+     * Este teste tratava a ausência de rastreio como erro, o que fazia sentido
+     * quando a única causa possível era Python quebrado. Agora há uma causa
+     * legítima e desejável: `rastrearRosto` mede se seguir ganha do crop
+     * central NESTE vídeo e desiste quando não ganha. Num trailer de cinema é
+     * exatamente o que deve acontecer — a fotografia já pôs o assunto no
+     * centro. Sair com erro aqui treinaria a gente a ignorar o teste, ou pior,
+     * a mexer no algoritmo até ele parar de recusar.
+     */
+    console.log(
+      "  o rastreio se RECUSOU a agir neste material (a razão está no log " +
+        "acima).\n  Isso é o comportamento correto quando o crop central já " +
+        "acerta mais.\n  Para exercitar o caminho de render, rode com " +
+        "FORCAR_RASTREIO=1.",
+    );
+    process.exit(0);
+  }
   console.log(
-    rastreio
-      ? `  ${rastreio.pontos} pontos · rosto em ${rastreio.comRosto}/${rastreio.amostras} amostras ` +
-        `· ${((Date.now() - t0) / 1000).toFixed(1)}s\n`
-      : "  sem rastreio (o teste perde o sentido)\n",
+    `  ${rastreio.pontos} pontos · rosto em ${rastreio.comRosto}/${rastreio.amostras} amostras ` +
+      `· seguir ${rastreio.acertosSeguindo} × ${rastreio.acertosFixo} fixo ` +
+      `· ${((Date.now() - t0) / 1000).toFixed(1)}s\n`,
   );
-  if (!rastreio) process.exit(1);
 
   for (const [nome, filtro] of [
     ["sem-rastreio", null],
