@@ -129,6 +129,27 @@ export type OpcoesTrajetoriaPorCena = OpcoesTrajetoria & {
    * atenção?") respondida duas vezes.
    */
   rampaDaCorrecao_s: number;
+
+  /**
+   * O teto de velocidade da correção, em LARGURAS DE RECORTE por segundo.
+   *
+   * Sem este teto a correção acerta 100% das amostras — e o número é uma
+   * armadilha. Medindo o movimento junto com a taxa, aquele 100% custava um
+   * pico de 1193 px/s num recorte de 270 px: a imagem inteira atravessa a tela
+   * 4,4 vezes por segundo. Isso não é câmera, é chicote, e apareceu no teste
+   * de render como o rosto ficando MAIS perto da borda no pior caso (47,5%
+   * contra 42,5% do crop fixo) mesmo com a média melhorando.
+   *
+   * A lição vale além daqui: uma métrica de acerto sem uma métrica de custo
+   * leva o otimizador direto ao pior vídeo possível, porque teleportar acerta
+   * sempre. As duas andam juntas a partir de agora.
+   *
+   * 1,0 = a câmera leva um segundo para percorrer uma largura de recorte. É o
+   * pan de acompanhamento comum; acima disso lê como corte mal feito. Quando
+   * a correção não cabe nessa velocidade dentro da cena, ela é ABANDONADA: um
+   * rosto encostado na borda por meio segundo incomoda menos que um solavanco.
+   */
+  velocidadeDaCorrecao: number;
 };
 
 export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
@@ -138,6 +159,7 @@ export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
   saltoEpsilon_s: 0.001,
   folgaDaBorda: 0.9,
   rampaDaCorrecao_s: 0.4,
+  velocidadeDaCorrecao: 1.0,
 };
 
 function limitar(v: number, min: number, max: number): number {
@@ -205,10 +227,26 @@ function garantirEnquadramento(
     // A rampa não pode recuar atrás de um ponto que já existe na trajetória —
     // reescrever o passado quebraria o que as amostras anteriores já ganharam.
     const ultimoAntes = seq.filter((p) => p.t < t).pop();
-    const piso = ultimoAntes ? ultimoAntes.t : ini;
-    const comeco = Math.max(piso, ini, t - o.rampaDaCorrecao_s);
+    const piso = Math.max(ultimoAntes ? ultimoAntes.t : ini, ini);
+
+    /**
+     * O TETO DE VELOCIDADE — ver `velocidadeDaCorrecao`.
+     *
+     * A rampa se alonga para trás até o movimento caber na velocidade
+     * máxima. Como a posição de partida MUDA conforme a rampa recua (a
+     * trajetória por baixo não é constante), o tempo necessário é estimado
+     * uma vez, a rampa é reposicionada, e então a velocidade real do trecho
+     * resultante é conferida. É essa última conferência que vale — as
+     * anteriores são só a busca por um começo plausível.
+     */
+    const vMax = meia * 2 * o.velocidadeDaCorrecao;
+    const tentativa = Math.max(piso, t - o.rampaDaCorrecao_s);
+    const precisa = Math.abs(destino - centroEm(seq, tentativa)) / vMax;
+    const comeco = Math.max(piso, t - Math.max(o.rampaDaCorrecao_s, precisa));
 
     const guardado = centroEm(seq, comeco);
+    const janela = t - comeco;
+    if (janela <= 0 || Math.abs(destino - guardado) / janela > vMax) continue;
     // Tudo daqui pra frente é substituído: a trajetória original já provou,
     // nesta amostra, que não serve.
     const antes = seq.filter((p) => p.t < comeco);
