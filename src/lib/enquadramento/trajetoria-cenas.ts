@@ -44,6 +44,7 @@
 
 import {
   planejarTrajetoria,
+  centroEm,
   larguraDoCrop,
   limitesDoCentro,
   PADROES,
@@ -141,6 +142,88 @@ export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
 
 function limitar(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(v, max));
+}
+
+/**
+ * A GARANTIA: passa por cima de uma trajetória pronta e conserta onde ela
+ * deixa o rosto sair do quadro.
+ *
+ * POR QUE ISTO EXISTE, e por que vale para os três ramos da cena
+ *
+ * As duas primeiras tentativas de subir a taxa falharam de maneiras que
+ * ensinaram a mesma coisa. Um pan reto do primeiro ao último rosto da cena não
+ * mudou nada (79% antes e depois): uma reta ligando as pontas passa POR CIMA
+ * das amostras do meio sem nenhuma obrigação de acertá-las. Corrigir só a cena
+ * curta subiu para 81% e parou: a listagem amostra a amostra mostrou que
+ * metade dos erros restantes era "a câmera não chegou" em CENA LONGA — onde o
+ * ramo curto nem roda, e onde a panorâmica suavizada (que sozinha mede 58%)
+ * estava chegando atrasada, exatamente o defeito que ela deveria ter deixado
+ * para trás.
+ *
+ * A lição é que suavizar e enquadrar são objetivos DIFERENTES, e pedir os dois
+ * ao mesmo filtro entrega mal os dois. Aqui eles ficam separados: cada ramo
+ * decide o movimento que quer (parada, panorâmica, centro), e depois esta
+ * função garante o resultado. Ela não substitui a trajetória — ela a emenda
+ * nos pontos em que a trajetória perderia o assunto.
+ *
+ * COMO
+ *
+ * Anda amostra a amostra. Enquanto o rosto está dentro da folga, não toca em
+ * nada — a estética escolhida pelo ramo sobrevive intacta. Quando o rosto
+ * passaria da folga, insere uma rampa que TERMINA naquela amostra e começa
+ * `rampaDaCorrecao_s` antes: a câmera chega no lugar no instante em que o
+ * lugar passa a importar, em vez de sair atrás depois do fato.
+ *
+ * Os pontos inseridos caem exatamente sobre `t` de amostra, que é o que faz a
+ * interpolação linear de `centroEm` acertar em vez de passar perto.
+ */
+function garantirEnquadramento(
+  base: Ponto[],
+  daCena: Amostra[],
+  ini: number,
+  meia: number,
+  min: number,
+  max: number,
+  o: OpcoesTrajetoriaPorCena,
+): Ponto[] {
+  // O rosto em foco de cada amostra — `rostos.py` entrega ordenado por área,
+  // então o primeiro válido é o principal.
+  const foco = daCena
+    .map((a) => ({ t: a.t, r: rostosValidos(a, o.confMinima)[0] }))
+    .filter((x): x is { t: number; r: Rosto } => x.r !== undefined)
+    .sort((a, b) => a.t - b.t);
+  if (foco.length === 0 || base.length === 0) return base;
+
+  const seq = base.slice().sort((a, b) => a.t - b.t);
+
+  for (const { t, r } of foco) {
+    const c = centroDe(r);
+    if (Math.abs(centroEm(seq, t) - c) <= meia * o.folgaDaBorda) continue;
+
+    const destino = limitar(c, min, max);
+
+    // A rampa não pode recuar atrás de um ponto que já existe na trajetória —
+    // reescrever o passado quebraria o que as amostras anteriores já ganharam.
+    const ultimoAntes = seq.filter((p) => p.t < t).pop();
+    const piso = ultimoAntes ? ultimoAntes.t : ini;
+    const comeco = Math.max(piso, ini, t - o.rampaDaCorrecao_s);
+
+    const guardado = centroEm(seq, comeco);
+    // Tudo daqui pra frente é substituído: a trajetória original já provou,
+    // nesta amostra, que não serve.
+    const antes = seq.filter((p) => p.t < comeco);
+    const depois = seq.filter((p) => p.t > t);
+
+    seq.length = 0;
+    seq.push(
+      ...antes,
+      { t: comeco, centroX: guardado },
+      { t: Math.max(t, comeco + 1e-3), centroX: destino },
+      ...depois,
+    );
+  }
+
+  return seq;
 }
 
 function finito(v: number, padrao: number): number {
@@ -426,75 +509,28 @@ export function planejarTrajetoriaPorCena(
             ? [{ t: ini, centroX: p[0].centroX }, ...p]
             : p.slice();
     } else {
-      /**
-       * CENA CURTA — parada quando dá, com um pan mínimo quando não dá.
-       *
-       * A regra continua sendo ficar parada: câmera imóvel numa cena de 1,5s
-       * é o que um editor faria, e movimento gratuito é a máquina se
-       * exibindo às custas de quem assiste.
-       *
-       * Mas parada só é a melhor escolha quando ela COBRE a cena. Medindo o
-       * teto num trailer real, a melhor posição fixa por cena chega a 84% —
-       * os 16% restantes são cenas em que o rosto anda mais do que o recorte
-       * de 270px perdoa, e ali ficar parada não é elegância, é deixar o
-       * assunto sair do quadro.
-       *
-       * Então: fica parada se a posição ótima cobre todas as amostras da
-       * cena; se não cobre, faz UM pan linear do primeiro ao último rosto —
-       * o movimento mais simples que existe, sem aceleração e sem inércia
-       * herdada, porque a cena começa já enquadrada.
-       */
+      // CENA CURTA — uma posição, escolhida pelo ótimo de cobertura, e fim.
+      // Câmera parada numa cena de 1,5 s é o que um editor faria; qualquer
+      // movimento aqui é a máquina se exibindo às custas do espectador. Se
+      // parada custar o rosto, `garantirEnquadramento` conserta abaixo — e
+      // só nesse caso.
       const fixa = posicaoFixaDaCena(daCena, o.confMinima, meia, min, max);
-      if (fixa === null) {
-        daCenaPontos = [{ t: ini, centroX: centroFonte }];
-      } else {
-        // O rosto em foco de cada amostra — `rostos.py` já entrega ordenado
-        // por área, então o primeiro válido é o principal.
-        const foco = daCena
-          .map((a) => ({ t: a.t, r: rostosValidos(a, o.confMinima)[0] }))
-          .filter((x): x is { t: number; r: Rosto } => x.r !== undefined)
-          .sort((a, b) => a.t - b.t);
-
-        /**
-         * CORRIGE ONDE ESCAPA, não entre as pontas.
-         *
-         * A primeira versão disto fazia um pan reto do primeiro ao último
-         * rosto da cena, e não mudou NADA na medição — 79% antes e depois.
-         * O motivo é geométrico: a régua avalia amostra a amostra, e uma reta
-         * ligando as pontas passa POR CIMA das amostras do meio sem nenhuma
-         * obrigação de acertá-las. Movimento que não é ancorado no que se quer
-         * enquadrar é só movimento.
-         *
-         * Então a câmera anda quando, e só quando, o rosto passa da folga — e
-         * ela chega no lugar ANTES disso acontecer, via uma rampa que termina
-         * na amostra problemática. Assim as amostras anteriores continuam
-         * atendidas pela posição antiga e a que escapava é atendida pela nova.
-         * Cada ponto emitido cai exatamente sobre um `t` de amostra, que é o
-         * que faz a interpolação linear acertar em vez de passar perto.
-         */
-        const seq: Ponto[] = [{ t: ini, centroX: fixa }];
-        let atual = fixa;
-
-        for (const { t, r } of foco) {
-          const c = centroDe(r);
-          if (Math.abs(c - atual) <= meia * o.folgaDaBorda) continue;
-
-          const destino = limitar(c, min, max);
-          if (Math.abs(destino - atual) < 1) continue;
-
-          // A rampa começa no instante anterior possível, sem nunca recuar
-          // atrás do último ponto já emitido nem do início da cena.
-          const anteriorT = seq[seq.length - 1].t;
-          const comeco = Math.max(anteriorT, ini, t - o.rampaDaCorrecao_s);
-          if (comeco > anteriorT) seq.push({ t: comeco, centroX: atual });
-
-          seq.push({ t: Math.max(t, comeco + 1e-3), centroX: destino });
-          atual = destino;
-        }
-
-        daCenaPontos = seq;
-      }
+      daCenaPontos =
+        fixa === null
+          ? [{ t: ini, centroX: centroFonte }]
+          : [{ t: ini, centroX: fixa }];
     }
+
+    // A GARANTIA, aplicada aos três ramos acima.
+    daCenaPontos = garantirEnquadramento(
+      daCenaPontos,
+      daCena,
+      ini,
+      meia,
+      min,
+      max,
+      o,
+    );
 
     // --- a costura: degrau, não rampa (ver o cabeçalho da função) ----------
     const primeiro = daCenaPontos[0];
