@@ -156,6 +156,47 @@ async function main() {
     return { total, pico, trechos };
   };
 
+  /**
+   * O ALVO FICA PARADO O BASTANTE PARA SER SEGUIDO?
+   *
+   * Esta é a pergunta que faltava, e ela veio de um resultado que não fechava:
+   * amostrando a 2, 4 e 6 Hz a régua PRINCIPAL não sai de ~80%, enquanto a
+   * régua ALGUM sobe de 91% para 97%. Se o problema fosse a câmera chegar
+   * atrasada, mais amostras teriam ajudado — ajudaram uma régua e não a outra.
+   *
+   * A explicação candidata é que "principal" (o maior rosto do frame) não é
+   * uma PESSOA, é um posto que muda de ocupante. Num plano com cinco rostos,
+   * quem é o maior troca conforme a perspectiva, e o alvo teleporta sem que
+   * ninguém tenha se mexido. Câmera nenhuma segue isso, e tentar seria a pior
+   * escolha possível: um zapping entre convidados.
+   *
+   * O teste: entre amostras vizinhas, o centro do principal andou mais do que
+   * um corpo humano andaria? Meia largura de recorte em meio segundo já é
+   * atravessar o quadro correndo. Se esses saltos forem frequentes, o teto da
+   * régua PRINCIPAL é dela, não da trajetória.
+   */
+  const comRostoOrdenado = amostras
+    .filter((a) => a.rostos.length > 0)
+    .sort((a, b) => a.t - b.t);
+  let teleportes = 0;
+  let vizinhos = 0;
+  for (let i = 1; i < comRostoOrdenado.length; i++) {
+    const a = comRostoOrdenado[i - 1];
+    const b = comRostoOrdenado[i];
+    const dt = b.t - a.t;
+    if (dt > 1.0) continue; // amostras distantes não são vizinhas
+    vizinhos += 1;
+    const ca = a.rostos[0].x + a.rostos[0].w / 2;
+    const cb = b.rostos[0].x + b.rostos[0].w / 2;
+    if (Math.abs(cb - ca) > meia) teleportes += 1;
+  }
+  console.log(
+    `\n  o alvo "principal" salta mais de ${meia.toFixed(0)}px entre amostras ` +
+      `vizinhas em ${teleportes}/${vizinhos} pares ` +
+      `(${vizinhos ? ((teleportes / vizinhos) * 100).toFixed(0) : 0}%) — ` +
+      `salto assim não é pessoa andando, é o posto trocando de ocupante`,
+  );
+
   const mov = movimento(porCena);
   console.log(
     `\n  movimento visível: ${mov.trechos} deslocamentos · ` +
