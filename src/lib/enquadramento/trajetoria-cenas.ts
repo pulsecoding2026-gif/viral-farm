@@ -26,7 +26,9 @@
  * que esconde o movimento, exatamente como um editor faz. Dentro do segmento:
  *
  *   CENA CURTA  →  uma posição FIXA, escolhida para enquadrar o máximo de
- *                  rostos daquela cena, e a câmera não mexe mais.
+ *                  rostos daquela cena, e a câmera não mexe mais — SALVO se
+ *                  nem a melhor posição segura o rosto até o fim da cena, e aí
+ *                  vai um pan reto de ponta a ponta. Ver `folgaDaBorda`.
  *   CENA LONGA  →  aí sim vale seguir, com toda a maquinaria de
  *                  `planejarTrajetoria` rodando SÓ dentro da cena.
  *   SEM ROSTO   →  centro da fonte. Sem herdar a posição da cena anterior:
@@ -89,6 +91,25 @@ export type OpcoesTrajetoriaPorCena = OpcoesTrajetoria & {
    * renderizado cai dentro da rampa, então na prática ela não existe.
    */
   saltoEpsilon_s: number;
+
+  /**
+   * Quanto da meia-largura do recorte conta como "ainda dentro", antes da cena
+   * curta desistir de ficar parada e fazer um pan.
+   *
+   * Isto existe porque medir o teto ensinou uma coisa desconfortável: a MELHOR
+   * posição fixa por cena entrega 84% no material de teste, e o oráculo (uma
+   * câmera que teleporta a cada amostra) entrega 100%. Os 16% no meio são
+   * cenas em que o rosto simplesmente ANDA mais do que 270 px de recorte
+   * perdoam — e ali ficar parada não é contenção, é deixar o assunto sair do
+   * quadro. Nenhuma escolha de posição única resolve; só movimento resolve.
+   *
+   * 0,9 = o pan dispara quando o rosto chega a 90% do caminho até a borda. A
+   * folga é de propósito: esperar ele encostar exatamente na borda faria a
+   * decisão depender de um pixel, e um pixel é menos que o erro do detector.
+   * Reserva-se assim uma faixa de 10% em que a câmera ainda escolhe ficar
+   * parada, que é a preferência — mover só quando parar custa o rosto.
+   */
+  folgaDaBorda: number;
 };
 
 export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
@@ -96,6 +117,7 @@ export const PADROES_POR_CENA: OpcoesTrajetoriaPorCena = {
   cenaLonga_s: 2.0,
   minAmostrasParaSeguir: 4,
   saltoEpsilon_s: 0.001,
+  folgaDaBorda: 0.9,
 };
 
 function limitar(v: number, min: number, max: number): number {
@@ -385,11 +407,55 @@ export function planejarTrajetoriaPorCena(
             ? [{ t: ini, centroX: p[0].centroX }, ...p]
             : p.slice();
     } else {
-      // CENA CURTA — uma posição, escolhida pelo ótimo de cobertura, e fim.
-      // Câmera parada numa cena de 1,5 s é o que um editor faria; qualquer
-      // movimento aqui é a máquina se exibindo às custas do espectador.
+      /**
+       * CENA CURTA — parada quando dá, com um pan mínimo quando não dá.
+       *
+       * A regra continua sendo ficar parada: câmera imóvel numa cena de 1,5s
+       * é o que um editor faria, e movimento gratuito é a máquina se
+       * exibindo às custas de quem assiste.
+       *
+       * Mas parada só é a melhor escolha quando ela COBRE a cena. Medindo o
+       * teto num trailer real, a melhor posição fixa por cena chega a 84% —
+       * os 16% restantes são cenas em que o rosto anda mais do que o recorte
+       * de 270px perdoa, e ali ficar parada não é elegância, é deixar o
+       * assunto sair do quadro.
+       *
+       * Então: fica parada se a posição ótima cobre todas as amostras da
+       * cena; se não cobre, faz UM pan linear do primeiro ao último rosto —
+       * o movimento mais simples que existe, sem aceleração e sem inércia
+       * herdada, porque a cena começa já enquadrada.
+       */
       const fixa = posicaoFixaDaCena(daCena, o.confMinima, meia, min, max);
-      daCenaPontos = [{ t: ini, centroX: fixa === null ? centroFonte : fixa }];
+      if (fixa === null) {
+        daCenaPontos = [{ t: ini, centroX: centroFonte }];
+      } else {
+        // O rosto em foco de cada amostra — `rostos.py` já entrega ordenado
+        // por área, então o primeiro válido é o principal.
+        const foco = daCena
+          .map((a) => ({ t: a.t, r: rostosValidos(a, o.confMinima)[0] }))
+          .filter((x): x is { t: number; r: Rosto } => x.r !== undefined)
+          .sort((a, b) => a.t - b.t);
+
+        const escapa = foco.some(
+          (x) => Math.abs(centroDe(x.r) - fixa) > meia * o.folgaDaBorda,
+        );
+
+        if (!escapa || foco.length < 2) {
+          daCenaPontos = [{ t: ini, centroX: fixa }];
+        } else {
+          // Pan entre as pontas, cada uma presa aos limites do quadro.
+          const de = limitar(centroDe(foco[0].r), min, max);
+          const ate = limitar(centroDe(foco[foco.length - 1].r), min, max);
+
+          daCenaPontos =
+            Math.abs(ate - de) < 1
+              ? [{ t: ini, centroX: de }]
+              : [
+                  { t: ini, centroX: de },
+                  { t: Math.max(foco[foco.length - 1].t, ini + 0.05), centroX: ate },
+                ];
+        }
+      }
     }
 
     // --- a costura: degrau, não rampa (ver o cabeçalho da função) ----------
