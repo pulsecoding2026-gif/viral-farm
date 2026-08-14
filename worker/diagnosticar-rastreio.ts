@@ -45,7 +45,9 @@ function detectar(video: string, inicio: number, fim: number): Promise<{
       "--video", video,
       "--inicio", String(inicio),
       "--fim", String(fim),
-      "--fps", "2",
+      // Configurável pra medir se amostrar mais denso ajuda: numa cena de
+      // 1,6s, 2 Hz dá só 3 amostras pra decidir o enquadramento inteiro.
+      "--fps", process.env.FPS_AMOSTRA ?? "2",
       "--modelo", MODELO,
     ]);
     let out = "";
