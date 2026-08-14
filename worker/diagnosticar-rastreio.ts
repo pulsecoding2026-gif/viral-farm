@@ -130,6 +130,40 @@ async function main() {
   }
 
   /**
+   * QUANTO A CÂMERA SE MEXE — a régua que falta.
+   *
+   * As taxas acima só perguntam "o rosto estava dentro?". Uma câmera que
+   * teleporta a cada amostra acerta 100% e é INASSISTÍVEL, então otimizar a
+   * taxa sozinha leva direto para o pior vídeo possível. Isto é o contrapeso.
+   *
+   * Saltos de fronteira de cena NÃO contam: ali a imagem inteira trocou no
+   * mesmo frame e o movimento é invisível por construção. O que conta é o
+   * movimento DENTRO da cena, que é o que o espectador enxerga como câmera.
+   */
+  const movimento = (pontos: { t: number; centroX: number }[]) => {
+    let total = 0;
+    let pico = 0;
+    let trechos = 0;
+    for (let i = 1; i < pontos.length; i++) {
+      const dt = pontos[i].t - pontos[i - 1].t;
+      const dx = Math.abs(pontos[i].centroX - pontos[i - 1].centroX);
+      if (dt <= 0.01) continue; // o degrau do corte de cena
+      if (dx < 1) continue;
+      total += dx;
+      trechos += 1;
+      pico = Math.max(pico, dx / dt);
+    }
+    return { total, pico, trechos };
+  };
+
+  const mov = movimento(porCena);
+  console.log(
+    `\n  movimento visível: ${mov.trechos} deslocamentos · ` +
+      `${mov.total.toFixed(0)}px no total · pico ${mov.pico.toFixed(0)}px/s ` +
+      `(recorte tem ${(meia * 2).toFixed(0)}px)`,
+  );
+
+  /**
    * QUEM SOBROU, uma por uma.
    *
    * Chegou a hora em que a taxa agregada parou de ensinar: 81% é "8 amostras
