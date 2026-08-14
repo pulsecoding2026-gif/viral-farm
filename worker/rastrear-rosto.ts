@@ -5,6 +5,8 @@ import {
   planejarTrajetoria,
   type Amostra,
 } from "../src/lib/enquadramento/trajetoria";
+import { planejarTrajetoriaPorCena } from "../src/lib/enquadramento/trajetoria-cenas";
+import { detectarCortesDeCena } from "./cenas";
 import { filtroDeCropAnimado, type Ponto } from "./crop-animado";
 
 /**
@@ -124,6 +126,8 @@ export type Rastreio = {
   filtro: string;
   /** Quantos pontos a trajetória tem. Serve pro log dizer o que aconteceu. */
   pontos: number;
+  /** Cenas encontradas no trecho. 1 = sem corte, o caso do podcast. */
+  cenas: number;
   /** Amostras em que havia alguém — a medida de "valeu a pena rastrear". */
   comRosto: number;
   amostras: number;
@@ -168,14 +172,52 @@ export async function rastrearRosto(
     return null;
   }
 
+  /**
+   * TUDO vira tempo RELATIVO ao início do clipe, aqui e agora.
+   *
+   * As três fontes falam bases diferentes: `rostos.py` emite `t` absoluto do
+   * vídeo (inicio + i/fps), `detectarCortesDeCena` devolve relativo, e o
+   * filtro de crop recebe um `t` que começa em zero porque o ffmpeg recorta
+   * antes. Misturar duas bases não dá erro — dá uma câmera fora de fase,
+   * que foi exatamente o que aconteceu: o primeiro diagnóstico mediu com a
+   * trajetória 10 segundos deslocada e reportou 44% num número que não
+   * significava nada.
+   *
+   * Converter numa linha só, na fronteira, é o que impede isso de voltar.
+   */
+  const amostras = dados.amostras.map((a) => ({
+    ...a,
+    t: a.t - janela.inicio_s,
+  }));
+
   const fonte = { largura: dados.largura, altura: dados.altura };
-  const pontos = planejarTrajetoria(dados.amostras, fonte, saida) as Ponto[];
+  const cortes = await detectarCortesDeCena(
+    video,
+    janela.inicio_s,
+    janela.fim_s,
+    sinal,
+  );
+
+  /**
+   * Trajetória POR CENA quando há corte, contínua quando não há.
+   *
+   * A contínua perde do crop fixo em material cortado: ela trata cada troca
+   * de cena como movimento e sai atrás. A por cena trata cada cena como um
+   * enquadramento próprio, com salto seco na fronteira — invisível, porque
+   * a imagem inteira mudou ali de qualquer jeito.
+   */
+  const pontos = (
+    cortes.length > 0
+      ? planejarTrajetoriaPorCena(amostras, cortes, fonte, saida)
+      : planejarTrajetoria(amostras, fonte, saida)
+  ) as Ponto[];
   if (pontos.length === 0) return null;
 
   return {
     filtro: filtroDeCropAnimado(pontos, fonte, saida),
     pontos: pontos.length,
+    cenas: cortes.length + 1,
     comRosto,
-    amostras: dados.amostras.length,
+    amostras: amostras.length,
   };
 }

@@ -56,9 +56,26 @@ function detectar(video: string): Promise<{
   });
 }
 
-/** A amostra tem algum rosto cujo centro cabe na janela centrada em `x`? */
-function acerta(a: Amostra, x: number, meia: number): boolean {
+/**
+ * Duas perguntas diferentes, e confundi-las foi erro meu.
+ *
+ * ALGUM: sobrou alguém no quadro? É a régua de "não cortei todo mundo fora".
+ * PRINCIPAL: o rosto EM FOCO (o maior, quem provavelmente fala) ficou? É a
+ * régua que importa pro produto — mostrar o convidado errado numa entrevista
+ * é falha, mesmo com um rosto no quadro.
+ *
+ * O primeiro diagnóstico usou PRINCIPAL (65%) e o primeiro medidor de teto
+ * usou ALGUM (88%). Comparar os dois números seria comparar réguas
+ * diferentes e concluir besteira, então os dois aparecem lado a lado daqui
+ * pra frente.
+ */
+function acertaAlgum(a: Amostra, x: number, meia: number): boolean {
   return a.rostos.some((r) => Math.abs(r.x + r.w / 2 - x) <= meia);
+}
+
+function acertaPrincipal(a: Amostra, x: number, meia: number): boolean {
+  const r = a.rostos[0];
+  return r !== undefined && Math.abs(r.x + r.w / 2 - x) <= meia;
 }
 
 async function main() {
@@ -72,7 +89,7 @@ async function main() {
 
   // FIXO: crop central.
   const centro = fonte.largura / 2;
-  const fixo = comRosto.filter((a) => acerta(a, centro, meia)).length;
+  const fixo = comRosto.filter((a) => acertaPrincipal(a, centro, meia)).length;
 
   // ORÁCULO: a cada amostra, a melhor posição possível.
   const oraculo = comRosto.filter((a) =>
@@ -81,7 +98,7 @@ async function main() {
         Math.max(r.x + r.w / 2, meia),
         fonte.largura - meia,
       );
-      return acerta(a, x, meia);
+      return acertaPrincipal(a, x, meia);
     }),
   ).length;
 
@@ -106,7 +123,7 @@ async function main() {
     );
     let melhor = 0;
     for (const x of candidatos) {
-      const n = daCena.filter((a) => acerta(a, x, meia)).length;
+      const n = daCena.filter((a) => acertaPrincipal(a, x, meia)).length;
       if (n > melhor) melhor = n;
     }
     viavel += melhor;
