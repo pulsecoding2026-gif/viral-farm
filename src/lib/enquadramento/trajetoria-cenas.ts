@@ -218,11 +218,32 @@ function garantirEnquadramento(
 
   const seq = base.slice().sort((a, b) => a.t - b.t);
 
-  for (const { t, r } of foco) {
+  for (let i = 0; i < foco.length; i++) {
+    const { t, r } = foco[i];
     const c = centroDe(r);
     if (Math.abs(centroEm(seq, t) - c) <= meia * o.folgaDaBorda) continue;
 
     const destino = limitar(c, min, max);
+
+    /**
+     * O SALTO NA FRONTEIRA É DE GRAÇA — use antes de gastar movimento.
+     *
+     * Quando quem escapa é a PRIMEIRA amostra da cena, a resposta não é
+     * atravessar o quadro num pan: é começar a cena já no lugar certo. Ali a
+     * imagem inteira acabou de trocar, então reposicionar não custa nada ao
+     * espectador, enquanto o pan custa tempo que a cena curta não tem — foi
+     * assim que quatro correções morreram no teto de velocidade enquanto a
+     * solução grátis estava disponível.
+     *
+     * Só vale para a primeira: mexer no início depois que amostras já foram
+     * atendidas por ele seria tirar delas o que já tinham.
+     */
+    if (i === 0) {
+      const depoisDoInicio = seq.filter((p) => p.t > ini);
+      seq.length = 0;
+      seq.push({ t: ini, centroX: destino }, ...depoisDoInicio);
+      if (Math.abs(centroEm(seq, t) - c) <= meia * o.folgaDaBorda) continue;
+    }
 
     // A rampa não pode recuar atrás de um ponto que já existe na trajetória —
     // reescrever o passado quebraria o que as amostras anteriores já ganharam.

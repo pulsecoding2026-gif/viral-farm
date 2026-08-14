@@ -189,15 +189,26 @@ async function main() {
       const r = a.rostos[0];
       const c = r.x + r.w / 2;
       const x = posicao(a.t);
-      const alcancavel = c >= meia && c <= fonte.largura - meia;
+      /**
+       * NÃO existe "fora de alcance" nesta geometria, e eu rotulei dois casos
+       * assim antes de conferir a conta.
+       *
+       * A câmera corre em [meia, largura−meia]. Para um rosto em `c` a posição
+       * mais próxima é `c` preso a esse curso, e a distância que sobra é no
+       * máximo `meia` — exatamente o limite do acerto. Ou seja: todo rosto
+       * dentro do quadro é alcançável, sempre. O rótulo antigo comparava `c`
+       * com as bordas e acusou de impossível um rosto em 786 px num vídeo de
+       * 854, que a câmera no limite enxerga com 68 px de sobra.
+       *
+       * Isso importa porque um rótulo errado manda consertar a coisa errada:
+       * "impossível" teria encerrado a investigação em 81%.
+       */
       const outroDentro = a.rostos.some(
         (q) => Math.abs(q.x + q.w / 2 - x) <= meia,
       );
-      const nota = !alcancavel
-        ? "fora de alcance (colado na borda do vídeo)"
-        : outroDentro
-          ? "outro rosto está no quadro — trocou o principal?"
-          : "a câmera não chegou";
+      const nota = outroDentro
+        ? "outro rosto no quadro — o principal trocou de pessoa?"
+        : "a câmera não chegou";
       console.log(
         `  ${a.t.toFixed(1).padStart(5)}  ${x.toFixed(0).padStart(6)}  ` +
           `${c.toFixed(0).padStart(6)}  ${Math.abs(c - x).toFixed(0).padStart(5)}  ` +
