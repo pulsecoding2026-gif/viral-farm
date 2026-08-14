@@ -287,29 +287,6 @@ export function pontuacao(r: Rosto): number {
  * Rosto desfocado não é descartado, só descontado: em plano aberto tudo pode
  * estar meio mole, e ali o desconto se aplica por igual e não muda nada.
  */
-/**
- * Menor rosto que pode ser considerado O ASSUNTO, como fração da largura da
- * fonte.
- *
- * Isto não é sobre o detector errar — o YuNet acha rosto de 10 px e costuma
- * estar certo. É sobre o que aquele rosto SIGNIFICA. Numa cena real medida
- * aqui, a primeira amostra trazia um único rosto de 23 px num quadro de
- * 854 px: uma pessoa lá no fundo da cozinha. A trajetória nasce ancorada na
- * primeira amostra, então ela começava apontada para essa figura distante e
- * gastava a cena inteira viajando de volta para o assunto de verdade, sem
- * nunca chegar por causa do teto de velocidade.
- *
- * 4% da largura: num vídeo de 854 px são 34 px, e num de 1920 são 77. Abaixo
- * disso a pessoa é cenário. Rostos pequenos continuam contando para "há
- * alguém em cena" — o que eles não podem é MANDAR na câmera.
- */
-export const MENOR_ASSUNTO_FRACAO = 0.04;
-
-export function assuntoPlausivel(r: Rosto, larguraFonte: number): boolean {
-  if (!(larguraFonte > 0)) return true;
-  return Math.max(0, finito(r.w, 0)) >= larguraFonte * MENOR_ASSUNTO_FRACAO;
-}
-
 export function notaNoFrame(r: Rosto, rostos: Rosto[]): number {
   const focoMax = Math.max(
     0,
@@ -396,7 +373,7 @@ export function planejarTrajetoria(
     const t = amostra.t;
     if (iniciada && t <= tAnterior) continue; // amostra repetida/fora de ordem
 
-    const validos = (Array.isArray(amostra.rostos) ? amostra.rostos : []).filter(
+    const rostos = (Array.isArray(amostra.rostos) ? amostra.rostos : []).filter(
       (r) =>
         r &&
         Number.isFinite(r.x) &&
@@ -404,12 +381,6 @@ export function planejarTrajetoria(
         r.w > 0 &&
         finito(r.conf, 0) >= o.confMinima,
     );
-
-    // Gente do tamanho de cenário não manda na câmera — ver MENOR_ASSUNTO_FRACAO.
-    // Se TODO MUNDO no quadro é pequeno, então é um plano aberto e o maiorzinho
-    // deles é o assunto que há; descartar todos deixaria a câmera cega.
-    const grandes = validos.filter((r) => assuntoPlausivel(r, fonte.largura));
-    const rostos = grandes.length > 0 ? grandes : validos;
 
     // === 1. ESCOLHER O ROSTO ==============================================
     //

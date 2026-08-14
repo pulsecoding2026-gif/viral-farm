@@ -47,7 +47,6 @@ import {
   centroEm,
   escolherPrincipal,
   pontuacao,
-  assuntoPlausivel,
   larguraDoCrop,
   limitesDoCentro,
   PADROES,
@@ -210,14 +209,13 @@ function garantirEnquadramento(
   min: number,
   max: number,
   o: OpcoesTrajetoriaPorCena,
-  larguraFonte: number,
 ): Ponto[] {
-  // O ASSUNTO de cada amostra — o que `escolherPrincipal` decide pesando
-  // tamanho, frontalidade e foco, já sem os rostos de tamanho de cenário.
+  // O rosto em foco de cada amostra — `rostos.py` entrega ordenado por área,
+  // então o primeiro válido é o principal.
   const foco = daCena
     .map((a) => ({
       t: a.t,
-      r: escolherPrincipal(rostosValidos(a, o.confMinima, larguraFonte)) ?? undefined,
+      r: escolherPrincipal(rostosValidos(a, o.confMinima)) ?? undefined,
     }))
     .filter((x): x is { t: number; r: Rosto } => x.r !== undefined)
     .sort((a, b) => a.t - b.t);
@@ -347,13 +345,9 @@ function centroDe(r: Rosto): number {
   return finito(r.x, 0) + Math.max(0, finito(r.w, 0)) / 2;
 }
 
-function rostosValidos(
-  a: Amostra,
-  confMinima: number,
-  larguraFonte = 0,
-): Rosto[] {
+function rostosValidos(a: Amostra, confMinima: number): Rosto[] {
   const rostos = Array.isArray(a.rostos) ? a.rostos : [];
-  const validos = rostos.filter(
+  return rostos.filter(
     (r) =>
       r &&
       Number.isFinite(r.x) &&
@@ -361,12 +355,6 @@ function rostosValidos(
       r.w > 0 &&
       finito(r.conf, 0) >= confMinima,
   );
-  if (!(larguraFonte > 0)) return validos;
-
-  // Mesma regra da trajetória contínua: quem tem tamanho de cenário não manda
-  // na câmera, mas se só há gente pequena o plano é aberto e ela é o assunto.
-  const grandes = validos.filter((r) => assuntoPlausivel(r, larguraFonte));
-  return grandes.length > 0 ? grandes : validos;
 }
 
 function primeiroT(amostras: Amostra[]): number {
@@ -416,7 +404,6 @@ function posicaoFixaDaCena(
   meia: number,
   min: number,
   max: number,
-  larguraFonte: number,
 ): number | null {
   /**
    * UM rosto por amostra — o assunto — e não todos os rostos do quadro.
@@ -432,7 +419,7 @@ function posicaoFixaDaCena(
    */
   const faces: Array<{ c: number; s: number }> = [];
   for (const a of amostras) {
-    const r = escolherPrincipal(rostosValidos(a, confMinima, larguraFonte));
+    const r = escolherPrincipal(rostosValidos(a, confMinima));
     if (r) faces.push({ c: centroDe(r), s: pontuacao(r) });
   }
   if (faces.length === 0) return null;
@@ -615,9 +602,6 @@ export function planejarTrajetoriaPorCena(
     const fim = k + 1 < inicios.length ? inicios[k + 1] : Infinity;
     const daCena = limpas.filter((a) => a.t >= ini && a.t < fim);
     const duracao = (k + 1 < inicios.length ? inicios[k + 1] : tUltimo) - ini;
-    // Sem largura da fonte aqui de propósito: a pergunta é "há ALGUÉM nesta
-    // cena?", e para isso até a pessoa lá no fundo conta. O filtro de tamanho
-    // decide quem MANDA na câmera, não quem existe.
     const comRosto = daCena.filter(
       (a) => rostosValidos(a, o.confMinima).length > 0,
     ).length;
@@ -647,14 +631,7 @@ export function planejarTrajetoriaPorCena(
       // movimento aqui é a máquina se exibindo às custas do espectador. Se
       // parada custar o rosto, `garantirEnquadramento` conserta abaixo — e
       // só nesse caso.
-      const fixa = posicaoFixaDaCena(
-        daCena,
-        o.confMinima,
-        meia,
-        min,
-        max,
-        fonte.largura,
-      );
+      const fixa = posicaoFixaDaCena(daCena, o.confMinima, meia, min, max);
       daCenaPontos =
         fixa === null
           ? [{ t: ini, centroX: centroFonte }]
@@ -670,7 +647,6 @@ export function planejarTrajetoriaPorCena(
       min,
       max,
       o,
-      fonte.largura,
     );
 
     // --- a costura: degrau, não rampa (ver o cabeçalho da função) ----------
