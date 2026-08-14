@@ -25,15 +25,17 @@
  * salto é invisível porque a imagem inteira mudou no mesmo frame — é o corte
  * que esconde o movimento, exatamente como um editor faz. Dentro do segmento:
  *
- *   CENA CURTA  →  uma posição FIXA, escolhida para enquadrar o máximo de
- *                  rostos daquela cena, e a câmera não mexe mais — SALVO se
- *                  nem a melhor posição segura o rosto até o fim da cena, e aí
- *                  vai um pan reto de ponta a ponta. Ver `folgaDaBorda`.
+ *   CENA CURTA  →  uma posição FIXA, escolhida para enquadrar o assunto ao
+ *                  longo daquela cena, e a câmera não mexe mais.
  *   CENA LONGA  →  aí sim vale seguir, com toda a maquinaria de
  *                  `planejarTrajetoria` rodando SÓ dentro da cena.
  *   SEM ROSTO   →  centro da fonte. Sem herdar a posição da cena anterior:
  *                  a imagem mudou, não há razão nenhuma para continuar
  *                  apontando para o mesmo canto.
+ *
+ * E DEPOIS, nos três casos, `garantirEnquadramento` passa por cima e emenda a
+ * trajetória nos instantes em que ela perderia o assunto — com teto de
+ * velocidade, para que consertar o enquadramento não vire um solavanco.
  *
  * O ganho não vem de seguir melhor. Vem de PARAR DE SEGUIR quando seguir não
  * faz sentido — que, num trailer, é quase sempre.

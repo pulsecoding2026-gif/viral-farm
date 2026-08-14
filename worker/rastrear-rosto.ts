@@ -34,22 +34,20 @@ const PY = process.env.PY_VISAO ?? "/opt/viral-farm/.venv-visao/bin/python";
 const MODELO = process.env.MODELO_YUNET ?? "/opt/viral-farm/.venv-visao/yunet.onnx";
 
 /**
- * DESLIGADO POR PADRÃO — e a razão está medida.
+ * DESLIGADO POR PADRÃO — mas o motivo mudou, e vale registrar qual era.
  *
- * Num trailer (corte de cena a cada 2–3s) o rastreamento entregou o rosto
- * dentro do recorte em 44% das amostras, contra 65% do crop central fixo.
- * Pior que não fazer nada.
+ * Era: num trailer o rastreamento punha o rosto no recorte em 44% das amostras
+ * contra 65% do crop fixo, porque a trajetória contínua tratava corte de cena
+ * como movimento e saía atrás de gente que já tinha sumido. Isso foi
+ * resolvido — trajetória POR CENA, correção com teto de velocidade, e a
+ * escolha do assunto por foco e frontalidade em vez de tamanho. No mesmo
+ * material, hoje: 81% contra 74% do crop fixo, e 81% contra 63% pela régua
+ * mais dura (o rosto INTEIRO dentro do quadro).
  *
- * A causa não é bug de conta: a escala e o filtro estão certos, e o teste
- * sintético segue objeto com 1,3px de erro. É o MATERIAL. A trajetória foi
- * calibrada pra movimento contínuo — pessoa sentada num podcast, que é onde
- * seguir rosto vale ouro. Corte de cena teleporta o rosto, a suavização
- * trata isso como movimento e a câmera sai atrás, chegando atrasada e no
- * lugar de onde a pessoa já saiu.
- *
- * O que falta pra ligar: DETECTAR CORTE DE CENA e reiniciar a trajetória em
- * cada um, em vez de interpolar por cima. Enquanto isso não existe, ligar
- * seria trocar um enquadramento honesto por uma câmera perseguindo fantasma.
+ * Continua desligado por prudência de implantação, não por desconfiança do
+ * resultado: a decisão de aplicar já não depende de acreditar que ajuda, e sim
+ * da prova que roda vídeo a vídeo mais abaixo nesta função. Ligar isto passou
+ * a ser uma escolha de quando, não de se.
  *
  * Ligue com RASTREAR_ROSTO=1 pra medir em material seu.
  */
