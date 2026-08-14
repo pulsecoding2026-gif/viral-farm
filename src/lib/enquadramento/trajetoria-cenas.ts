@@ -218,10 +218,29 @@ function garantirEnquadramento(
 
   const seq = base.slice().sort((a, b) => a.t - b.t);
 
+  /**
+   * "DENTRO" É O ROSTO INTEIRO, não o centro dele.
+   *
+   * A primeira versão comparava só o centro do rosto com meia largura de
+   * recorte, e isso deixa passar um rosto pela metade: com `meia` = 135 px, um
+   * rosto de 80 px cujo centro está a 130 px da câmera é declarado dentro
+   * enquanto sua borda está 35 px fora do quadro. O teste de render pegou
+   * exatamente isso — três amostras seguidas em que o vídeo final não tinha
+   * rosto detectável, num trecho que o diagnóstico dava como acerto. Régua que
+   * discorda do vídeo entregue está errada, não o vídeo.
+   *
+   * Agora a margem desconta a largura do rosto. O piso existe para o caso
+   * patológico do rosto maior que o próprio recorte (close extremo), em que
+   * nenhuma posição cabe inteira e insistir só produziria correção perpétua.
+   */
+  const margemDe = (r: Rosto) =>
+    Math.max(meia * 0.35, meia - Math.max(0, finito(r.w, 0)) / 2) *
+    o.folgaDaBorda;
+
   for (let i = 0; i < foco.length; i++) {
     const { t, r } = foco[i];
     const c = centroDe(r);
-    if (Math.abs(centroEm(seq, t) - c) <= meia * o.folgaDaBorda) continue;
+    if (Math.abs(centroEm(seq, t) - c) <= margemDe(r)) continue;
 
     const destino = limitar(c, min, max);
 
@@ -242,7 +261,7 @@ function garantirEnquadramento(
       const depoisDoInicio = seq.filter((p) => p.t > ini);
       seq.length = 0;
       seq.push({ t: ini, centroX: destino }, ...depoisDoInicio);
-      if (Math.abs(centroEm(seq, t) - c) <= meia * o.folgaDaBorda) continue;
+      if (Math.abs(centroEm(seq, t) - c) <= margemDe(r)) continue;
     }
 
     // A rampa não pode recuar atrás de um ponto que já existe na trajetória —

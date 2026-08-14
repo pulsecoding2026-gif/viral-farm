@@ -60,14 +60,33 @@ function detectar(video: string, inicio: number, fim: number): Promise<{
   });
 }
 
-type Regua = "principal" | "algum";
+/**
+ * TRÊS RÉGUAS, porque duas não bastaram.
+ *
+ *   principal  o maior rosto teve o CENTRO dentro do recorte
+ *   algum      qualquer rosto teve o centro dentro
+ *   inteiro    o maior rosto coube INTEIRO, borda a borda
+ *
+ * A terceira nasceu de uma contradição: o teste de render mostrou três
+ * amostras seguidas sem rosto no vídeo final, num trecho que as duas primeiras
+ * réguas davam como acerto. Elas comparavam só o centro do rosto com meia
+ * largura de recorte, e por isso aprovavam um rosto cortado ao meio — o centro
+ * dentro, a cara metade fora. Para quem assiste, isso não é acerto.
+ *
+ * As três continuam lado a lado em vez de a nova substituir as antigas: a de
+ * centro é comparável com todo o histórico de medição deste trabalho, e trocar
+ * a régua no meio do caminho apagaria a base de comparação.
+ */
+type Regua = "principal" | "algum" | "inteiro";
 
 function acerta(a: Amostra, x: number, meia: number, regua: Regua): boolean {
-  const dentro = (r: { x: number; w: number }) =>
+  const centroDentro = (r: { x: number; w: number }) =>
     Math.abs(r.x + r.w / 2 - x) <= meia;
-  if (regua === "algum") return a.rostos.some(dentro);
+  if (regua === "algum") return a.rostos.some(centroDentro);
   const r = a.rostos[0];
-  return r !== undefined && dentro(r);
+  if (r === undefined) return false;
+  if (regua === "inteiro") return r.x >= x - meia && r.x + r.w <= x + meia;
+  return centroDentro(r);
 }
 
 function taxa(
@@ -119,13 +138,15 @@ async function main() {
       `${cortes.length} cortes de cena · ${porCena.length} pontos\n`,
   );
 
-  console.log("  câmera      PRINCIPAL      ALGUM");
+  console.log("  câmera      PRINCIPAL      ALGUM        INTEIRO");
   for (const [nome, posicao] of camaras) {
     const p = taxa(amostras, posicao, meia, "principal");
     const g = taxa(amostras, posicao, meia, "algum");
+    const i = taxa(amostras, posicao, meia, "inteiro");
     console.log(
       `  ${nome.padEnd(10)} ${p.pct.toFixed(0).padStart(3)}% (${p.acertos}/${p.total})` +
-        `    ${g.pct.toFixed(0).padStart(3)}% (${g.acertos}/${g.total})`,
+        `    ${g.pct.toFixed(0).padStart(3)}% (${g.acertos}/${g.total})` +
+        `    ${i.pct.toFixed(0).padStart(3)}% (${i.acertos}/${i.total})`,
     );
   }
 
