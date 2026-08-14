@@ -269,7 +269,7 @@ export function limitesDoCentro(
  */
 const PESO_PERFIL = 0.45;
 
-function pontuacao(r: Rosto): number {
+export function pontuacao(r: Rosto): number {
   const base =
     Math.max(0, finito(r.w, 0)) * limitar(finito(r.conf, 0), 0, 1);
   if (r.frontal === undefined) return base;

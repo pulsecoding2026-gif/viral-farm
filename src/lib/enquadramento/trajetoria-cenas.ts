@@ -46,6 +46,7 @@ import {
   planejarTrajetoria,
   centroEm,
   escolherPrincipal,
+  pontuacao,
   larguraDoCrop,
   limitesDoCentro,
   PADROES,
@@ -291,16 +292,33 @@ function garantirEnquadramento(
     const guardado = centroEm(seq, comeco);
     const janela = t - comeco;
     if (janela <= 0 || Math.abs(destino - guardado) / janela > vMax) continue;
-    // Tudo daqui pra frente é substituído: a trajetória original já provou,
-    // nesta amostra, que não serve.
+
     const antes = seq.filter((p) => p.t < comeco);
-    const depois = seq.filter((p) => p.t > t);
+    const chegada = Math.max(t, comeco + 1e-3);
+
+    /**
+     * A VOLTA TAMBÉM É MOVIMENTO — e eu tinha limitado só a ida.
+     *
+     * Com a ida presa ao teto e a volta livre, a trajetória retomava o traçado
+     * original no ponto seguinte por mais longe que ele estivesse. A medição
+     * acusou pico de 440 px/s com o teto configurado em 270, e a violação
+     * inteira estava aí. Um ponto que exigiria velocidade acima do teto é
+     * descartado, e a câmera fica onde está até aparecer um alcançável.
+     */
+    const depois: Ponto[] = [];
+    let ref: Ponto = { t: chegada, centroX: destino };
+    for (const p of seq) {
+      if (p.t <= chegada) continue;
+      if (Math.abs(p.centroX - ref.centroX) / (p.t - ref.t) > vMax) continue;
+      depois.push(p);
+      ref = p;
+    }
 
     seq.length = 0;
     seq.push(
       ...antes,
       { t: comeco, centroX: guardado },
-      { t: Math.max(t, comeco + 1e-3), centroX: destino },
+      { t: chegada, centroX: destino },
       ...depois,
     );
   }
@@ -312,10 +330,16 @@ function finito(v: number, padrao: number): number {
   return Number.isFinite(v) ? v : padrao;
 }
 
-/** Mesma pontuação de `trajetoria.ts`: largura × confiança. */
-function pontuacao(r: Rosto): number {
-  return Math.max(0, finito(r.w, 0)) * limitar(finito(r.conf, 0), 0, 1);
-}
+/**
+ * Nada aqui: a pontuação é importada de `trajetoria.ts`.
+ *
+ * Havia uma CÓPIA desta fórmula neste arquivo, com o comentário dizendo que
+ * era "a mesma pontuação". Era, até a original passar a considerar
+ * frontalidade — e aí os dois lados do mesmo algoritmo passaram a discordar
+ * sobre quem é o assunto, em silêncio: a posição da cena era escolhida pelo
+ * rosto maior enquanto a correção perseguia o rosto frontal. Duas definições
+ * de "principal" no mesmo cálculo não dão erro, dão uma câmera indecisa.
+ */
 
 function centroDe(r: Rosto): number {
   return finito(r.x, 0) + Math.max(0, finito(r.w, 0)) / 2;
@@ -381,11 +405,22 @@ function posicaoFixaDaCena(
   min: number,
   max: number,
 ): number | null {
+  /**
+   * UM rosto por amostra — o assunto — e não todos os rostos do quadro.
+   *
+   * Contar todo mundo faz a varredura otimizar a coisa errada: numa cena com
+   * quatro figurantes de um lado e o protagonista do outro, a posição que
+   * "cobre mais rostos" aponta para os figurantes. E como `garantirEnquadramento`
+   * persegue o assunto escolhido por `escolherPrincipal`, as duas metades do
+   * algoritmo brigavam — uma escolhia o lugar pela multidão, a outra corrigia
+   * em direção ao protagonista, e a câmera ficava indo e voltando.
+   *
+   * Uma amostra, um voto, do mesmo eleitor que o resto do código consulta.
+   */
   const faces: Array<{ c: number; s: number }> = [];
   for (const a of amostras) {
-    for (const r of rostosValidos(a, confMinima)) {
-      faces.push({ c: centroDe(r), s: pontuacao(r) });
-    }
+    const r = escolherPrincipal(rostosValidos(a, confMinima));
+    if (r) faces.push({ c: centroDe(r), s: pontuacao(r) });
   }
   if (faces.length === 0) return null;
 
