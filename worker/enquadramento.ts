@@ -147,6 +147,57 @@ export async function medirQuadro(
 const RAZAO_ALTA = 0.75;
 const LATERAL_MINIMA = 12;
 
+/**
+ * Abaixo desta razão o conteúdo está TÃO concentrado no centro que abrir o
+ * plano seria desperdiçar tela: o assunto encolheria para caber junto com duas
+ * faixas de nada desfocado.
+ *
+ * Existe para criar uma FAIXA LIVRE entre 0,40 e 0,75. Antes a decisão era
+ * binária e cada trecho tinha uma resposta certa, o que não deixava espaço
+ * nenhum para o ritmo alternar. Nem todo trecho tem resposta certa: quando as
+ * bordas têm alguma coisa, mas não o bastante para cortar ser mutilação, os
+ * dois enquadramentos são defensáveis — e é exatamente aí que trocar de plano
+ * sai de graça. Fora dessa faixa o conteúdo continua mandando.
+ */
+const RAZAO_CENTRO_DOMINA = 0.4;
+
+export type Exigencia = {
+  /** O enquadramento que o conteúdo IMPÕE, ou null quando os dois servem. */
+  obrigatorio: Enquadramento | null;
+  motivo: string;
+};
+
+export function exigenciaDeEnquadramento(m: MedidaQuadro): Exigencia {
+  if (m.frames === 0) {
+    return {
+      obrigatorio: "preencher",
+      motivo: "não consegui ler frames deste trecho",
+    };
+  }
+  if (m.laterais < LATERAL_MINIMA) {
+    return {
+      obrigatorio: "preencher",
+      motivo: `laterais quase lisas (${m.laterais.toFixed(1)})`,
+    };
+  }
+  if (m.razao >= RAZAO_ALTA) {
+    return {
+      obrigatorio: "ajustar",
+      motivo: `bordas com ${Math.round(m.razao * 100)}% do detalhe do centro — cortar perderia conteúdo`,
+    };
+  }
+  if (m.razao < RAZAO_CENTRO_DOMINA) {
+    return {
+      obrigatorio: "preencher",
+      motivo: `conteúdo concentrado no centro (bordas em ${Math.round(m.razao * 100)}%)`,
+    };
+  }
+  return {
+    obrigatorio: null,
+    motivo: `bordas em ${Math.round(m.razao * 100)}%, os dois enquadramentos servem`,
+  };
+}
+
 export function decidirEnquadramento(m: MedidaQuadro): {
   enquadramento: Enquadramento;
   motivo: string;

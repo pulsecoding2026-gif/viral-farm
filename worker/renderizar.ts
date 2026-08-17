@@ -4,6 +4,7 @@ import { run, bin } from "../src/lib/proc";
 import { gerarAss, type EstiloLegenda } from "./legendas";
 import { limparSilencios, filtroDeJanelas } from "./silencio";
 import { filtroDeEnquadramento, type Enquadramento } from "./enquadramento";
+import { filtroDeRitmo, type Bloco } from "./ritmo";
 import type { Palavra } from "./transcritor";
 
 /**
@@ -40,6 +41,18 @@ export type OpcoesRender = {
    * Python e a um modelo em disco.
    */
   filtroDeCrop?: string | null;
+  /**
+   * Os atos do corte, cada um com o seu enquadramento — de `planejarRitmo`.
+   *
+   * Os tempos são RELATIVOS ao início do corte e falam a linha do tempo FINAL:
+   * se `limparSilencio` estiver ligado, é a linha já sem as pausas, porque é
+   * ela que o espectador vê. Quem monta o plano tem que usar a mesma base, e
+   * `duracaoFinal()` existe para isso.
+   *
+   * Ausente ou com um bloco só = enquadramento único, o comportamento de
+   * sempre.
+   */
+  ritmo?: Bloco[] | null;
   /** Cancelamento: mata o ffmpeg em vez de esperar o render terminar. */
   sinal?: AbortSignal;
   /** Palavras que a IA marcou pra ganhar a cor de destaque na legenda. */
@@ -60,6 +73,7 @@ export async function renderizarCorte(
     limparSilencio = false,
     enquadramento = "preencher",
     filtroDeCrop = null,
+    ritmo = null,
     sinal,
     destaques = [],
   } = opcoes;
@@ -109,20 +123,56 @@ export async function renderizarCorte(
    * trecho longo demais), `filtroDeCrop` é nulo e a cadeia é exatamente a
    * de antes.
    */
-  const grafoVideo =
+  /**
+   * O ENQUADRAMENTO DE CADA BLOCO, quando o corte tem ritmo.
+   *
+   * `ritmo` é a lista de atos vinda de `planejarRitmo`; sem ela, o corte
+   * inteiro usa um enquadramento só, que é o comportamento de sempre.
+   *
+   * O rastreamento de rosto entra apenas nos blocos `preencher`: em `ajustar`
+   * o quadro inteiro cabe na largura e não existe recorte lateral para
+   * movimentar, então seguir rosto ali é trabalho jogado fora. Como o filtro
+   * de crop animado é escrito em função de `t`, e `trim`+`setpts` reinicia o
+   * relógio de cada bloco em zero, ele só pode ser usado no bloco que começa
+   * em zero — nos demais a trajetória estaria fora de fase, que é o defeito
+   * que já custou uma medição inteira neste trabalho. Os outros blocos
+   * `preencher` usam o crop central, que é honesto e não mente sobre o tempo.
+   */
+  const paraBloco = (e: Enquadramento, comecaEmZero: boolean): string =>
+    filtroDeCrop && e === "preencher" && comecaEmZero
+      ? filtroDeCrop
+      : filtroDeEnquadramento(e);
+
+  /** A cadeia de sempre, para o caminho -vf (sem ritmo, sem limpeza). */
+  const grafoSimples =
     (filtroDeCrop && enquadramento === "preencher"
       ? filtroDeCrop
       : filtroDeEnquadramento(enquadramento)) + sufixoLegenda;
+
+  const comRitmo = ritmo !== null && ritmo.length > 1;
+
+  /**
+   * Com ritmo, o vídeo passa por um grafo de blocos; sem ritmo, pela cadeia
+   * única de sempre. `entrada` é o pulo do gato: quando houve limpeza de
+   * silêncio o vídeo já foi remontado em `[vcat]`, e é sobre ESSA linha do
+   * tempo que os blocos do ritmo foram planejados.
+   */
+  const cadeiaDeVideo = (entrada: string): string =>
+    comRitmo
+      ? `${filtroDeRitmo(ritmo, (e, i) => paraBloco(e, i === 0), entrada)};` +
+        `[rvout]${sufixoLegenda.replace(/^,/, "") || "null"}[vout]`
+      : `[${entrada}]${
+          (filtroDeCrop && enquadramento === "preencher"
+            ? filtroDeCrop
+            : filtroDeEnquadramento(enquadramento)) + sufixoLegenda
+        }[vout]`;
 
   const args: string[] = [];
 
   if (limpeza && limpeza.janelas.length > 1) {
     // Colagem: as janelas viram trims concatenados e o resultado passa pelo
     // enquadramento + legenda. Sem -ss/-t aqui — quem recorta é o filtro.
-    const cadeia = [
-      filtroDeJanelas(limpeza.janelas),
-      `[vcat]${grafoVideo}[vout]`,
-    ].join(";");
+    const cadeia = [filtroDeJanelas(limpeza.janelas), cadeiaDeVideo("vcat")].join(";");
 
     args.push(
       "-i", videoFonte,
@@ -138,8 +188,18 @@ export async function renderizarCorte(
       "-ss", corte.inicio_s.toFixed(2),
       "-t", duracao.toFixed(2),
       "-i", videoFonte,
-      "-vf", grafoVideo,
     );
+    if (comRitmo) {
+      // O grafo de blocos tem rótulos nomeados, então precisa de
+      // -filter_complex; o áudio segue reto, sem passar por filtro nenhum.
+      args.push(
+        "-filter_complex", cadeiaDeVideo("0:v"),
+        "-map", "[vout]",
+        "-map", "0:a?",
+      );
+    } else {
+      args.push("-vf", grafoSimples);
+    }
   }
 
   args.push(
@@ -163,6 +223,27 @@ export async function renderizarCorte(
   await run(bin.ffmpeg(), args, { timeoutMs: 10 * 60_000, cwd: dir, sinal });
 
   return saida;
+}
+
+/**
+ * Quanto o corte VAI DURAR depois de renderizado.
+ *
+ * Com limpeza de silêncio ligada isso não é `fim − início`: as pausas somem e
+ * o vídeo encurta. O plano de ritmo precisa desta duração, e não da janela
+ * original, porque os blocos são posições na linha do tempo que o espectador
+ * vê — usar a janela crua colocaria as trocas de plano cada vez mais adiantadas
+ * conforme o corte avança, e a última cairia fora do vídeo.
+ */
+export function duracaoFinal(
+  corte: { inicio_s: number; fim_s: number },
+  palavras: Palavra[],
+  limparSilencio: boolean,
+): number {
+  const bruta = Math.max(0, corte.fim_s - corte.inicio_s);
+  if (!limparSilencio) return bruta;
+  const limpeza = limparSilencios(palavras, corte.inicio_s, corte.fim_s);
+  const soma = limpeza.janelas.reduce((s, j) => s + (j.ate - j.de), 0);
+  return soma > 0 ? soma : bruta;
 }
 
 /** Palavras da transcrição que caem dentro da janela do corte. */
