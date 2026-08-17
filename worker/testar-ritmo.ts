@@ -20,7 +20,7 @@
  */
 import path from "node:path";
 import fs from "node:fs/promises";
-import { runBinario, bin } from "../src/lib/proc";
+import { runBinario, run, bin } from "../src/lib/proc";
 import { renderizarCorte, palavrasNaJanela, duracaoFinal } from "./renderizar";
 import { medirQuadro } from "./enquadramento";
 import { planejarRitmoDoCorte, planejarRitmo } from "./ritmo";
@@ -28,18 +28,35 @@ import { detectarCortesDeCena } from "./cenas";
 import type { Enquadramento } from "./enquadramento";
 import type { Palavra } from "./transcritor";
 
-const LARGURA = 108;
-const ALTURA = 192;
+/** Resolução da leitura. Alta o bastante para a borda cair numa linha nítida. */
+const LARGURA = 270;
+const ALTURA = 480;
 
 /**
- * Quanto do frame, em cima, é "fundo" — escuro e sem variação.
+ * O frame está em `ajustar`? Procura a EMENDA, não a barra.
  *
- * O fundo do `ajustar` é o próprio vídeo ampliado, desfocado e escurecido em
- * 16%, então ele NÃO é preto: o teste não pode procurar preto puro. O que o
- * distingue é a falta de detalhe — depois do gblur não sobra borda nenhuma —
- * combinada com o escurecimento. Daí medir desvio local e brilho juntos.
+ * A primeira versão disto contava linhas lisas a partir do topo, supondo que
+ * fundo desfocado = ausência de detalhe. Deu falso alarme na primeira tentativa
+ * e por um motivo óbvio depois de ver o frame: um close com fundo escuro atrás
+ * da cabeça também tem o topo liso. O teste acusou o ato 3 de estar errado
+ * quando o vídeo estava perfeito — e teste que grita à toa é pior que teste
+ * nenhum, porque ensina a ignorar o resultado.
+ *
+ * O sinal certo é geométrico e não depende do conteúdo da cena. No `ajustar`,
+ * a frente é o vídeo inteiro escalado para 1080 de largura e colado no meio:
+ * a altura dela sai da proporção da FONTE, e nas duas pontas dessa faixa há
+ * uma emenda entre imagem nítida e fundo borrado. Essa descontinuidade é
+ * abrupta — muito maior que a diferença entre duas linhas vizinhas quaisquer.
+ * Em `preencher` a imagem é contínua e não existe emenda alguma.
+ *
+ * Comparar o salto NA borda esperada com o salto TÍPICO do resto do frame
+ * torna a medida independente de a cena ser clara, escura, lisa ou detalhada.
  */
-async function faixaDeFundo(mp4: string, segundo: number): Promise<number | null> {
+async function pareceAjustar(
+  mp4: string,
+  segundo: number,
+  proporcaoDaFonte: number,
+): Promise<{ ajustar: boolean; salto: number } | null> {
   let buf: Buffer;
   try {
     buf = await runBinario(
@@ -60,19 +77,43 @@ async function faixaDeFundo(mp4: string, segundo: number): Promise<number | null
   }
   if (buf.length < LARGURA * ALTURA) return null;
 
-  // Percorre de cima para baixo e para na primeira linha com detalhe real.
-  let linhas = 0;
-  for (let y = 0; y < Math.floor(ALTURA / 2); y++) {
-    const linha: number[] = [];
-    for (let x = 0; x < LARGURA; x++) linha.push(buf[y * LARGURA + x]);
-    const media = linha.reduce((a, b) => a + b, 0) / linha.length;
-    const dp = Math.sqrt(
-      linha.reduce((a, p) => a + (p - media) ** 2, 0) / linha.length,
-    );
-    if (dp > 18) break;
-    linhas += 1;
+  /** Diferença média, pixel a pixel, entre duas linhas. */
+  const entreLinhas = (y: number): number => {
+    if (y < 1 || y >= ALTURA) return 0;
+    let soma = 0;
+    for (let x = 0; x < LARGURA; x++) {
+      soma += Math.abs(buf[y * LARGURA + x] - buf[(y - 1) * LARGURA + x]);
+    }
+    return soma / LARGURA;
+  };
+
+  // Onde a frente começa: altura dela é a largura cheia vezes a proporção da
+  // fonte, e ela fica centrada.
+  const alturaFrente = LARGURA * proporcaoDaFonte;
+  const bordaCima = Math.round((ALTURA - alturaFrente) / 2);
+  const bordaBaixo = Math.round((ALTURA + alturaFrente) / 2);
+
+  // ±2 linhas de tolerância: o arredondamento da escala move a emenda.
+  const naBorda = Math.max(
+    ...[-2, -1, 0, 1, 2].flatMap((d) => [
+      entreLinhas(bordaCima + d),
+      entreLinhas(bordaBaixo + d),
+    ]),
+  );
+
+  // O salto típico do frame, longe das bordas candidatas.
+  const tipicos: number[] = [];
+  for (let y = 2; y < ALTURA - 2; y++) {
+    if (Math.abs(y - bordaCima) <= 4 || Math.abs(y - bordaBaixo) <= 4) continue;
+    tipicos.push(entreLinhas(y));
   }
-  return linhas / ALTURA;
+  tipicos.sort((a, b) => a - b);
+  const mediano = tipicos[Math.floor(tipicos.length / 2)] || 1;
+
+  const salto = naBorda / Math.max(mediano, 0.5);
+  // 3x acima do salto mediano: uma emenda de verdade passa disso com folga,
+  // e nenhuma textura de cena produz um degrau assim numa linha exata.
+  return { ajustar: salto > 3, salto };
 }
 
 /**
@@ -145,6 +186,23 @@ async function testarAlternancia(): Promise<number> {
   }
   console.log();
   return falhas;
+}
+
+/** altura/largura da fonte — é ela que define onde a emenda do `ajustar` cai. */
+async function proporcaoDoVideo(video: string): Promise<number> {
+  const saida = await run(
+    bin.ffprobe(),
+    [
+      "-v", "error",
+      "-select_streams", "v:0",
+      "-show_entries", "stream=width,height",
+      "-of", "csv=p=0",
+      video,
+    ],
+    { timeoutMs: 20_000 },
+  );
+  const [l, a] = saida.trim().split(",").map(Number);
+  return l && a ? a / l : 9 / 16;
 }
 
 async function main() {
@@ -234,25 +292,26 @@ async function main() {
     ritmo: blocos,
   });
 
-  console.log("\n  O QUE SAIU (faixa de fundo no topo do frame):");
+  const proporcao = await proporcaoDoVideo(video);
+  console.log(
+    `\n  O QUE SAIU (salto na emenda; fonte ${(1 / proporcao).toFixed(2)}:1):`,
+  );
   let falhas = 0;
   for (const b of blocos) {
-    // O meio do bloco: longe das emendas, onde o frame é inequívoco.
+    // O meio do bloco: longe das emendas de tempo, onde o frame é inequívoco.
     const t = (b.de + b.ate) / 2;
-    const faixa = await faixaDeFundo(path.join(dir, "com-ritmo.mp4"), t);
-    if (faixa === null) {
+    const m = await pareceAjustar(path.join(dir, "com-ritmo.mp4"), t, proporcao);
+    if (m === null) {
       console.log(`  ${t.toFixed(1)}s  não consegui ler o frame`);
       falhas += 1;
       continue;
     }
-    // `ajustar` numa fonte 16:9 deixa ~28% do frame de fundo em cada ponta;
-    // 8% é folga generosa para não confundir com uma cena de céu liso.
-    const pareceAjustar = faixa > 0.08;
     const esperado = b.enquadramento === "ajustar";
-    const ok = pareceAjustar === esperado;
+    const ok = m.ajustar === esperado;
     if (!ok) falhas += 1;
     console.log(
-      `  ${t.toFixed(1).padStart(5)}s  faixa ${(faixa * 100).toFixed(0).padStart(3)}%  ` +
+      `  ${t.toFixed(1).padStart(5)}s  salto ${m.salto.toFixed(1).padStart(5)}x  ` +
+        `vi ${(m.ajustar ? "ajustar" : "preencher").padEnd(9)}  ` +
         `planejado ${b.enquadramento.padEnd(9)}  ${ok ? "ok" : "NÃO CONFERE"}`,
     );
   }
