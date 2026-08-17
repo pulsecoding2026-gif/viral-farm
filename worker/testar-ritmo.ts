@@ -23,8 +23,9 @@ import fs from "node:fs/promises";
 import { runBinario, bin } from "../src/lib/proc";
 import { renderizarCorte, palavrasNaJanela, duracaoFinal } from "./renderizar";
 import { medirQuadro } from "./enquadramento";
-import { planejarRitmoDoCorte } from "./ritmo";
+import { planejarRitmoDoCorte, planejarRitmo } from "./ritmo";
 import { detectarCortesDeCena } from "./cenas";
+import type { Enquadramento } from "./enquadramento";
 import type { Palavra } from "./transcritor";
 
 const LARGURA = 108;
@@ -74,7 +75,81 @@ async function faixaDeFundo(mp4: string, segundo: number): Promise<number | null
   return linhas / ALTURA;
 }
 
+/**
+ * A ALTERNÂNCIA, testada sem depender de achar o material certo.
+ *
+ * O teste de vídeo real prova que o grafo executa, mas ele não consegue provar
+ * que o ritmo alterna: no trailer usado, as bordas carregam conteúdo o tempo
+ * todo, o conteúdo manda nos três atos e a preferência de ritmo nunca chega a
+ * ser consultada. Esperar aparecer um vídeo com a mistura exata seria testar
+ * por sorteio.
+ *
+ * Aqui a medição é substituída por respostas escolhidas, o que deixa perguntar
+ * as três coisas que a regra promete: alterna quando está livre, obedece
+ * quando o conteúdo impõe, e — a parte que erra fácil — depois de uma imposição
+ * ela continua alternando A PARTIR DO QUE FOI USADO, não do que queria ter
+ * usado.
+ */
+async function testarAlternancia(): Promise<number> {
+  const fronteiras = [10, 20];
+  const livre = { obrigatorio: null, motivo: "faixa livre" };
+
+  const casos: Array<{
+    nome: string;
+    respostas: Array<{ obrigatorio: Enquadramento | null; motivo: string }>;
+    espera: Enquadramento[];
+  }> = [
+    {
+      nome: "tudo livre: fecha, abre, fecha",
+      respostas: [livre, livre, livre],
+      espera: ["preencher", "ajustar", "preencher"],
+    },
+    {
+      nome: "conteúdo impõe no 1º: o ritmo segue a partir do que foi usado",
+      respostas: [
+        { obrigatorio: "ajustar", motivo: "bordas cheias" },
+        livre,
+        livre,
+      ],
+      espera: ["ajustar", "preencher", "ajustar"],
+    },
+    {
+      nome: "conteúdo impõe em todos: ritmo não passa por cima",
+      respostas: [
+        { obrigatorio: "ajustar", motivo: "bordas cheias" },
+        { obrigatorio: "ajustar", motivo: "bordas cheias" },
+        { obrigatorio: "ajustar", motivo: "bordas cheias" },
+      ],
+      espera: ["ajustar", "ajustar", "ajustar"],
+    },
+  ];
+
+  let falhas = 0;
+  console.log("  A ALTERNÂNCIA (medição simulada):");
+  for (const caso of casos) {
+    let i = 0;
+    const blocos = await planejarRitmo(
+      30,
+      fronteiras,
+      async () => caso.respostas[Math.min(i++, caso.respostas.length - 1)],
+    );
+    const deu = blocos.map((b) => b.enquadramento);
+    const ok =
+      deu.length === caso.espera.length &&
+      deu.every((e, k) => e === caso.espera[k]);
+    if (!ok) falhas += 1;
+    console.log(
+      `  ${ok ? "ok  " : "ERRO"} ${caso.nome}\n       saiu: ${deu.join(" → ")}` +
+        (ok ? "" : `\n       esperado: ${caso.espera.join(" → ")}`),
+    );
+  }
+  console.log();
+  return falhas;
+}
+
 async function main() {
+  const falhasDaRegra = await testarAlternancia();
+
   const video = process.argv[2];
   const inicio = Number(process.argv[3] ?? 10);
   const fim = Number(process.argv[4] ?? 40);
@@ -120,6 +195,7 @@ async function main() {
       "\nUm bloco só — não há ritmo a conferir. Isso é legítimo (corte curto " +
         "ou sem fronteira natural), mas o teste perde o sentido aqui.",
     );
+    if (falhasDaRegra > 0) process.exit(1);
     return;
   }
 
@@ -153,7 +229,7 @@ async function main() {
   }
 
   console.log(`\nvídeo em ${path.join(dir, "com-ritmo.mp4")}`);
-  if (falhas > 0) process.exit(1);
+  if (falhas + falhasDaRegra > 0) process.exit(1);
 }
 
 main().catch((e) => {
