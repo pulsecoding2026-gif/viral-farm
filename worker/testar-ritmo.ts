@@ -199,9 +199,19 @@ async function main() {
     return;
   }
 
-  console.log("\n  renderizando…");
+  /**
+   * COM LEGENDA, que é o caminho que o worker usa de verdade.
+   *
+   * O grafo do ritmo termina num rótulo (`[rvout]`) e a legenda é colada
+   * depois dele; sem legenda esse trecho vira um `null` para o rótulo não
+   * ficar solto. São dois caminhos diferentes dentro do mesmo código, e testar
+   * só o mais simples deixaria o outro quebrar em produção — que é onde ele
+   * roda.
+   */
+  console.log("\n  renderizando (com legenda, como em produção)…");
   await renderizarCorte(video, corte, palavras, dir, "com-ritmo", {
-    estilo: "sem",
+    estilo: "hormozi",
+    tituloTela: "TESTE DE RITMO",
     ritmo: blocos,
   });
 

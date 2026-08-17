@@ -8,7 +8,10 @@ import { extrairAudio, duracaoDoArquivo } from "../src/lib/analise/midia";
 import { ambiente } from "./ambiente";
 import { criarTranscritor } from "./transcritor";
 import { escolherCortes } from "./cortar";
-import { renderizarCorte, palavrasNaJanela } from "./renderizar";
+import { renderizarCorte, palavrasNaJanela, duracaoFinal } from "./renderizar";
+import { planejarRitmoDoCorte, type Bloco } from "./ritmo";
+import { detectarCortesDeCena } from "./cenas";
+import type { Palavra } from "./transcritor";
 import {
   medirQuadro,
   decidirEnquadramento,
@@ -154,9 +157,17 @@ async function escolherEnquadramento(
   corte: { inicio_s: number; fim_s: number },
   fonteVertical: boolean,
   rotulo: string,
+  palavras: Palavra[],
+  limparSilencio: boolean,
   sinal?: AbortSignal,
-): Promise<{ enquadramento: Enquadramento; filtroDeCrop: string | null }> {
-  if (fonteVertical) return { enquadramento: "preencher", filtroDeCrop: null };
+): Promise<{
+  enquadramento: Enquadramento;
+  filtroDeCrop: string | null;
+  ritmo: Bloco[] | null;
+}> {
+  if (fonteVertical) {
+    return { enquadramento: "preencher", filtroDeCrop: null, ritmo: null };
+  }
 
   let enquadramento: Enquadramento = "preencher";
   try {
@@ -169,13 +180,74 @@ async function escolherEnquadramento(
   }
 
   /**
+   * O RITMO: em vez de um enquadramento para o corte inteiro, um por ato.
+   *
+   * Fica atrás de flag porque muda a cara do vídeo entregue, e essa é uma
+   * decisão de produto que tem que ser tomada olhando o resultado, não
+   * herdada de um deploy. A medição por corte acima continua valendo como
+   * plano B: se o ritmo falhar por qualquer motivo, o corte sai como sempre
+   * saiu, e a falha não passa de uma linha de log.
+   */
+  let ritmo: Bloco[] | null = null;
+  if (process.env.RITMO_DO_CORTE === "1") {
+    try {
+      const cortesDeCena = await detectarCortesDeCena(
+        video, corte.inicio_s, corte.fim_s, sinal,
+      );
+      const blocos = await planejarRitmoDoCorte(
+        duracaoFinal(corte, palavras, limparSilencio),
+        cortesDeCena,
+        palavras,
+        corte.inicio_s,
+        (de, ate) => medirQuadro(video, de, ate),
+        /**
+         * A ponte entre as duas bases de tempo. Sem limpeza ela é uma soma; com
+         * limpeza seria preciso remapear pelas janelas mantidas, e enquanto
+         * esse mapa não existe o ritmo mede a janela CRUA. O erro que isso
+         * introduz é de conteúdo (mede um trecho um pouco deslocado), não de
+         * sincronia — o vídeo continua certo, só a escolha do enquadramento
+         * pode olhar o pedaço vizinho.
+         */
+        (t) => corte.inicio_s + t,
+      );
+      if (blocos.length > 1) {
+        ritmo = blocos;
+        console.log(
+          `[worker] ${rotulo}: ritmo em ${blocos.length} atos — ` +
+            blocos
+              .map((b) => `${b.de.toFixed(0)}s ${b.enquadramento}`)
+              .join(", "),
+        );
+      }
+    } catch (e) {
+      if (e instanceof Cancelado) throw e;
+      console.error(`[worker] ${rotulo}: ritmo indisponível:`, e);
+    }
+  }
+  if (ritmo) {
+    /**
+     * Com ritmo, o rastreamento de rosto sai de cena.
+     *
+     * O filtro de crop animado é escrito em função de `t`, e cada bloco
+     * reinicia o relógio em zero — só o primeiro bloco poderia usá-lo sem
+     * ficar fora de fase. Aplicar num bloco e não nos outros produziria uma
+     * câmera que segue no primeiro ato e congela nos demais, que é pior do
+     * que não seguir em lugar nenhum. Enquanto os dois não forem costurados
+     * de verdade, quem estiver ligado manda.
+     */
+    return { enquadramento, filtroDeCrop: null, ritmo };
+  }
+
+  /**
    * Rastrear rosto só faz sentido em "preencher".
    *
    * Em "ajustar" o quadro inteiro cabe na largura e o resto é fundo
    * desfocado — não existe recorte lateral pra movimentar, então detectar
    * seria gastar CPU pra não usar o resultado.
    */
-  if (enquadramento !== "preencher") return { enquadramento, filtroDeCrop: null };
+  if (enquadramento !== "preencher") {
+    return { enquadramento, filtroDeCrop: null, ritmo: null };
+  }
 
   const rastreio = await rastrearRosto(
     video,
@@ -189,7 +261,7 @@ async function escolherEnquadramento(
         `rosto em ${rastreio.comRosto}/${rastreio.amostras} amostras`,
     );
   }
-  return { enquadramento, filtroDeCrop: rastreio?.filtro ?? null };
+  return { enquadramento, filtroDeCrop: rastreio?.filtro ?? null, ritmo: null };
 }
 
 async function guardarFonte(video: string, analiseId: string): Promise<void> {
@@ -290,18 +362,21 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
         job.id, job.user_id, i + 1, corte, "renderizando",
       );
       try {
-        const { enquadramento, filtroDeCrop } = await escolherEnquadramento(
-          video, corte, vertical, `corte ${i + 1}`, sinal,
+        const doCorte = palavrasNaJanela(transcricao.palavras, corte);
+        const limparSilencio = job.opcoes.limpar_silencio === true;
+        const { enquadramento, filtroDeCrop, ritmo } = await escolherEnquadramento(
+          video, corte, vertical, `corte ${i + 1}`, doCorte, limparSilencio, sinal,
         );
         const mp4 = await renderizarCorte(
           video,
           corte,
-          palavrasNaJanela(transcricao.palavras, corte),
+          doCorte,
           dir,
           `corte-${i + 1}`,
           {
             enquadramento,
             filtroDeCrop,
+            ritmo,
             sinal,
             // O formato vem por corte: a IA casou cada trecho com o preset
             // que combina com aquele conteúdo. Escolha fixa do usuário já
@@ -309,7 +384,7 @@ async function analisar(job: JobAnalise, sinal: AbortSignal): Promise<void> {
             estilo: corte.formato,
             destaques: corte.destaques,
             tituloTela: job.opcoes.titulo !== false ? corte.titulo_tela : undefined,
-            limparSilencio: job.opcoes.limpar_silencio === true,
+            limparSilencio,
           },
         );
         await subirVideoDoCorte(corteId, job.id, job.user_id, mp4);
@@ -415,18 +490,21 @@ async function renderizarAprovados(
       await marcarEtapa(job.id, `renderizando_${i + 1}_de_${aprovados.length}`);
       await marcarCorteRenderizando(corte.id);
       try {
-        const { enquadramento, filtroDeCrop } = await escolherEnquadramento(
-          video, corte, vertical, `corte ${corte.ordem}`, sinal,
+        const doCorte = palavrasNaJanela(transcricao.palavras, corte);
+        const limparSilencio = job.opcoes.limpar_silencio === true;
+        const { enquadramento, filtroDeCrop, ritmo } = await escolherEnquadramento(
+          video, corte, vertical, `corte ${corte.ordem}`, doCorte, limparSilencio, sinal,
         );
         const mp4 = await renderizarCorte(
           video,
           corte,
-          palavrasNaJanela(transcricao.palavras, corte),
+          doCorte,
           dir,
           `corte-${corte.ordem}`,
           {
             enquadramento,
             filtroDeCrop,
+            ritmo,
             sinal,
             // Reedição pode trocar o formato só deste corte.
             estilo: corte.estilo ?? formatoDaAnalise,
@@ -437,7 +515,7 @@ async function renderizarAprovados(
               job.opcoes.titulo !== false
                 ? (corte.titulo_tela ?? undefined)
                 : undefined,
-            limparSilencio: job.opcoes.limpar_silencio === true,
+            limparSilencio,
           },
         );
         await subirVideoDoCorte(corte.id, job.id, job.user_id, mp4);
