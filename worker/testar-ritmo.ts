@@ -169,6 +169,19 @@ async function main() {
   const cortes = await detectarCortesDeCena(video, inicio, fim);
   const dur = duracaoFinal(corte, palavras, false);
 
+  /**
+   * FORCAR_ALTERNANCIA=1 ignora a medição e alterna à força.
+   *
+   * Serve para VER o efeito, e só. Num material em que as bordas carregam
+   * conteúdo o tempo todo — trailer widescreen, por exemplo — o conteúdo manda
+   * nos três atos e a alternância nunca aparece na tela, por mais correta que
+   * esteja. Sem uma forma de forçar, a única maneira de olhar o resultado
+   * seria caçar um vídeo com a mistura certa.
+   *
+   * NÃO é um modo de produção: forçar aqui significa aceitar cortar conteúdo
+   * que a medição disse para não cortar.
+   */
+  const forcar = process.env.FORCAR_ALTERNANCIA === "1";
   const blocos = await planejarRitmoDoCorte(
     dur,
     cortes,
@@ -177,6 +190,12 @@ async function main() {
     (de, ate) => medirQuadro(video, de, ate),
     (t) => inicio + t,
   );
+  if (forcar) {
+    for (const [i, b] of blocos.entries()) {
+      b.enquadramento = i % 2 === 0 ? "preencher" : "ajustar";
+      b.motivo = "FORÇADO para inspeção visual — a medição foi ignorada";
+    }
+  }
 
   console.log(
     `${path.basename(video)} · ${inicio}–${fim}s (${dur.toFixed(1)}s) · ` +
