@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { MARCA } from "@/lib/gta/marca";
 
 /**
  * Marca do produto — arquivos do cliente, sem redesenho.
@@ -43,12 +44,17 @@ export function Simbolo({
 }
 
 /**
- * Lockup. Proporção 1094x180 ≈ 6,1:1.
+ * Lockup da GTA VIRAL. Proporção 774x100 ≈ 7,7:1.
  *
- * O nome do arquivo carrega a marca (`logo-viral-farm`) e isso não é
- * enfeite: trocar o conteúdo de um `/logo.png` mantendo a URL faz o
- * navegador de quem já visitou continuar servindo a arte antiga do cache.
- * Marca nova, nome novo — a URL vira a chave de invalidação.
+ * Agora é SVG, e a troca de PNG para vetor foi possível porque o letreiro
+ * passou a ser desenhado (traço de tubo de néon com cantos chanfrados) em vez
+ * de tipografado — não há mais texto branco a vetorizar, que era o problema do
+ * lockup anterior.
+ *
+ * O nome do arquivo mudou junto com a marca, e isso não é enfeite: trocar o
+ * conteúdo mantendo a URL faria o navegador de quem já visitou continuar
+ * servindo a arte antiga do cache. Marca nova, nome novo — a URL é a chave de
+ * invalidação.
  *
  * As dimensões precisam bater com o arquivo real: o next/image usa esse par
  * pra reservar o espaço antes da imagem chegar. Erradas, o layout salta
@@ -57,11 +63,14 @@ export function Simbolo({
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <Image
-      src="/logo-viral-farm.png"
-      alt="Viral Farm"
-      width={1094}
-      height={180}
+      src="/gta-viral.svg"
+      alt={MARCA}
+      width={774}
+      height={100}
       priority
+      // `unoptimized`: o otimizador do next/image não processa SVG, e mandá-lo
+      // pelo pipeline só adiciona um salto de rede para devolver o mesmo byte.
+      unoptimized
       className={"h-auto w-full " + className}
     />
   );

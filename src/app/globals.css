@@ -1,6 +1,16 @@
 @import "tailwindcss";
 
 /*
+ * A paleta da GTA VIRAL — Miami à noite.
+ *
+ * Vem de docs/gta/tokens.css e traz três famílias: laranja de pôr do sol
+ * (ação), ciano de água à noite (dado) e magenta de néon (marca). O arquivo
+ * define os tokens; as rampas do Tailwind logo abaixo é que fazem os
+ * componentes existentes herdarem a cara nova sem trocar uma classe sequer.
+ */
+@import "./gta-tokens.css";
+
+/*
  * Dark por padrão, não pelo tema do sistema.
  *
  * O Tailwind 4 liga `dark:` ao prefers-color-scheme por default. Aqui a
@@ -10,20 +20,29 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Superfícies — quase preto, com degraus sutis pra dar profundidade. */
-  --background: #09090b;
-  --surface-1: #101012;
-  --surface-2: #17171a;
-  --foreground: #ededf0;
+  /*
+   * Superfícies — não são mais o cinza neutro de antes.
+   *
+   * O preto #09090b era correto e anônimo: serve a qualquer SaaS. O fundo da
+   * GTA VIRAL puxa para o roxo (#0a0712) porque é o que faz o laranja e o
+   * magenta lerem como néon em vez de lerem como aviso de erro. A mudança é
+   * de poucos pontos de matiz e muda a temperatura da tela inteira.
+   */
+  --background: var(--fundo);
+  --surface-1: var(--superficie);
+  --surface-2: var(--superficie-2);
+  --foreground: var(--texto);
 
   /*
-   * As duas cores da marca. Laranja é a AÇÃO — o que você faz: botão, CTA,
-   * item ativo, viralizar. Azul é o DADO — o que a plataforma devolve:
-   * métrica, gráfico, análise. Separar assim evita o problema clássico de
-   * duas cores fortes disputando o mesmo papel e nenhuma significar nada.
+   * Os PAPÉIS continuam os mesmos, e é por isso que a troca é barata: laranja
+   * é a AÇÃO — o que você faz: botão, item ativo, viralizar. Ciano é o DADO —
+   * o que a plataforma devolve: métrica, gráfico, análise. O magenta entrou
+   * como terceiro papel, e só um: MARCA — logo, selo, anel de foco. Ele não
+   * disputa com os outros dois porque nunca aparece em botão nem em número.
    */
-  --marca: #f74111;
-  --marca-dado: #0072ff;
+  --marca: var(--acao-600);
+  --marca-dado: var(--dado-600);
+  --marca-neon: var(--neon-500);
 
   /*
    * Tempos do movimento. A saída é sempre mais rápida que a entrada: o que
@@ -63,20 +82,58 @@
  * (#09090b): 5.42 e 4.60. Ver a nota no fim deste arquivo.
  */
 @theme {
-  --color-orange-400: #ff8055;
-  --color-orange-500: #ff5c2b;
-  --color-orange-600: #f74111;
-  --color-orange-700: #d6380e;
-  --color-orange-900: #4d1300;
-  --color-orange-950: #260900;
+  --color-orange-300: var(--acao-300);
+  --color-orange-400: var(--acao-400);
+  --color-orange-500: var(--acao-500);
+  --color-orange-600: var(--acao-600);
+  --color-orange-700: var(--acao-700);
+  --color-orange-800: var(--acao-800);
+  --color-orange-900: var(--acao-900);
+  --color-orange-950: var(--acao-950);
 
-  --color-blue-300: #7ab6ff;
-  --color-blue-400: #4d9dff;
-  --color-blue-500: #2b8bff;
-  --color-blue-600: #0072ff;
-  --color-blue-700: #0059c7;
-  --color-blue-900: #062f66;
-  --color-blue-950: #041b3d;
+  /*
+   * O ciano ocupa o lugar do azul.
+   *
+   * Os componentes pedem `blue-400` para número de métrica e `blue-600` para
+   * barra de gráfico — a semântica está certa e não muda. Só a cor muda:
+   * água de Miami à noite no lugar do azul corporativo. Nenhum componente
+   * precisa saber.
+   */
+  --color-blue-300: var(--dado-300);
+  --color-blue-400: var(--dado-400);
+  --color-blue-500: var(--dado-500);
+  --color-blue-600: var(--dado-600);
+  --color-blue-700: var(--dado-700);
+  --color-blue-900: var(--dado-900);
+  --color-blue-950: var(--dado-950);
+
+  /*
+   * O magenta entra por cima das rampas que os componentes já usavam para
+   * "roxo/rosa" — havia `from-fuchsia-500`, `from-purple-600` e
+   * `from-rose-600` espalhados nos gradientes dos ícones de módulo. Em vez de
+   * caçar cada um, as rampas passam a apontar para o néon da marca e os
+   * gradientes existentes já saem na paleta nova.
+   */
+  --color-fuchsia-400: var(--neon-400);
+  --color-fuchsia-500: var(--neon-500);
+  --color-fuchsia-600: var(--neon-600);
+  --color-pink-400: var(--neon-400);
+  --color-pink-500: var(--neon-500);
+  --color-pink-600: var(--neon-600);
+  --color-rose-500: var(--neon-500);
+  --color-rose-600: var(--neon-600);
+  --color-purple-500: var(--neon-600);
+  --color-purple-600: var(--neon-700);
+
+  /*
+   * O cinza-zinco também puxa para o roxo. É o token mais usado da interface
+   * inteira (fundo de card, borda, texto secundário); deixá-lo neutro faria a
+   * tela ficar com dois climas brigando — um néon quente por cima de um cinza
+   * de escritório.
+   */
+  --color-zinc-800: var(--borda);
+  --color-zinc-900: var(--superficie);
+  --color-zinc-950: var(--fundo-poco);
 }
 
 body {

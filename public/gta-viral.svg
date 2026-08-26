@@ -2,12 +2,32 @@
   <title>GTA VIRAL</title>
 
   <style>
-    /* A tinta segue o tema de quem exibe o arquivo — funciona mesmo carregado
-       via &lt;img&gt;, onde currentColor não chega. */
-    .gv-tinta { stroke: #17101f; }
-    @media (prefers-color-scheme: dark) {
-      .gv-tinta { stroke: #f5f1f7; }
-    }
+    /*
+     * TINTA CLARA FIXA — e o motivo é uma armadilha que quase passou.
+     *
+     * A primeira versão trocava de cor por `prefers-color-scheme`, o que é o
+     * certo para um arquivo que não sabe onde vai ser exibido. Só que esta
+     * aplicação é escura POR IDENTIDADE, não por preferência: a raiz do
+     * documento leva a classe `dark` fixa (ver layout.tsx). Quem tivesse o
+     * sistema em modo
+     * claro receberia o letreiro em #17101f sobre um fundo #0a0712 — logo
+     * preto sobre fundo preto, invisível, e sem nenhum erro no console para
+     * denunciar.
+     *
+     * O SVG não enxerga a classe do documento quando carregado como imagem, e
+     * `currentColor` também não chega ali. Então a cor é fixa e combina com o
+     * único fundo que existe. Se um dia a aplicação ganhar tema claro, este
+     * arquivo precisa virar componente inline para herdar a cor.
+     *
+     * Nada de sinal de menor que dentro deste comentário: SVG solto é parseado
+     * como XML, e o conteúdo de `style` NÃO é CDATA implícito como no HTML —
+     * um `img` entre colchetes angulares aqui derruba o arquivo inteiro.
+     */
+    .gv-tinta { stroke: #f5f1f7; }
+
+    .gv-q1 { stop-color: #ff3d9a; }
+    .gv-q2 { stop-color: #f95d1e; }
+    .gv-q3 { stop-color: #ffc247; }
   </style>
 
   <defs>
@@ -20,9 +40,9 @@
 
     <!-- Mesmo sol, deitado: atravessa o "VI" da esquerda para a direita. -->
     <linearGradient id="gv-marquise" gradientUnits="userSpaceOnUse" x1="286" y1="0" x2="384" y2="0">
-      <stop offset="0" stop-color="#ff3d9a"/>
-      <stop offset="0.55" stop-color="#f95d1e"/>
-      <stop offset="1" stop-color="#ffc247"/>
+      <stop offset="0" class="gv-q1"/>
+      <stop offset="0.55" class="gv-q2"/>
+      <stop offset="1" class="gv-q3"/>
     </linearGradient>
 
     <!-- Vazado: o play e as três lâminas do sol viram buraco, não cor.

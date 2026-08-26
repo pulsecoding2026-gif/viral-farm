@@ -14,7 +14,9 @@ import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
 import { Perguntas } from "./perguntas";
 import { ChamadaFinal } from "./chamada-final";
+import { ContagemLancamento } from "./contagem-lancamento";
 import { Logo } from "../logo";
+import { NAO_AFILIADO } from "@/lib/gta/marca";
 
 /** Chips de capacidade sob o hero — o que o produto faz, em uma palavra cada. */
 const CAPACIDADES = [
@@ -70,28 +72,38 @@ export default function LandingPage() {
           <div className="mx-auto max-w-3xl text-center">
             <p className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-400">
               <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-              Farme viralização. Farme monetização.
+              Feito por fãs · não afiliado à Rockstar Games
             </p>
 
-            <h1 className="mt-6 text-4xl leading-[1.05] font-semibold tracking-tight text-zinc-50 sm:text-6xl">
-              Farmar viralização
+            <h1 className="fonte-titulo mt-6 text-4xl leading-[1.05] font-semibold tracking-tight text-zinc-50 sm:text-6xl">
+              Sua live de GTA VI vira
               <br />
               <span className="text-orange-500 italic">
-                nunca foi tão fácil.
+                uma semana de Shorts.
               </span>
             </h1>
 
             <p className="mx-auto mt-5 max-w-[52ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
-              <b className="font-semibold text-zinc-100">Cole um vídeo.</b> A IA
-              encontra os melhores momentos e transforma uma live, um podcast ou
-              um vídeo longo em dezenas de oportunidades de viralizar.
+              <b className="font-semibold text-zinc-100">Cole o link.</b> A IA
+              acha os melhores momentos, corta em 9:16 e legenda — enquanto você
+              ainda está jogando. O hype não espera você editar.
             </p>
 
             {/* O campo de link é a demonstração mais barata que existe —
                 esconder atrás de "criar conta" joga fora a chance. */}
             <HeroEntrada />
 
-            <p className="mt-5 flex items-center justify-center gap-2 text-xs text-zinc-600">
+            {/*
+              A contagem vem DEPOIS do campo, não antes.
+              A urgência só ajuda quem já entendeu o que o produto faz; em cima
+              do título ela rouba a atenção da única frase que explica a
+              plataforma para quem chegou agora.
+            */}
+            <div className="mt-10">
+              <ContagemLancamento />
+            </div>
+
+            <p className="mt-6 flex items-center justify-center gap-2 text-xs text-zinc-600">
               <ShieldCheck size={14} className="text-emerald-600" />O vídeo é
               processado e apagado. Fica só a análise.
             </p>
@@ -151,6 +163,19 @@ export default function LandingPage() {
               Privacidade
             </Link>
           </div>
+        </div>
+
+        {/*
+          O aviso de não-afiliação, em toda página pública.
+          Custa uma linha e é o que separa "site de fã" de "site que se passa
+          por oficial" — ver docs/gta/politica-de-conteudo.md. Fica legível de
+          verdade (zinc-500, não 600): aviso que ninguém consegue ler não
+          cumpre a função de avisar.
+        */}
+        <div className="border-t border-zinc-800/40">
+          <p className="mx-auto max-w-6xl px-5 py-5 text-[11px] leading-relaxed text-zinc-500 sm:px-8">
+            {NAO_AFILIADO}
+          </p>
         </div>
       </footer>
     </div>

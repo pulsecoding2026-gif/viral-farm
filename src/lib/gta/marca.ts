@@ -1,30 +1,20 @@
 /**
  * O NOME DA PLATAFORMA, num lugar só.
  *
- * POR QUE ISTO EXISTE, e vale ler antes de mexer
+ * A DECISÃO: GTA VIRAL, tomada pelo dono e reafirmada depois de ele pesquisar
+ * o INPI — há diversas empresas registradas com "GTA" no nome, e ele avaliou
+ * que a marca do produto não conflita com a do jogo. O agente de marketing
+ * tinha sugerido um nome sem o "GTA" na frente; a sugestão está em
+ * `docs/gta/posicionamento.md` e foi decidida contra, com conhecimento de
+ * causa. Assunto encerrado — não reabra pelo código.
  *
- * O dono decidiu chamar a plataforma de GTA VIRAL, e é isso que está no ar.
- * A decisão é dele e este arquivo a implementa.
+ * POR QUE O NOME MORA NUMA CONSTANTE MESMO ASSIM
  *
- * Só que o agente de marketing levantou uma objeção que ficou registrada em
- * `docs/gta/posicionamento.md` e que merece este comentário: usar uma marca de
- * terceiro como PRIMEIRA PALAVRA de um produto PAGO é a configuração de maior
- * risco possível. Políticas de conteúdo de fã costumam cobrir uso não
- * comercial, e esta plataforma cobra assinatura — ou seja, não está debaixo
- * desse guarda-chuva. Some-se a isso que a Take-Two obteve intimações
- * judiciais esta semana no caso dos vazamentos: é um titular ativo, não
- * distraído.
- *
- * A recomendação dele era batizar o produto de VI·RAL e deixar o "GTA" viver
- * no descritor ("cortes para criadores de GTA VI, não oficial"). Não é uma
- * decisão que um agente toma sozinho — é do dono, e ele já se manifestou.
- *
- * O QUE ESTE ARQUIVO FAZ COM ISSO: torna a troca barata. Todo texto de tela
- * importa `MARCA` daqui. Se um dia a decisão mudar — por conselho jurídico, por
- * notificação recebida, ou porque o hype passou e o nome ficou datado — é uma
- * linha, não uma caçada por 105 ocorrências espalhadas. O custo de manter a
- * opção aberta é este arquivo; o custo de não a manter aparece no pior dia
- * possível.
+ * Não é ressalva disfarçada: é a mesma razão pela qual a data de lançamento
+ * também mora num arquivo só. Nome de produto muda por muitos motivos comuns
+ * — o hype passa, a marca amadurece, um sócio entra. Espalhar o nome por 105
+ * pontos do código transforma qualquer um desses em semana de trabalho.
+ * Centralizar custa este arquivo e devolve a opção de graça.
  *
  * NÃO USE ISTO PARA IDENTIFICADOR. Caminho de servidor, nome de bucket, chave
  * de env e nome de tabela continuam sendo `viral-farm` e devem continuar —

@@ -1,0 +1,276 @@
+/* =========================================================================
+   GTA VIRAL — tokens
+   =========================================================================
+
+   Como usar (Tailwind 4, projeto atual). Em src/app/globals.css:
+
+     @import "tailwindcss";
+     @import "./gta-tokens.css";
+     @custom-variant dark (&:where(.dark, .dark *));
+
+   O import vem DEPOIS do "tailwindcss" — os blocos `@theme` daqui reescrevem
+   as rampas padrão. As rampas `orange`, `blue` e `pink` do Tailwind viram as
+   cores da marca, então `bg-orange-600` e `text-blue-400` já espalhados pelos
+   componentes passam a ser as cores certas sem tocar em classe nenhuma.
+
+   Papéis, e eles não se misturam:
+     LARANJA = ação      o que VOCÊ faz  (botão primário, item ativo, CTA)
+     CIANO   = dado      o que o app DEVOLVE (gráfico, métrica, barra)
+     MAGENTA = marca     identidade e foco (logo, hero, anel de foco, selo)
+
+   O tema escuro é o padrão e mora no `:root`. O claro é opt-in: classe
+   `.claro` no `<html>`. A classe `.dark` continua no `<html>` para a variante
+   `dark:` do Tailwind não quebrar nos componentes que já a usam.
+   ========================================================================= */
+
+:root {
+  /* ---------------------------------------------- superfícies (escuro) --- */
+  --fundo-poco:     #05030a;  /* lateral, overlay de modal, rodapé */
+  --fundo:          #0a0712;  /* FUNDO PADRÃO DO APP */
+  --superficie:     #150f22;  /* card, painel, input */
+  --superficie-2:   #1e1730;  /* elevada: hover, dropdown, popover */
+  --superficie-3:   #2a2140;  /* elevada 2: menu sobre popover, tooltip */
+  --borda:          #2e2545;  /* divisor DECORATIVO (não carrega informação) */
+  --borda-forte:    #7a6d96;  /* borda que INFORMA: campo, checkbox, toggle */
+
+  /* ----------------------------------------------------------- texto --- */
+  --texto:          #f5f1f7;  /* título e corpo */
+  --texto-2:        #bdb2cf;  /* secundário, descrição */
+  --texto-3:        #948aa8;  /* legenda, metadado, placeholder */
+  --texto-sobre-cor:#0a0712;  /* texto por cima de laranja/magenta sólidos */
+
+  /* ------------------------------------- AÇÃO — laranja (pôr do sol) --- */
+  --acao-300: #ffc48f;
+  --acao-400: #ff9455;  /* laranja como TEXTO sobre escuro — 9.14 */
+  --acao-500: #ff7333;  /* hover do botão sólido */
+  --acao-600: #f95d1e;  /* A COR DA AÇÃO: fundo sólido, item ativo */
+  --acao-700: #d64510;  /* pressionado */
+  --acao-800: #b03608;  /* fundo quando o texto PRECISA ser branco — 6.22 */
+  --acao-900: #4a1806;
+  --acao-950: #2a0d03;
+
+  /* -------------------------------------- DADO — ciano (água à noite) --- */
+  --dado-300: #9beeff;
+  --dado-400: #4fd8f5;  /* número e rótulo de métrica sobre escuro — 11.86 */
+  --dado-500: #22c8ea;
+  --dado-600: #00a8d6;  /* preenchimento de barra, linha de gráfico */
+  --dado-700: #0079a8;
+  --dado-800: #046180;
+  --dado-900: #073a4d;
+  --dado-950: #04222e;
+
+  /* -------------------------------- MARCA — magenta (néon da marquise) --- */
+  --neon-300: #ffa8d2;
+  --neon-400: #ff6fb5;  /* magenta como TEXTO sobre escuro — 7.79 */
+  --neon-500: #ff3d9a;  /* A COR DA MARCA: foco, logo, hero */
+  --neon-600: #ec1d80;
+  --neon-700: #c2126a;  /* fundo com texto branco — 5.85 */
+  --neon-800: #a10a58;
+  --neon-900: #4d0629;
+  --neon-950: #2a0316;
+
+  /* ---------------------------------------------------------- estados --- */
+  --sucesso: #3ddc97;
+  --aviso:   #ffc247;
+  --erro:    #ff6b6b;
+  --info:    var(--dado-400);
+
+  /* ------------------------------------------------------------ papéis --- */
+  /* Use estes nos componentes. As rampas acima são a matéria-prima. */
+  --primaria:        var(--acao-600);
+  --primaria-hover:  var(--acao-500);
+  --primaria-ativa:  var(--acao-700);
+  --primaria-texto:  var(--texto-sobre-cor);
+  --destaque:        var(--neon-500);   /* marca, selo, detalhe */
+  --foco:            var(--neon-500);   /* anel de foco — NUNCA laranja */
+
+  /* -------------------------------------------------------- gradientes --- */
+  /* Dose: superfície grande. Nunca em texto pequeno, nunca em tabela. */
+  --grad-sol:      linear-gradient(180deg, #ffc247 0%, #ff7333 45%, #ec1d80 100%);
+  --grad-marquise: linear-gradient(100deg, #ff3d9a 0%, #f95d1e 55%, #ffc247 100%);
+  --grad-oceano:   linear-gradient(160deg, #22c8ea 0%, #0079a8 60%, #073a4d 100%);
+  --grad-noite:    linear-gradient(180deg, #1e1730 0%, #0a0712 100%);
+
+  /* ------------------------------------------------------------- raios --- */
+  --r-sm:     8px;    /* selo, checkbox */
+  --r-md:     10px;   /* botão, campo */
+  --r-lg:     14px;   /* card, painel */
+  --r-xl:     20px;   /* modal, hero, seção */
+  --r-pilula: 999px;
+  --chanfro:  16px;   /* corte a 45° — só em painel decorativo e selo de hero */
+
+  /* ------------------------------------------------------------ sombra --- */
+  /* No escuro, sombra é preta e difusa. Cinza nunca. */
+  --sombra-1: 0 1px 2px rgb(0 0 0 / 0.50);
+  --sombra-2: 0 6px 20px -6px rgb(0 0 0 / 0.60);
+  --sombra-3: 0 24px 60px -12px rgb(0 0 0 / 0.70);
+
+  /* Brilho de néon. Um por tela, no máximo dois. Ver identidade.md. */
+  --brilho-acao: 0 6px 20px -4px rgb(249 93 30 / 0.45);
+  --brilho-neon: 0 8px 28px -6px rgb(255 61 154 / 0.45);
+  --anel-foco:   0 0 0 3px rgb(255 61 154 / 0.30);
+
+  /* ---------------------------------------------------------- movimento --- */
+  --saida:   130ms;   /* o que sai é sempre mais rápido que o que entra */
+  --entrada: 220ms;
+  --mola:    cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* -------------------------------------------------------- tipografia --- */
+  /*
+   * A variável vem do `next/font` (layout.tsx), não do nome da família.
+   * Escrever "Space Grotesk" aqui funcionaria só se a fonte fosse carregada
+   * por conta própria — com next/font o nome real é gerado no build, e o
+   * literal cairia calado no fallback.
+   */
+  --fonte-titulo: var(--font-space-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --fonte-corpo:  var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --fonte-mono:   var(--font-geist-mono), ui-monospace, monospace;
+
+  --t-hero:     clamp(2.25rem, 6vw, 4rem);  /* 36 → 64 */
+  --t-pagina:   1.5rem;      /* 24 */
+  --t-secao:    1.125rem;    /* 18 */
+  --t-rotulo:   0.875rem;    /* 14 */
+  --t-corpo:    0.875rem;    /* 14 */
+  --t-corpo-p:  0.8125rem;   /* 13 */
+  --t-meta:     0.75rem;     /* 12 */
+  --t-etiqueta: 0.6875rem;   /* 11 — só em caixa alta com tracking */
+
+  /* ------------------------------------------------------------ textura --- */
+  --grao-opacidade:     0.035;  /* hero e vazio. Zero em formulário/tabela. */
+  --scanline-opacidade: 0.025;  /* só por cima de vídeo e thumb. */
+}
+
+/* ========================================================================= */
+/* TEMA CLARO — Miami às três da tarde: papel quente, sombra curta.          */
+/* Opt-in: <html class="dark claro">                                         */
+/* ========================================================================= */
+:root:where(.claro) {
+  --fundo-poco:     #ede2db;
+  --fundo:          #f7f1ee;
+  --superficie:     #ffffff;
+  --superficie-2:   #f0e7e2;
+  --superficie-3:   #e7dbd4;
+  --borda:          #e2d6cf;
+  --borda-forte:    #8d7c72;
+
+  --texto:          #17101f;
+  --texto-2:        #4a3f57;
+  --texto-3:        #6a5d78;
+  --texto-sobre-cor:#17101f;
+
+  /* Laranja e magenta claros REPROVAM como texto sobre papel.
+     No claro, texto colorido desce dois degraus na rampa. */
+  --sucesso: #0d7a4d;
+  --aviso:   #8a5a00;
+  --erro:    #c62828;
+  --info:    var(--dado-800);
+
+  --destaque: var(--neon-700);
+  --foco:     var(--neon-700);
+  /* --primaria segue --acao-600: o botão é laranja com texto quase preto nos
+     dois temas (5.85 no claro, 6.29 no escuro). Uma regra só, sem exceção. */
+
+  --grad-noite: linear-gradient(180deg, #ffffff 0%, #f0e7e2 100%);
+
+  --sombra-1: 0 1px 2px rgb(58 34 20 / 0.08);
+  --sombra-2: 0 6px 20px -6px rgb(58 34 20 / 0.14);
+  --sombra-3: 0 24px 60px -12px rgb(58 34 20 / 0.20);
+  --brilho-acao: 0 6px 20px -4px rgb(249 93 30 / 0.35);
+  --brilho-neon: 0 8px 28px -6px rgb(194 18 106 / 0.28);
+  --anel-foco:   0 0 0 3px rgb(194 18 106 / 0.22);
+
+  --grao-opacidade:     0.025;
+  --scanline-opacidade: 0.02;
+}
+
+/* ========================================================================= */
+/* PONTE COM O TAILWIND                                                      */
+/* ========================================================================= */
+
+/* Tokens que mudam por tema entram como `inline` para o Tailwind não os
+   congelar no valor do escuro. */
+@theme inline {
+  --color-background:  var(--fundo);
+  --color-foreground:  var(--texto);
+  --color-superficie:  var(--superficie);
+  --color-superficie-2:var(--superficie-2);
+  --color-borda:       var(--borda);
+  --color-borda-forte: var(--borda-forte);
+  --color-texto-2:     var(--texto-2);
+  --color-texto-3:     var(--texto-3);
+
+  --font-sans:    var(--fonte-corpo);
+  --font-display: var(--fonte-titulo);
+  --font-mono:    var(--fonte-mono);
+}
+
+/* Rampas reescritas: as classes que já existem nos componentes passam a
+   apontar para a marca nova. Valores literais de propósito — estes não mudam
+   entre temas. */
+@theme {
+  --color-orange-300: #ffc48f;
+  --color-orange-400: #ff9455;
+  --color-orange-500: #ff7333;
+  --color-orange-600: #f95d1e;
+  --color-orange-700: #d64510;
+  --color-orange-800: #b03608;
+  --color-orange-900: #4a1806;
+  --color-orange-950: #2a0d03;
+
+  --color-blue-300: #9beeff;
+  --color-blue-400: #4fd8f5;
+  --color-blue-500: #22c8ea;
+  --color-blue-600: #00a8d6;
+  --color-blue-700: #0079a8;
+  --color-blue-800: #046180;
+  --color-blue-900: #073a4d;
+  --color-blue-950: #04222e;
+
+  --color-pink-300: #ffa8d2;
+  --color-pink-400: #ff6fb5;
+  --color-pink-500: #ff3d9a;
+  --color-pink-600: #ec1d80;
+  --color-pink-700: #c2126a;
+  --color-pink-800: #a10a58;
+  --color-pink-900: #4d0629;
+  --color-pink-950: #2a0316;
+}
+
+/* ========================================================================= */
+/* BASE                                                                      */
+/* ========================================================================= */
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte-corpo);
+  font-size: var(--t-corpo);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .fonte-titulo {
+  font-family: var(--fonte-titulo);
+  letter-spacing: -0.02em;
+}
+
+/* Coluna dança quando o número não é tabular. */
+table, .numero, .metrica {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Foco visível em tudo que recebe teclado. Magenta, não laranja: o foco não
+   pode ser confundido com "este é o botão principal". */
+:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

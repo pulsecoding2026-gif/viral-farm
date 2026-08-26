@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { MARCA, TEMPLATE_TITULO } from "@/lib/gta/marca";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,13 +13,31 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * A fonte dos títulos.
+ *
+ * Space Grotesk tem o desenho geométrico meio torto que combina com letreiro
+ * de rua, sem ser uma fonte "de games" — dessas que já chegam gritando e
+ * envelhecem em seis meses. Fica só nos títulos: o corpo continua em Geist,
+ * porque texto longo em display cansa e a interface tem muita tabela e muito
+ * formulário.
+ *
+ * É do Google Fonts e carrega pelo `next/font`, então nada de requisição a
+ * host externo em tempo de execução.
+ */
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "Viral Farm",
-    template: "%s · Viral Farm",
+    default: MARCA,
+    template: TEMPLATE_TITULO,
   },
   description:
-    "Farme viralização e monetização a partir de qualquer vídeo longo. Cole o link de uma live, um podcast ou uma gravação e a IA devolve cortes verticais com legenda animada, prontos pra postar.",
+    "Sua live de GTA VI vira uma semana de Shorts enquanto você ainda está jogando. Cole o link e a IA devolve cortes verticais com legenda animada, prontos pra postar. Projeto independente, não afiliado à Rockstar Games.",
 };
 
 /**
@@ -41,7 +60,7 @@ export default function RootLayout({
       lang="pt-BR"
       // `dark` fixo: o produto é escuro por identidade, não por preferência
       // do sistema. A variante `dark:` do Tailwind lê esta classe (globals.css).
-      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>
