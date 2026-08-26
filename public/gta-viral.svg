@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 774 100" width="774" height="100" role="img" aria-label="GTA VIRAL">
+  <title>GTA VIRAL</title>
+
+  <style>
+    /* A tinta segue o tema de quem exibe o arquivo — funciona mesmo carregado
+       via &lt;img&gt;, onde currentColor não chega. */
+    .gv-tinta { stroke: #17101f; }
+    @media (prefers-color-scheme: dark) {
+      .gv-tinta { stroke: #f5f1f7; }
+    }
+  </style>
+
+  <defs>
+    <!-- O sol: ouro no topo, magenta na água. -->
+    <linearGradient id="gv-sol" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffc247"/>
+      <stop offset="0.45" stop-color="#ff7333"/>
+      <stop offset="1" stop-color="#ec1d80"/>
+    </linearGradient>
+
+    <!-- Mesmo sol, deitado: atravessa o "VI" da esquerda para a direita. -->
+    <linearGradient id="gv-marquise" gradientUnits="userSpaceOnUse" x1="286" y1="0" x2="384" y2="0">
+      <stop offset="0" stop-color="#ff3d9a"/>
+      <stop offset="0.55" stop-color="#f95d1e"/>
+      <stop offset="1" stop-color="#ffc247"/>
+    </linearGradient>
+
+    <!-- Vazado: o play e as três lâminas do sol viram buraco, não cor.
+         Assim o símbolo assenta em qualquer fundo. -->
+    <mask id="gv-vazado">
+      <path d="M22 2H78L98 22V78L78 98H22L2 78V22Z" fill="#fff"/>
+      <path d="M38 28L76 50L38 72Z" fill="#000"/>
+      <rect x="0" y="76" width="100" height="4" fill="#000"/>
+      <rect x="0" y="84" width="100" height="5" fill="#000"/>
+      <rect x="0" y="91" width="100" height="5" fill="#000"/>
+    </mask>
+  </defs>
+
+  <!-- Símbolo: sol chanfrado descendo atrás do horizonte, com o play vazado. -->
+  <path d="M22 2H78L98 22V78L78 98H22L2 78V22Z" fill="url(#gv-sol)" mask="url(#gv-vazado)"/>
+
+  <!-- Letreiro. Traço único, cantos chanfrados: tubo de néon montado no grid. -->
+  <g transform="translate(144,0)" fill="none" stroke-width="15" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="10">
+    <!-- G T A -->
+    <g class="gv-tinta">
+      <path d="M54 24L38 8L24 8L8 24L8 76L24 92L38 92L54 76L54 54L34 54"/>
+      <path d="M82 8L144 8M113 8L113 92"/>
+      <path d="M172 92L178 8L212 8L218 92M174.4 58L215.6 58"/>
+    </g>
+
+    <!-- VI — o trocadilho mora aqui, e é a única coisa acesa no letreiro. -->
+    <g stroke="url(#gv-marquise)">
+      <path d="M294 8L317 92L340 8"/>
+      <path d="M376 8L376 92"/>
+    </g>
+
+    <!-- R A L -->
+    <g class="gv-tinta">
+      <path d="M412 92L412 8L442 8L458 24L458 34L442 50L412 50M438 50L458 92"/>
+      <path d="M494 92L500 8L534 8L540 92M496.4 58L537.6 58"/>
+      <path d="M576 8L576 76L592 92L622 92"/>
+    </g>
+  </g>
+</svg>
