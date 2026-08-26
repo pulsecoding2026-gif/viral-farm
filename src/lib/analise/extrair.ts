@@ -21,6 +21,31 @@ const HOSTS_PERMITIDOS = [
   "facebook.com",
   "www.facebook.com",
   "fb.watch",
+
+  /**
+   * TWITCH E KICK — onde o GTA realmente acontece.
+   *
+   * Entraram porque a plataforma passou a se dirigir a quem monta canal de
+   * cortes de GTA, e a matéria-prima desse canal é live: no Brasil, o
+   * roleplay sustentou as maiores audiências do GTA V por anos, e isso mora
+   * na Twitch e no Kick — não no YouTube.
+   *
+   * Sem estes hosts a home prometia "cole o link da sua live da Twitch" e o
+   * produto respondia com erro de host não permitido. Promessa que quebra no
+   * primeiro clique é pior do que promessa que não foi feita.
+   *
+   * O yt-dlp já extrai dos dois (VOD e clipe na Twitch, VOD no Kick), então o
+   * custo aqui é só liberar o host. LIVE EM ANDAMENTO é outra história: baixar
+   * uma transmissão que não terminou não tem fim definido, e o worker espera
+   * um arquivo. Quem colar uma live no ar vai receber erro do yt-dlp, e isso
+   * ainda precisa de mensagem própria.
+   */
+  "twitch.tv",
+  "www.twitch.tv",
+  "m.twitch.tv",
+  "clips.twitch.tv",
+  "kick.com",
+  "www.kick.com",
 ];
 
 export class ErroDeEntrada extends Error {
@@ -44,8 +69,8 @@ export function validarUrl(entrada: string): URL {
 
   if (!HOSTS_PERMITIDOS.includes(url.hostname.toLowerCase())) {
     throw new ErroDeEntrada(
-      `Por enquanto aceitamos links de YouTube, TikTok, Instagram e Facebook. ` +
-        `Recebi: ${url.hostname}`,
+      `Por enquanto aceitamos links de Twitch, Kick, YouTube, TikTok, ` +
+        `Instagram e Facebook. Recebi: ${url.hostname}`,
     );
   }
 

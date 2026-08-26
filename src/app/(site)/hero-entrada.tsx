@@ -7,7 +7,10 @@ import {
   YoutubeLogo,
   TiktokLogo,
   InstagramLogo,
-  FacebookLogo,
+  TwitchLogo,
+  // O Phosphor não tem logo do Kick. Um controle genérico diz "plataforma de
+  // games" sem fingir uma marca que não existe no conjunto de ícones.
+  GameController,
 } from "@phosphor-icons/react/dist/ssr";
 
 /**
@@ -22,11 +25,21 @@ import {
  * chamada. Um botão que dispara análise sem conta seria convite a abuso.
  */
 
+/**
+ * A ordem não é alfabética nem histórica: Twitch e Kick vêm primeiro porque
+ * são de onde sai o material de quem cliba GTA. Quem chega nesta página está
+ * pensando em live de roleplay, e a primeira coisa que ele procura é se a
+ * ferramenta engole o link dele.
+ *
+ * Esta lista precisa bater com HOSTS_PERMITIDOS em src/lib/analise/extrair.ts.
+ * Anunciar aqui um host que o validador recusa é prometer erro.
+ */
 const ACEITOS = [
+  { icone: TwitchLogo, nome: "Twitch" },
+  { icone: GameController, nome: "Kick" },
   { icone: YoutubeLogo, nome: "YouTube" },
   { icone: TiktokLogo, nome: "TikTok" },
   { icone: InstagramLogo, nome: "Reels" },
-  { icone: FacebookLogo, nome: "Facebook" },
 ];
 
 export function HeroEntrada({

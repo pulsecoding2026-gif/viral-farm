@@ -116,7 +116,13 @@
   --mola:    cubic-bezier(0.22, 1, 0.36, 1);
 
   /* -------------------------------------------------------- tipografia --- */
-  --fonte-titulo: "Space Grotesk", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  /*
+   * A variável vem do `next/font` (layout.tsx), não do nome da família.
+   * Escrever "Space Grotesk" aqui funcionaria só se a fonte fosse carregada
+   * por conta própria — com next/font o nome real é gerado no build, e o
+   * literal cairia calado no fallback.
+   */
+  --fonte-titulo: var(--font-space-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --fonte-corpo:  var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --fonte-mono:   var(--font-geist-mono), ui-monospace, monospace;
 

@@ -18,14 +18,21 @@ import { ContagemLancamento } from "./contagem-lancamento";
 import { Logo } from "../logo";
 import { NAO_AFILIADO } from "@/lib/gta/marca";
 
-/** Chips de capacidade sob o hero — o que o produto faz, em uma palavra cada. */
+/**
+ * Chips de capacidade sob o hero.
+ *
+ * Cada um é uma coisa que o sistema REALMENTE faz hoje — o rastreamento de
+ * rosto e o enquadramento em três atos existem e estão medidos. Prometer aqui
+ * o que ainda não roda é o jeito mais barato de perder um assinante no
+ * primeiro corte que ele gerar.
+ */
 const CAPACIDADES = [
-  "Transcrição palavra a palavra",
-  "Cortes 9:16 prontos",
-  "Legenda animada",
+  "Corta live de 6h sozinho",
+  "Legenda animada palavra a palavra",
+  "A câmera segue o rosto",
   "Título na tela",
-  "Limpeza de silêncios",
-  "Radar por plataforma",
+  "Tira os silêncios",
+  "Acha o melhor momento",
 ];
 
 
@@ -75,18 +82,48 @@ export default function LandingPage() {
               Feito por fãs · não afiliado à Rockstar Games
             </p>
 
+            {/*
+              A PROMESSA, e por que ela é escrita assim.
+
+              Duas forças puxando: "sem aparecer" abre o público (não precisa
+              de câmera, audiência nem equipamento — qualquer um monta um canal
+              de cortes) e "dinheiro" é o que faz a pessoa agir. As duas cabem
+              na mesma frase.
+
+              O que NÃO entra aqui: promessa de quanto se ganha. "Fature R$ X
+              por mês" venderia mais rápido e é o tipo de frase que volta como
+              pedido de reembolso e print no Reddit — além de ser exatamente o
+              que a plataforma não pode garantir. O fato verdadeiro já é forte:
+              o GTA V criou canais enormes, e os do GTA VI ainda não existem.
+              A oportunidade é real, quem entrega o resultado é a pessoa.
+            */}
             <h1 className="fonte-titulo mt-6 text-4xl leading-[1.05] font-semibold tracking-tight text-zinc-50 sm:text-6xl">
-              Sua live de GTA VI vira
+              O GTA V criou canais milionários.
               <br />
               <span className="text-orange-500 italic">
-                uma semana de Shorts.
+                Os do GTA VI ainda não existem.
               </span>
             </h1>
 
+            {/*
+              O RP é citado por nome porque é O formato do GTA no Brasil: foi o
+              roleplay, e não o modo história, que sustentou as maiores
+              audiências brasileiras do GTA V por anos. Quem cliba aqui cliba
+              RP — e reconhecer isso na primeira frase separa quem entende o
+              nicho de quem traduziu uma landing gringa.
+
+              Nomes de streamers ficam FORA da página de venda, mesmo os
+              óbvios. Citar uma pessoa real como prova de que "dá dinheiro" lê
+              como endosso, e endosso que não foi dado é problema com a pessoa
+              e com quem leu. O fenômeno se sustenta sem nome próprio.
+            */}
             <p className="mx-auto mt-5 max-w-[52ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
-              <b className="font-semibold text-zinc-100">Cole o link.</b> A IA
-              acha os melhores momentos, corta em 9:16 e legenda — enquanto você
-              ainda está jogando. O hype não espera você editar.
+              <b className="font-semibold text-zinc-100">
+                Monte seu canal de cortes antes de 19 de novembro
+              </b>{" "}
+              — sem aparecer, sem gravar, sem editar. Cole o link de uma live de
+              RP, uma stream da Twitch ou do Kick, e a IA devolve os Shorts
+              prontos pra postar.
             </p>
 
             {/* O campo de link é a demonstração mais barata que existe —

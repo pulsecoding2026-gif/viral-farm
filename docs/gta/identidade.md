@@ -274,10 +274,13 @@ const spaceGrotesk = Space_Grotesk({
 });
 ```
 
-E no `<html className={...}>` some `${spaceGrotesk.variable}` às outras. Em
-`tokens.css`, troque a primeira entrada de `--fonte-titulo` por
-`var(--font-space-grotesk)` — o nome literal `"Space Grotesk"` que está lá
-funciona como fallback caso a fonte venha por `<link>`.
+E no `<html className={...}>` some `${spaceGrotesk.variable}` às outras.
+
+`--fonte-titulo` aponta para **`var(--font-space-grotesk)`, não para o literal
+`"Space Grotesk"`** — com `next/font` o nome real da família é gerado no build
+(algo como `__Space_Grotesk_a1b2c3`), então escrever o nome humano cairia calado
+no fallback e ninguém veria erro nenhum. O literal só funcionaria se a fonte
+fosse carregada por `<link>` à mão.
 
 ### Escala
 
@@ -894,3 +897,24 @@ Registrado, para quem herdar isto:
   parece com letreiro de jogo nenhum, e é essa a intenção.
 - Fontes: **Space Grotesk** e **Geist** / **Geist Mono**, todas no Google Fonts,
   todas com licença livre (OFL / SIL). Nenhuma outra é necessária.
+
+### O aviso de não-afiliação é peça de design, não rodapé morto
+
+`src/lib/gta/marca.ts` exporta `NAO_AFILIADO` e o texto é obrigatório no rodapé
+de toda página pública. Do meu lado isso tem consequência visual e ela não é
+negociável:
+
+- **`--texto-3`, 12px, no mínimo.** Nunca `--texto-3` a 11px, nunca opacidade
+  reduzida, nunca escondido atrás de acordeão. Um aviso ilegível não é aviso —
+  é a aparência de um, e legalmente vale menos que nada.
+- Contraste medido de `--texto-3` sobre `--fundo-poco` (`#05030a`, o rodapé):
+  **6.31:1** no escuro e **4.78:1** no claro. Passa AA nos dois, de propósito.
+- Nunca por cima de grão, gradiente ou imagem. Fundo chapado.
+- O `DESCRITOR` ("… · não oficial") viaja junto com o nome nos metadados; em
+  tela, quando o lockup aparece grande (hero), o "não oficial" acompanha em
+  `--t-meta` logo abaixo, não some.
+
+A regra de ouro do §1 vale para a marca inteira, não só para o desenho: **se só
+funciona porque parece com o deles, está errado.** O nome carrega "GTA" por
+decisão registrada do dono (ver o cabeçalho de `marca.ts`); o *desenho* não
+carrega nada deles, e é isso que este documento garante.
