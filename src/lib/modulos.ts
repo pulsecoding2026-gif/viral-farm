@@ -69,94 +69,46 @@ export type Secao = {
   modulos: Modulo[];
 };
 
+/**
+ * O MENU DA GTA VIRAL — cinco módulos, dois blocos.
+ *
+ * Eram quinze módulos em quatro blocos, herdados da ferramenta genérica. A
+ * virada para o nicho cortou dez, com um critério só: **este módulo ajuda
+ * alguém a publicar um corte de GTA hoje?**
+ *
+ * O que saiu do menu NÃO foi apagado — Trends, Agent Viral, Roteiros, Hooks,
+ * Voice Viral, Banco de Vídeos, Redes Sociais, Viralytics e Concorrentes
+ * continuam em `src/app/`. Módulo fora do menu não atrapalha ninguém e volta
+ * com uma linha; módulo apagado é trabalho pago jogado fora por uma sensação
+ * de limpeza.
+ *
+ * LIVES É A PRIMEIRA TELA, e é a mudança de ordem que mais importa. Antes o
+ * Analisador abria o painel. Só que o novo usuário chega SEM VÍDEO NENHUM: ele
+ * não é o streamer que cliba a si mesmo, é quem quer montar canal de cortes
+ * sem aparecer. A primeira pergunta dele não é "como corto", é "de onde tiro
+ * material" — e abrir num campo de link vazio responde a pergunta errada.
+ */
 export const SECOES: Secao[] = [
   {
     id: "descobrir",
     rotulo: "Descobrir",
-    descricao: "O que funciona lá fora — e de onde dá pra tirar o próximo corte",
+    descricao: "De onde sai o próximo corte",
     icone: "Compass",
     modulos: [
       {
-        slug: "analisador",
-        rotulo: "Analisador",
-        resumo: "Vídeo longo vira cortes 9:16 prontos pra postar",
-        icone: "MagnifyingGlass",
-        cor: "from-orange-500 to-amber-600",
-        pronto: true,
-        principal: true,
-      },
-      {
-        // Antes do Radar de propósito: Trends é DEMANDA (sobre o que falar),
-        // o Radar é OFERTA (em que formato). Escolher o assunto vem primeiro.
-        slug: "trends",
-        rotulo: "Trends",
-        resumo: "O que estão pesquisando e comentando agora",
-        icone: "TrendUp",
-        cor: "from-fuchsia-500 to-purple-600",
-        pronto: true,
-      },
-      {
-        slug: "radar-viral",
-        rotulo: "Radar Viral",
-        resumo: "O que está em alta agora, por categoria",
-        icone: "Target",
-        cor: "from-cyan-500 to-blue-600",
-        pronto: true,
-      },
-      {
-        // Fonte de matéria-prima: onde tem gente assistindo ao vivo, tem corte
-        // acontecendo. Fica ao lado do Radar porque as duas telas respondem
-        // "de onde tiro conteúdo agora", só que em tempos diferentes.
         slug: "lives",
         rotulo: "Lives",
-        resumo: "Quem está com mais audiência ao vivo agora",
+        resumo: "Quem está ao vivo agora — a matéria-prima do seu canal",
         icone: "Broadcast",
         cor: "from-purple-500 to-fuchsia-600",
         pronto: true,
       },
       {
-        // Terceira de propósito: a Biblioteca é o depósito do trabalho feito
-        // nas duas primeiras. Só faz sentido depois de existir o que guardar.
-        slug: "biblioteca",
-        rotulo: "Biblioteca",
-        resumo: "O que você salvou do Analisador e do Radar",
-        icone: "BookmarkSimple",
-        cor: "from-blue-500 to-indigo-600",
-        pronto: true,
-      },
-    ],
-  },
-  {
-    id: "planejar",
-    rotulo: "Planejar",
-    descricao: "Roteiro, hooks, títulos e capa — escritos com IA",
-    icone: "NotePencil",
-    modulos: [
-      {
-        slug: "agent-viral",
-        rotulo: "Agent Viral",
-        resumo: "Converse e resolva qualquer peça do vídeo na hora",
-        icone: "ChatCircleDots",
-        cor: "from-orange-500 to-rose-600",
-        // "Analisar o canal na conversa" saiu da lista: o agente não navega,
-        // e prometer scraping que não existe é mentira que a pessoa descobre
-        // na segunda pergunta. Ele PEDE os dados colados e analisa em cima.
-        pronto: true,
-      },
-      {
-        slug: "roteiros",
-        rotulo: "Roteiros",
-        resumo: "Roteiro completo a partir de um tema ou referência",
-        icone: "Scroll",
-        cor: "from-amber-500 to-orange-600",
-        pronto: true,
-      },
-      {
-        slug: "hooks",
-        rotulo: "Hooks",
-        resumo: "Os primeiros segundos que seguram o dedo",
-        icone: "Lightning",
-        cor: "from-yellow-400 to-amber-500",
+        slug: "radar-viral",
+        rotulo: "Radar Viral",
+        resumo: "O corte que está performando agora, e por quê",
+        icone: "Target",
+        cor: "from-cyan-500 to-blue-600",
         pronto: true,
       },
     ],
@@ -164,118 +116,50 @@ export const SECOES: Secao[] = [
   {
     id: "criar",
     rotulo: "Criar",
-    descricao: "Monte o vídeo: cortes, narração e imagens de apoio",
+    descricao: "Do link ao Short pronto",
     icone: "MagicWand",
     modulos: [
       {
-        // Era "Clip AI", e o que ele prometia (achar os melhores momentos,
-        // cortar em 9:16, legendar, tirar silêncio) o Analisador JÁ faz —
-        // eram o mesmo produto com dois nomes. Aqui vive a outra metade: o
-        // ajuste na mão do que a automação entregou.
+        slug: "analisador",
+        rotulo: "Analisador",
+        resumo: "Cole a live e receba os cortes 9:16 legendados",
+        icone: "MagnifyingGlass",
+        cor: "from-orange-500 to-amber-600",
+        pronto: true,
+        principal: true,
+      },
+      {
         slug: "editor-viral",
-        rotulo: "Editor Viral IA",
-        resumo: "Abra um corte e ajuste na mão: tempo, legenda, formato",
+        rotulo: "Editor",
+        resumo: "Ajuste na mão o que a IA entregou: tempo, legenda, formato",
         icone: "Scissors",
         cor: "from-blue-500 to-sky-600",
         pronto: true,
       },
       {
-        slug: "voice-viral",
-        rotulo: "Voice Viral",
-        resumo: "Narração, clonagem e tradução de voz",
-        icone: "Waveform",
-        cor: "from-amber-400 to-yellow-500",
-        recursos: [
-          "Transformar o roteiro do Analisador em narração pronta",
-          "Clonar a sua própria voz a partir de uma amostra curta",
-          "Traduzir a narração mantendo o timbre",
-          "Ajustar emoção, tom e ritmo por trecho",
-          "Voz econômica para rascunho e premium para o vídeo final",
-        ],
-      },
-      {
-        slug: "banco-de-videos",
-        rotulo: "Banco de Vídeos",
-        resumo: "Clipes livres pra baixar e usar no seu vídeo",
-        icone: "VideoCamera",
-        cor: "from-rose-500 to-red-600",
+        slug: "biblioteca",
+        rotulo: "Biblioteca",
+        resumo: "Seus cortes salvos, prontos pra baixar e postar",
+        icone: "BookmarkSimple",
+        cor: "from-fuchsia-500 to-purple-600",
         pronto: true,
       },
     ],
   },
-  {
-    id: "viralizar",
-    rotulo: "Viralizar",
-    descricao: "Seus canais conectados, o que já foi ao ar e o que deu resultado",
-    icone: "Broadcast",
-    modulos: [
-      {
-        slug: "redes-sociais",
-        rotulo: "Redes Sociais",
-        resumo: "Suas contas conectadas e a publicação em todas elas",
-        icone: "ShareNetwork",
-        cor: "from-sky-500 to-indigo-600",
-        subs: [
-          {
-            slug: "conexoes",
-            rotulo: "Conexões",
-            resumo: "Conecte TikTok, Instagram e YouTube numa conta só",
-            icone: "PlugsConnected",
-            cor: "from-sky-500 to-indigo-600",
-            recursos: [
-              "Conectar e desconectar contas por plataforma",
-              "Ver limites e permissões de cada conta conectada",
-              "Trocar de perfil sem sair do painel",
-              "Status de saúde da conexão, com aviso quando o token expira",
-            ],
-          },
-          {
-            slug: "publicar",
-            rotulo: "Publicar",
-            resumo: "Publique e agende para todas as redes de uma vez",
-            icone: "PaperPlaneTilt",
-            cor: "from-emerald-500 to-teal-600",
-            recursos: [
-              "Publicação simultânea nas redes conectadas",
-              "Título, descrição e hashtags sugeridos a partir da análise",
-              "Agendamento por melhor horário do nicho",
-              "Calendário único do que já foi e do que ainda vai ao ar",
-              "Fila de publicação com reordenação",
-            ],
-          },
-        ],
-      },
-      {
-        slug: "viralytics",
-        rotulo: "Viralytics",
-        resumo: "Views, retenção e CTR de tudo que você publicou",
-        icone: "ChartLineUp",
-        cor: "from-cyan-500 to-blue-600",
-        recursos: [
-          "Views, curtidas, comentários e seguidores por canal",
-          "Curva de retenção com o ponto exato da queda",
-          "CTR por capa e por título",
-          "Comparativo entre os seus vídeos e com a média do nicho",
-          "Ligação entre a análise feita e o resultado real",
-        ],
-      },
-      {
-        slug: "concorrentes",
-        rotulo: "Concorrentes",
-        resumo: "Espione perfis e veja o que rompeu a média deles",
-        icone: "Detective",
-        cor: "from-purple-500 to-fuchsia-600",
-        recursos: [
-          "Adicionar canais e perfis do nicho para monitorar",
-          "Destaque dos vídeos que romperam a média histórica",
-          "Frequência e horário de postagem de cada concorrente",
-          "Leitura do padrão: gancho, formato e tema que se repetem",
-          "Alerta quando um concorrente emplaca um vídeo fora da curva",
-        ],
-      },
-    ],
-  },
 ];
+
+/*
+ * O BLOCO "VIRALIZAR" SAIU DAQUI — Redes Sociais, Viralytics e Concorrentes.
+ *
+ * Eram promessas da ferramenta genérica que dependem de integração com TikTok,
+ * Instagram e YouTube. A do TikTok está em análise de aprovação; as outras não
+ * existem. Anunciar no menu o que não funciona é o jeito mais rápido de perder
+ * a confiança de quem acabou de assinar — e este produto vive de credibilidade
+ * num fandom que confere tudo.
+ *
+ * As telas continuam no repositório. No dia em que a integração for aprovada,
+ * o bloco volta com um `git revert` deste commit.
+ */
 
 /**
  * Conta e configurações. Fica fora de SECOES de propósito: não é navegação de

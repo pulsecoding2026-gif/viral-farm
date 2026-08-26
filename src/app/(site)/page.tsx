@@ -111,13 +111,28 @@ export default function LandingPage() {
               como endosso, e endosso que não foi dado é problema com a pessoa
               e com quem leu. O fenômeno se sustenta sem nome próprio.
             */}
+            {/*
+              COMEÇA NO GTA V, e isso não é detalhe de texto: é o furo que
+              quase entrou no ar.
+
+              Ninguém jogou GTA VI ainda. Até 19 de novembro não existe
+              gameplay para cortar — o que existe é material da Rockstar, que a
+              nossa própria política proíbe e que a Take-Two está derrubando por
+              DMCA. Uma home que promete "monte seu canal de cortes de GTA VI"
+              entrega tela vazia para quem se cadastrar hoje.
+
+              O RP de GTA V resolve: é abundante, é o formato que fez as maiores
+              audiências brasileiras da franquia, e treina exatamente a mesma
+              habilidade. E se o jogo adiar pela terceira vez, perde-se a
+              urgência da campanha — não a matéria-prima do produto.
+            */}
             <p className="mx-auto mt-5 max-w-[52ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
               <b className="font-semibold text-zinc-100">
-                Monte seu canal de cortes antes de 19 de novembro
+                Comece hoje com o RP que já bomba
               </b>{" "}
-              — sem aparecer, sem gravar, sem editar. Cole o link de uma live de
-              RP, uma stream da Twitch ou do Kick, e a IA devolve os Shorts
-              prontos pra postar.
+              — sem aparecer, sem gravar, sem editar. Cole o link de uma live da
+              Twitch ou do Kick e a IA devolve os Shorts prontos. Quando o VI
+              sair, seu canal já tem público.
             </p>
 
             {/* O campo de link é a demonstração mais barata que existe —
