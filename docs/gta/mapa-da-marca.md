@@ -80,6 +80,16 @@ Apagar um módulo que funciona para "focar" é destruir trabalho pago para ganha
 
 ---
 
+## Antes de acusar o typecheck de quebrado
+
+Se `npx tsc --noEmit` reclamar de **`Cannot find name 'RouteContext'`** em `src/app/api/**/route.ts`, não procure o bug no código: `RouteContext` é um tipo GERADO pelo Next, que mora em `.next/types` e não é versionado. Num checkout limpo ele não existe, e o erro aparece sozinho sem ninguém ter tocado em nada.
+
+```bash
+npx next typegen
+```
+
+Isso resolve em segundos. Aconteceu durante esta virada e custou uma investigação — fica registrado para não custar duas.
+
 ## A ordem segura
 
 1. Marca visível (layout, logo, navegação, metadados) — reversível, aparece na hora
