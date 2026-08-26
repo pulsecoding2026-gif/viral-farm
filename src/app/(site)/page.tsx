@@ -4,16 +4,10 @@ import { NavegacaoSite } from "./navegacao-site";
 import { HeroVideo } from "./hero-video";
 import { HeroEntrada } from "./hero-entrada";
 import { Metodo } from "./metodo";
-import { VisaoIA } from "./visao-ia";
-import {
-  DestaqueGrande,
-  DestaquesDuplos,
-  DestaqueBiblioteca,
-} from "./destaques";
+import { DestaqueGrande } from "./destaques";
 import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
 import { Perguntas } from "./perguntas";
-import { ChamadaFinal } from "./chamada-final";
 import { ContagemLancamento } from "./contagem-lancamento";
 import { Logo } from "../logo";
 import { NAO_AFILIADO } from "@/lib/gta/marca";
@@ -159,20 +153,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/*
+        CINCO SEÇÕES, e antes eram nove.
+        Saíram VisaoIA, DestaquesDuplos e DestaqueBiblioteca — três blocos que
+        passeavam pelos recursos da ferramenta genérica. Numa página movida a
+        urgência (o lançamento tem data), cada rolagem a mais é uma chance de
+        a pessoa desistir antes do preço. O que ficou responde, na ordem: o que
+        é, prova que funciona, por que dá dinheiro, quanto custa e a dúvida que
+        trava a compra.
+        Os componentes continuam existindo no repositório — se um deles fizer
+        falta, é uma linha para trazer de volta.
+      */}
       <Metodo />
       <DestaqueGrande />
-      <VisaoIA />
-      <DestaquesDuplos />
-      <DestaqueBiblioteca />
-
-
-      {/* A monetização vem logo antes dos planos: é ela que dá o porquê de
-          pagar, e o bloco termina com o custo por roteiro. */}
       <Monetizacao />
       <Planos />
       <Perguntas />
-
-      <ChamadaFinal />
 
       {/* ----------------------------------------------------------- rodapé */}
       <footer className="border-t border-zinc-800/60">

@@ -50,16 +50,15 @@ export function Metodo() {
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[52ch] text-center">
           <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
-            O ciclo do farm
+            Do link ao post
           </span>
-          <h2 className="mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
-            Saia do silêncio, viralize e{" "}
-            <span className="pr-[2px] text-orange-500 italic">ganhe dinheiro</span>{" "}
-            em 4 passos
+          <h2 className="fonte-titulo mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
+            Um canal de cortes de GTA VI em{" "}
+            <span className="pr-[2px] text-orange-500 italic">4 passos</span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-400">
-            Aura ninguém ganha de sorte — farma. Com alcance é igual: quem
-            cresce de forma consistente repete o mesmo ciclo.
+            Você não precisa jogar, nem aparecer. Precisa chegar antes — e
+            postar todo dia enquanto o assunto está quente.
           </p>
         </div>
 
