@@ -52,7 +52,7 @@ export function NavegacaoSite() {
         monetizar" em zinc-400 sobre uma mancha rosa não passa perto de 4,5:1.
         O contraste do texto não pode depender do frame que está tocando atrás.
       */}
-      <header className="relative mx-auto max-w-5xl rounded-3xl bg-zinc-900/82 shadow-[0_8px_32px_-8px_rgb(0_0_0/0.8),0_0_24px_-6px_rgb(243_69_170/0.25)] backdrop-blur-md before:pointer-events-none before:absolute before:inset-0 before:rounded-3xl before:p-px before:[background:linear-gradient(100deg,rgb(61_69_215/0.55),rgb(243_69_170/0.65),rgb(253_162_78/0.45))] before:![mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] before:[mask-composite:exclude]">
+      <header className="pilula-marca mx-auto max-w-5xl rounded-3xl bg-zinc-900/82 shadow-[0_8px_32px_-8px_rgb(0_0_0/0.8),0_0_24px_-6px_rgb(243_69_170/0.25)] backdrop-blur-md">
         <div className="flex items-center gap-5 px-4 py-2.5 sm:px-5">
           <Link
             href="/"

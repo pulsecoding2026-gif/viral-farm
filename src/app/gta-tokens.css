@@ -647,6 +647,54 @@ section:not(:first-of-type) .titulo-letreiro {
 }
 
 /*
+ * A PÍLULA DO CABEÇALHO — fundo sólido, contorno em gradiente.
+ *
+ * A primeira versão fazia isto com `mask-composite: exclude` escrito como
+ * classe utilitária arbitrária do Tailwind. A técnica é válida, mas a
+ * declaração dependia de várias propriedades caírem na ordem certa dentro de
+ * um `className` gigante — e uma delas não pegou: em vez de recortar o miolo e
+ * deixar só a borda, o gradiente PREENCHEU a pílula inteira. O cabeçalho virou
+ * uma faixa de arco-íris com o texto por cima, ilegível.
+ *
+ * Aqui a mesma ideia mora numa classe de verdade, onde dá para ler as quatro
+ * linhas que importam e conferir a ordem delas. Sem `!important`, sem colchete,
+ * sem depender de como o Tailwind serializa valor arbitrário.
+ *
+ * A ordem NÃO é negociável: as duas camadas de `mask` precisam existir antes
+ * do `mask-composite`, senão não há o que compor e o preenchimento volta.
+ */
+.pilula-marca {
+  position: relative;
+  isolation: isolate;
+}
+
+.pilula-marca::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    100deg,
+    rgb(61 69 215 / 0.55),
+    rgb(243 69 170 / 0.65),
+    rgb(253 162 78 / 0.45)
+  );
+  /* Duas máscaras: uma cobre só a área interna, a outra a caixa inteira. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  /* `exclude` remove a interna da externa — sobra o anel de 1px do padding. */
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/*
  * A LINHA DE HORIZONTE: um fio do gradiente oficial separando seções.
  * É o detalhe mais barato que existe e amarra a página ao logo — a mesma
  * transição azul → rosa → amarelo.

@@ -27,6 +27,24 @@ import { ContagemLancamento } from "./contagem-lancamento";
  * nenhum outro ponto deste arquivo precisa de ajuste, é a mesma ideia de fonte
  * única que `src/lib/gta/lancamento.ts` aplica às datas.
  */
+/*
+ * PARA LIGAR O PLAYER: cole aqui o ID do vídeo no YouTube oficial da Rockstar.
+ *
+ * O ID é o trecho depois de `v=` na URL. Em
+ * `https://www.youtube.com/watch?v=ABC123xyz`, o ID é `ABC123xyz`.
+ *
+ *   const ID_YOUTUBE_TRAILER: string | null = "ABC123xyz";
+ *
+ * Trocar `null` por essa string é a ÚNICA edição necessária: o cartão deixa de
+ * mostrar o botão de saída e passa a mostrar a capa clicável, com o vídeo
+ * tocando DENTRO da página.
+ *
+ * Por que não hospedamos o arquivo aqui: o trailer é obra da Take-Two, que está
+ * emitindo remoção em massa e obteve intimações judiciais nesta semana (ver
+ * `docs/gta/pesquisa-jogo.md`, seção 6, e `docs/gta/politica-de-conteudo.md`).
+ * O player oficial entrega o mesmo — o vídeo roda na nossa página — sem custo
+ * de banda e sem expor o site.
+ */
 const ID_YOUTUBE_TRAILER: string | null = null;
 
 /** A fonte oficial, confirmada — usada tanto no rodapé do card quanto no
@@ -153,16 +171,15 @@ function TrailerEmbed() {
       >
         <PlayCircle size={48} weight="fill" className="text-white/60" />
         {/*
-          O texto anterior falava de "ID do vídeo confirmado para incorporar",
-          que é conversa de quem programa, não de quem visita. O visitante não
-          precisa saber por que o vídeo não toca aqui dentro — ele precisa
-          saber que o trailer existe, quanto dura e onde assistir. A razão
-          técnica está documentada no topo deste arquivo, que é onde ela serve
-          para alguma coisa.
+          Sem prometer onde o vídeo toca.
+          A versão anterior dizia "assista no canal oficial da Rockstar", o que
+          descreve o estado TEMPORÁRIO (sem ID, o botão leva para fora) como se
+          fosse o comportamento do produto. Assim que o ID entrar, o vídeo passa
+          a rodar aqui dentro e essa frase viraria mentira — e ninguém lembra de
+          voltar para trocar texto que não quebra nada.
         */}
         <p className="max-w-[38ch] text-sm leading-relaxed text-zinc-200">
-          26 minutos de gameplay, capturados no PlayStation 5. Assista no canal
-          oficial da Rockstar.
+          26 minutos de gameplay, capturados no PlayStation 5.
         </p>
         {/* Alvo de toque ≥44px, mesmo sendo um link de texto com ícone. */}
         <a

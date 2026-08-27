@@ -117,16 +117,28 @@ export function AcessoLayout({
           <p className="placa text-[11px] text-orange-400">
             Cortes para criadores de GTA VI
           </p>
+          {/*
+            NEM "sua live" NEM "seu rosto" — o mesmo erro que a home já
+            corrigiu. Quem monta canal de cortes aqui não clipa a própria
+            live: cola o link da live de OUTRA pessoa (RP de GTA V na
+            Twitch/Kick) e recebe os cortes de volta. E o rastreamento de
+            rosto segue o STREAMER que aparece no vídeo de origem, não quem
+            usa a plataforma — a promessa central é justamente não aparecer.
+            Ver docs/gta/plano-mestre.md §1.
+          */}
           <p className="fonte-titulo mt-3 max-w-[20ch] text-3xl leading-[1.1] font-bold tracking-tight text-white">
-            Sua live vira{" "}
-            <span className="acento-rosa">uma semana de Shorts.</span>
+            Cole o link.{" "}
+            <span className="acento-rosa">Vira uma semana de Shorts.</span>
           </p>
 
           <ul className="mt-6 space-y-2.5">
             {[
               ["Transcrição por palavra", "cada uma com seu tempo"],
               ["Melhores momentos de gameplay", "com nota e o motivo escrito"],
-              ["Cortes 9:16 legendados", "com o seu rosto sempre no quadro"],
+              [
+                "Câmera sempre no streamer",
+                "cortes 9:16 legendados, sem você aparecer",
+              ],
             ].map(([titulo, detalhe]) => (
               <li key={titulo} className="flex items-start gap-2.5">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-blue-400">

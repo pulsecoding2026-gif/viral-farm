@@ -7,7 +7,10 @@ import { MARCA } from "@/lib/gta/marca";
 
 export const metadata: Metadata = {
   title: "Criar conta",
-  description: `Crie sua conta no ${MARCA} e transforme sua live de GTA VI em cortes prontos.`,
+  // Nem "sua live" nem "GTA VI" — o público não tem live própria (cliba a
+  // live de RP de OUTRA pessoa) e ninguém joga GTA VI ainda. Mesmo erro que
+  // a vitrine ao lado tinha, ver docs/gta/plano-mestre.md §1.
+  description: `Crie sua conta no ${MARCA} e comece pelo RP de GTA V — cole o link, receba os cortes, sem aparecer.`,
 };
 
 export default async function CadastroPage() {
@@ -16,7 +19,10 @@ export default async function CadastroPage() {
   return (
     <AcessoLayout
       titulo="Criar conta"
-      subtitulo="Cole o link da sua live de GTA VI e veja os cortes saírem."
+      // Último passo antes da conta: o texto aqui reduz atrito, não
+      // reapresenta o produto — quem chegou até aqui já leu a promessa na
+      // home ou na vitrine ao lado.
+      subtitulo="Leva menos de um minuto. Sem cartão de crédito."
       rodape={
         <>
           Já tem conta?{" "}

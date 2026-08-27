@@ -61,10 +61,55 @@ const CAMINHOS = [
  * planos.tsx, estes precisam mudar junto — por isso os números vivem aqui
  * calculados, e não escritos à mão.
  */
-const PLANOS_CUSTO = [
-  { nome: "Lite", mensal: 59.9, analises: 60 },
-  { nome: "Creator", mensal: 99.9, analises: 150, destaque: true },
-  { nome: "Viral", mensal: 149.9, analises: 300 },
+/**
+ * O QUE AS PLATAFORMAS PAGAM — faixas públicas de mercado, não previsão nossa.
+ *
+ * Esta tabela substituiu a de "custo por corte". O raciocínio do dono está
+ * certo: mostrar o que a pessoa PAGA vende pelo preço; mostrar o que ela pode
+ * RECEBER vende pela oportunidade.
+ *
+ * O QUE ESTES NÚMEROS SÃO, E O QUE NÃO SÃO
+ *
+ * São faixas de RPM (receita por mil visualizações) reportadas publicamente
+ * para vídeo curto, convertidas para real. NÃO são medição nossa, NÃO são
+ * garantia e variam MUITO — o próprio intervalo (de 6x entre piso e teto)
+ * é a informação mais honesta aqui.
+ *
+ * O que mais move o número, e por isso está escrito na tela:
+ *   · o país de quem assiste (view do Brasil paga bem menos que dos EUA);
+ *   · o nicho (games rende menos que finanças ou tecnologia);
+ *   · o formato (o MESMO conteúdo rende uma fração em curto se comparado ao
+ *     vídeo longo).
+ *
+ * Por que mostrar mesmo sendo baixo: porque é verdade, e porque o argumento
+ * do produto não é "o fundo das plataformas te enriquece" — é que o fundo é
+ * UMA das quatro fontes, todas dependentes de volume, e volume é exatamente o
+ * que a ferramenta destrava. Inflar a tabela venderia mais rápido e voltaria
+ * como reembolso.
+ *
+ * Fonte das faixas: reportagens de mercado sobre RPM de Shorts (2026).
+ * Conversão a ~R$ 5,40/US$. Se o câmbio andar muito, revisar.
+ */
+const PAGAMENTO_PLATAFORMA = [
+  {
+    nome: "YouTube Shorts",
+    minMil: 0.05,
+    maxMil: 0.32,
+    nota: "Fundo de criadores, por view monetizada",
+  },
+  {
+    nome: "TikTok",
+    minMil: 0.11,
+    maxMil: 0.54,
+    nota: "Programa de recompensas, exige vídeo de 1 min+",
+    destaque: true,
+  },
+  {
+    nome: "Reels",
+    minMil: 0.05,
+    maxMil: 0.27,
+    nota: "Bônus por convite, disponibilidade varia",
+  },
 ];
 
 const brl = (n: number) =>
@@ -145,53 +190,51 @@ export function Monetizacao() {
         <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
           <div className="border-b border-zinc-800 px-6 py-5 text-center">
             <h3 className="text-lg font-semibold tracking-tight text-zinc-50">
-              O que cada corte custa
+              O que as plataformas pagam
             </h3>
             {/* zinc-500 media 4,14:1 sobre este fundo — abaixo do 4,5:1 de
                 texto normal. zinc-400 dá 7,81:1. */}
             <p className="mx-auto mt-1.5 max-w-[54ch] text-sm leading-relaxed text-zinc-400">
-              Uma análise devolve até 8 cortes. Dividindo a mensalidade pelo
-              número de análises do plano, dá pra ver o custo real de cada
-              vídeo que sai daqui.
+              Faixas de mercado por{" "}
+              <b className="font-semibold text-zinc-200">mil visualizações</b>.
+              Variam com o país de quem assiste, o nicho e o formato — o
+              intervalo largo é a parte honesta do número.
             </p>
           </div>
 
           <div className="grid divide-y divide-zinc-800 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            {PLANOS_CUSTO.map((p) => {
-              const porAnalise = p.mensal / p.analises;
-              // 8 cortes é o teto do plano de entrada — o divisor mais
-              // conservador. Prometer o custo dos 15 do Creator inflaria a
-              // conta pra quem entra pelo Lite.
-              const porCorte = porAnalise / 8;
-              return (
-                <div
-                  key={p.nome}
-                  className={
-                    "px-6 py-6 text-center " + (p.destaque ? "bg-orange-600/[0.07]" : "")
-                  }
-                >
-                  {/*
-                    `.placa` no lugar do `uppercase` cru.
-                    A regra da virada é caixa alta só na classe `.placa`
-                    (Bebas Neue) — este rótulo estava maiúsculo com a fonte de
-                    corpo (Inter) e `tracking-wide` escrito à mão, dois jeitos
-                    de pedir o mesmo efeito que a classe já resolve sozinha.
-                    Cor também sobe de zinc-500 (4,14:1, reprova) pra zinc-400
-                    (7,81:1).
-                  */}
-                  <p className="placa text-zinc-400">{p.nome}</p>
-                  <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums text-zinc-50">
-                    R$ {brl(porCorte)}
-                  </p>
-                  <p className="mt-1 text-xs text-zinc-400">por corte</p>
-                  {/* zinc-600 media 2,59:1 — bem abaixo do mínimo. zinc-400
-                      dá 7,81:1. */}
-                  <p className="mt-3 text-[11px] tabular-nums text-zinc-400">
-                    R$ {brl(p.mensal)} ÷ {p.analises} análises ÷ 8 cortes
-                  </p>
-                </div>
-              );
-            })}
+            {PAGAMENTO_PLATAFORMA.map((p) => (
+              <div
+                key={p.nome}
+                className={
+                  "px-6 py-6 text-center " + (p.destaque ? "bg-orange-600/[0.07]" : "")
+                }
+              >
+                {/* `.placa` (Bebas Neue) é a classe de rótulo da identidade —
+                    caixa alta só aqui, nunca em título. */}
+                <p className="placa text-zinc-400">{p.nome}</p>
+                <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums text-zinc-50">
+                  R$ {brl(p.minMil)}
+                  <span className="text-zinc-500"> a </span>
+                  {brl(p.maxMil)}
+                </p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  por mil visualizações
+                </p>
+                {/*
+                  A projeção por milhão, que é a escala em que a pessoa pensa —
+                  ninguém raciocina em "mil views". Sai da mesma faixa, só
+                  multiplicada, então não inventa nada: se a faixa por mil
+                  estiver certa, esta está também.
+                */}
+                <p className="mt-3 text-[11px] tabular-nums text-zinc-400">
+                  R$ {brl(p.minMil * 1000)} a {brl(p.maxMil * 1000)} por 1 milhão
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                  {p.nota}
+                </p>
+              </div>
+            ))}
           </div>
 
           {/*
@@ -204,10 +247,13 @@ export function Monetizacao() {
           <div className="flex items-start gap-2.5 border-t border-zinc-800 bg-zinc-950/40 px-6 py-4">
             <Info size={15} weight="fill" className="mt-px shrink-0 text-zinc-500" />
             <p className="text-xs leading-relaxed text-zinc-400">
-              O painel entrega roteiro e direção — não entrega audiência nem
-              receita. Quanto cada pessoa ganha depende do nicho, da execução e
-              da constância. Não prometemos resultado financeiro, e desconfie de
-              quem promete.
+              Estes valores são <b className="font-semibold text-zinc-200">faixas
+              públicas de mercado</b>, não uma previsão do que você vai ganhar.
+              View do Brasil paga menos que dos Estados Unidos, games rende
+              menos que finanças, e a maior parte das visualizações não é
+              monetizada. Nenhuma plataforma garante valor por view — nós
+              entregamos os cortes, não a audiência nem a receita. Desconfie de
+              quem promete número certo.
             </p>
           </div>
         </div>
