@@ -24,7 +24,10 @@ import { SeletorFormatoCompacto } from "./seletor-formato";
 import { acharFormato } from "@/lib/formatos";
 
 /**
- * O Estúdio — Clip AI.
+ * O Estúdio — a mesa de decisão do Analisador.
+ *
+ * "Clip AI" era nome de recurso de ferramenta genérica e não dizia nada pro
+ * público da virada; o rótulo na tela agora nomeia o que a etapa É.
  *
  * A IA já assistiu, transcreveu e propôs os cortes; aqui é a mesa de
  * decisão do dono: cada proposta com gancho, score, motivo e a PRÉVIA do
@@ -82,10 +85,16 @@ function Diagnostico({ notas }: { notas: NotasCorte }) {
         return (
           <div key={chave} title={dica}>
             <div className="flex items-baseline justify-between gap-1">
-              <span className="text-[10px] tracking-wide text-zinc-500 uppercase">
+              {/*
+                Era 10px — abaixo do piso de 11px que a identidade exige, e
+                em zinc-500 (≈4:1, reprova o mínimo de 4,5:1 do texto normal).
+                `.placa` já entrega caixa alta e tracking; só faltava subir a
+                cor pra --texto-3 (5,26:1 medido sobre o fundo do app).
+              */}
+              <span className="placa text-[11px] text-[var(--texto-3)]">
                 {rotulo}
               </span>
-              <span className="font-mono text-[10px] tabular-nums text-zinc-400">
+              <span className="font-mono text-[11px] tabular-nums text-zinc-400">
                 {v}
               </span>
             </div>
@@ -214,10 +223,8 @@ export function EstudioCortes({
       {/* ------------------------------------------------------ cabeçalho */}
       <div className="overflow-hidden rounded-2xl border border-zinc-800">
         <div className="relative border-b border-zinc-800 bg-gradient-to-br from-orange-600/15 via-zinc-900/60 to-blue-600/10 px-5 py-5 sm:px-6">
-          <p className="text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
-            Clip AI · Estúdio
-          </p>
-          <h2 className="mt-1.5 text-lg leading-snug font-semibold tracking-tight text-zinc-50">
+          <p className="placa text-[11px] text-orange-400">Estúdio de cortes</p>
+          <h2 className="mt-1.5 text-lg leading-snug font-bold text-zinc-50">
             {resumo?.titulo ?? job.link}
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-400">
@@ -282,7 +289,10 @@ export function EstudioCortes({
                         {c.titulo}
                       </h3>
                       <CorScore score={c.score} />
-                      <span className="font-mono text-[11px] tabular-nums text-zinc-600">
+                      {/* zinc-600 mede ~2,5:1 sobre o fundo do app — falha o
+                          mínimo de 4,5:1 pra texto normal. --texto-3 mede
+                          5,26:1: continua discreto, mas legível de verdade. */}
+                      <span className="font-mono text-[11px] tabular-nums text-[var(--texto-3)]">
                         {tempo(c.inicio_s)}–{tempo(c.fim_s)} · {duracaoDe(c)}
                       </span>
                     </div>
@@ -299,7 +309,7 @@ export function EstudioCortes({
                     )}
 
                     {c.motivo && (
-                      <p className="mt-1 text-xs leading-relaxed text-zinc-500">
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--texto-2)]">
                         {c.motivo}
                       </p>
                     )}
@@ -342,7 +352,7 @@ export function EstudioCortes({
                       />
                     ) : (
                       c.previa && (
-                        <p className="mt-2 rounded-lg border border-zinc-800/80 bg-zinc-950/50 px-3 py-2 font-mono text-[11px] leading-relaxed text-zinc-500">
+                        <p className="mt-2 rounded-lg border border-zinc-800/80 bg-zinc-950/50 px-3 py-2 font-mono text-[11px] leading-relaxed text-[var(--texto-2)]">
                           {c.previa}
                         </p>
                       )
@@ -357,17 +367,25 @@ export function EstudioCortes({
         {/* ---------------------------------------------------------- ação */}
         <div className="border-t border-zinc-800 bg-zinc-900/60 px-5 py-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-[var(--texto-3)]">
               {escolhidos.size === 0
                 ? "Nenhum corte selecionado"
                 : `${escolhidos.size} de ${propostos.length} selecionado${escolhidos.size > 1 ? "s" : ""}`}{" "}
               · o que ficar de fora não gasta renderização
             </p>
+            {/*
+              bg-orange-600 (rosa da marca) com texto branco mede 3,37:1 —
+              reprova o mínimo de 4,5:1 pra texto normal. bg-orange-700 é o
+              mesmo rosa um degrau mais escuro e mede 4,85:1, passa com
+              folga. O brilho também estava com o rgb do laranja antigo
+              (255 62 2) — trocado pelo rosa da marca (238 79 156).
+            */}
             <button
               type="button"
               onClick={renderizar}
               disabled={enviando || escolhidos.size === 0}
-              className="flex items-center gap-2 rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+              aria-busy={enviando}
+              className="flex min-h-11 items-center gap-2 rounded-xl bg-orange-700 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(238_79_156/0.35)] transition hover:bg-orange-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
               {enviando ? (
                 <CircleNotch size={16} className="animate-spin" />
@@ -380,7 +398,7 @@ export function EstudioCortes({
           </div>
 
           {erro && (
-            <p className="mt-3 flex items-start gap-2 text-xs text-rose-400">
+            <p role="alert" className="mt-3 flex items-start gap-2 text-xs text-rose-400">
               <WarningCircle size={14} weight="fill" className="mt-px shrink-0" />
               {erro}
             </p>
@@ -388,7 +406,7 @@ export function EstudioCortes({
         </div>
       </div>
 
-      <p className="mt-3 text-xs leading-relaxed text-zinc-600">
+      <p className="mt-3 text-xs leading-relaxed text-[var(--texto-3)]">
         O vídeo fonte fica guardado por até 24h pra esta revisão — renderizar
         agora é imediato. Depois disso ele é apagado e uma nova renderização
         baixa o vídeo de novo.

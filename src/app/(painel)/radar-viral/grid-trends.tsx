@@ -13,7 +13,7 @@ import {
   Rows,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
-import { NICHOS_BIBLIOTECA } from "@/lib/biblioteca/videos-exemplo";
+import { NICHOS_BIBLIOTECA, ROTULOS_NICHO } from "@/lib/biblioteca/videos-exemplo";
 import type { ItemBiblioteca } from "@/lib/biblioteca/tipos";
 import { CartaoVideo } from "./cartao-video";
 import { LinhaVideo } from "./linha-video";
@@ -215,7 +215,7 @@ export function GridTrends({
                 "flex shrink-0 items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition " +
                 (ativa
                   ? "bg-zinc-800 text-zinc-50"
-                  : "text-zinc-500 hover:text-zinc-300")
+                  : "text-zinc-400 hover:text-zinc-300")
               }
             >
               <Icone
@@ -247,7 +247,7 @@ export function GridTrends({
             onClick={() => setNicho(null)}
             aria-pressed={nicho === null}
             className={
-              "rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-[0.97] " +
+              "placa rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-[0.97] " +
               (nicho === null
                 ? "bg-orange-600 text-white"
                 : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200")
@@ -262,13 +262,13 @@ export function GridTrends({
               onClick={() => setNicho(n)}
               aria-pressed={nicho === n}
               className={
-                "rounded-full px-3 py-1.5 text-xs font-medium capitalize transition active:scale-[0.97] " +
+                "placa rounded-full px-3 py-1.5 text-xs font-medium transition active:scale-[0.97] " +
                 (nicho === n
                   ? "bg-orange-600 text-white"
                   : "bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-zinc-200")
               }
             >
-              {n}
+              {ROTULOS_NICHO[n]}
             </button>
           ))}
         </div>
@@ -290,7 +290,7 @@ export function GridTrends({
             />
           </div>
 
-          <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <label className="flex items-center gap-1.5 text-xs text-zinc-400">
             Ordenar
             <select
               value={ordem}
@@ -304,7 +304,7 @@ export function GridTrends({
             </select>
           </label>
 
-          <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <label className="flex items-center gap-1.5 text-xs text-zinc-400">
             Período
             <select
               value={periodo}
@@ -326,7 +326,7 @@ export function GridTrends({
               "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition " +
               (qtdAvancados > 0
                 ? "border-orange-900/70 text-orange-400"
-                : "border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300")
+                : "border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300")
             }
           >
             <SlidersHorizontal size={13} />
@@ -341,7 +341,7 @@ export function GridTrends({
 
         {avancados && (
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2.5 border-t border-zinc-800 pt-3">
-            <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-400">
               Duração
               <select
                 value={duracao}
@@ -356,7 +356,7 @@ export function GridTrends({
               </select>
             </label>
 
-            <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+            <label className="flex items-center gap-1.5 text-xs text-zinc-400">
               Engajamento
               <select
                 value={engajamento}
@@ -371,7 +371,7 @@ export function GridTrends({
               </select>
             </label>
 
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-500 transition hover:text-zinc-300">
+            <label className="flex cursor-pointer items-center gap-2 text-xs text-zinc-400 transition hover:text-zinc-300">
               <input
                 type="checkbox"
                 checked={semLegenda}
@@ -385,9 +385,14 @@ export function GridTrends({
       </div>
 
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-xs tabular-nums text-zinc-500">
+        <p className="numero-placa text-xs text-zinc-400">
           {videos.length} {videos.length === 1 ? "vídeo" : "vídeos"}
-          {nicho && <span className="text-zinc-600"> · {nicho}</span>}
+          {nicho && (
+            <span className="text-zinc-400">
+              {" "}
+              · {ROTULOS_NICHO[nicho as keyof typeof ROTULOS_NICHO] ?? nicho}
+            </span>
+          )}
         </p>
 
         <div className="flex items-center gap-3">
@@ -395,7 +400,7 @@ export function GridTrends({
             <button
               type="button"
               onClick={limpar}
-              className="text-xs text-zinc-500 transition hover:text-orange-400"
+              className="text-xs text-zinc-400 transition hover:text-orange-400"
             >
               Limpar filtros
             </button>
@@ -426,7 +431,7 @@ export function GridTrends({
                     "rounded-md p-1.5 transition " +
                     (ativa
                       ? "bg-zinc-800 text-zinc-100"
-                      : "text-zinc-600 hover:text-zinc-400")
+                      : "text-zinc-400 hover:text-zinc-200")
                   }
                 >
                   <Icone size={15} weight={ativa ? "fill" : "regular"} />
@@ -445,7 +450,7 @@ export function GridTrends({
               ? `Nenhum vídeo do ${PLATAFORMAS.find((p) => p.id === plataforma)?.rotulo} por aqui`
               : "Nenhum vídeo com esses filtros"}
           </p>
-          <p className="mt-1 max-w-[46ch] text-sm leading-relaxed text-zinc-500">
+          <p className="mt-1 max-w-[46ch] text-sm leading-relaxed text-zinc-400">
             {plataformaVazia
               ? "As tendências reais hoje vêm só do YouTube, que é a única das três com API pública de busca. TikTok e Instagram aparecem apenas nos dados de exemplo."
               : "Tente afrouxar o período, a duração ou escolher outra categoria."}
@@ -481,7 +486,7 @@ export function GridTrends({
         </>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/30">
-          <div className="flex items-center gap-3 border-b border-zinc-800 px-3 py-2 text-[10px] font-semibold tracking-wider text-zinc-600 uppercase">
+          <div className="placa flex items-center gap-3 border-b border-zinc-800 px-3 py-2 text-[10px] font-semibold text-zinc-400">
             <span className="w-4 shrink-0" />
             <span className="w-7 shrink-0" />
             <span className="min-w-0 flex-1">Vídeo</span>

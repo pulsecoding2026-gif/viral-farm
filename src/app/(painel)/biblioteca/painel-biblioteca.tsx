@@ -23,7 +23,9 @@ import {
 import type { ItemSalvo, Colecao } from "@/lib/salvos";
 import { CartaoSalvo } from "./cartao-salvo";
 
-const EMOJIS = ["💡", "🎬", "🌊", "🔥", "🍳", "💪", "🚗", "🧠", "💰", "🌱"];
+// Ícones da paleta de coleção — trocados pro universo GTA (heist, RP,
+// perseguição, dinheiro) em vez dos genéricos de antes (comida, natureza).
+const EMOJIS = ["🎮", "🚔", "💰", "🔫", "🏝️", "🚗", "🎬", "🔥", "🕶️", "🏆"];
 
 /**
  * Seleção da navegação lateral. Uma string só em vez de vários estados
@@ -96,8 +98,8 @@ function ItemNav({
       <span className="min-w-0 flex-1 truncate">{rotulo}</span>
       <span
         className={
-          "shrink-0 text-[11px] tabular-nums " +
-          (ativo ? "text-white/70" : "text-zinc-600")
+          "numero-placa shrink-0 text-[11px] " +
+          (ativo ? "text-white/70" : "text-zinc-400")
         }
       >
         {n}
@@ -283,7 +285,7 @@ export function PainelBiblioteca({
         <p className="mt-4 text-sm font-medium text-zinc-300">
           Seu acervo está vazio
         </p>
-        <p className="mt-1 max-w-[48ch] text-sm leading-relaxed text-zinc-500">
+        <p className="mt-1 max-w-[48ch] text-sm leading-relaxed text-zinc-400">
           É daqui que sai o que você vai planejar e criar. Guarde referências de
           formato, junte com as análises do seu material, e organize em coleções
           quando o vídeo começar a tomar forma.
@@ -377,7 +379,7 @@ export function PainelBiblioteca({
             <button
               type="button"
               onClick={() => setMarcados(new Set())}
-              className="rounded-lg px-1.5 py-1 text-[11px] text-zinc-500 transition hover:text-zinc-300"
+              className="rounded-lg px-1.5 py-1 text-[11px] text-zinc-400 transition hover:text-zinc-300"
             >
               limpar
             </button>
@@ -453,7 +455,7 @@ export function PainelBiblioteca({
             {item("tudo", "Todos os ativos", contagens.tudo, <Stack size={15} />)}
           </div>
 
-          <p className="mt-4 mb-1.5 px-2.5 text-[10px] font-semibold tracking-wider text-zinc-600 uppercase">
+          <p className="placa mt-4 mb-1.5 px-2.5 text-[10px] font-semibold text-zinc-400">
             Por tipo
           </p>
           <div className="space-y-0.5">
@@ -467,22 +469,23 @@ export function PainelBiblioteca({
           </div>
 
           <div className="mt-4 mb-1.5 flex items-center justify-between px-2.5">
-            <p className="text-[10px] font-semibold tracking-wider text-zinc-600 uppercase">
+            <p className="placa text-[10px] font-semibold text-zinc-400">
               Coleções
             </p>
+            {/* min-h/min-w 11: alvo de toque de 44px, ícone continua 13px. */}
             <button
               type="button"
               onClick={() => setCriando(true)}
               aria-label="Nova coleção"
               title="Nova coleção"
-              className="rounded p-0.5 text-zinc-600 transition hover:bg-white/10 hover:text-orange-400"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded p-0.5 text-zinc-400 transition hover:bg-white/10 hover:text-orange-400"
             >
               <Plus size={13} weight="bold" />
             </button>
           </div>
           <div className="space-y-0.5">
             {colecoes.length === 0 ? (
-              <p className="px-2.5 py-1.5 text-[11px] leading-relaxed text-zinc-700">
+              <p className="px-2.5 py-1.5 text-[11px] leading-relaxed text-zinc-400">
                 Nenhuma ainda. Marque ativos e agrupe.
               </p>
             ) : (
@@ -541,7 +544,7 @@ export function PainelBiblioteca({
                         type="button"
                         onClick={() => setEditandoNota(null)}
                         aria-label="Cancelar"
-                        className="rounded-lg border border-zinc-800 p-1.5 text-zinc-500 transition hover:text-zinc-300"
+                        className="rounded-lg border border-zinc-800 p-1.5 text-zinc-400 transition hover:text-zinc-300"
                       >
                         <X size={14} />
                       </button>
@@ -564,7 +567,7 @@ export function PainelBiblioteca({
                         setRascunhoNota("");
                         setEditandoNota(colecaoAberta.id);
                       }}
-                      className="mt-1 flex items-center gap-1 text-[11px] text-zinc-600 transition hover:text-zinc-400"
+                      className="mt-1 flex items-center gap-1 text-[11px] text-zinc-400 transition hover:text-zinc-200"
                     >
                       <NotePencil size={12} />
                       Descrever a coleção
@@ -576,7 +579,7 @@ export function PainelBiblioteca({
                   onClick={() => removerColecao(colecaoAberta.id)}
                   aria-label="Apagar coleção"
                   title="Apaga a coleção. Os ativos voltam para o acervo."
-                  className="shrink-0 rounded-lg p-1.5 text-zinc-700 transition hover:bg-rose-950/40 hover:text-rose-400"
+                  className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg p-1.5 text-zinc-400 transition hover:bg-rose-950/40 hover:text-rose-400"
                 >
                   <Trash size={14} />
                 </button>
@@ -621,7 +624,7 @@ export function PainelBiblioteca({
           )}
 
           <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-xs tabular-nums text-zinc-500">
+            <p className="numero-placa text-xs text-zinc-400">
               {visiveis.length} {visiveis.length === 1 ? "ativo" : "ativos"}
             </p>
             {visiveis.length > 0 && (
@@ -634,7 +637,7 @@ export function PainelBiblioteca({
                       : new Set(visiveis.map((i) => i.id)),
                   )
                 }
-                className="text-xs text-zinc-600 transition hover:text-zinc-400"
+                className="text-xs text-zinc-400 transition hover:text-zinc-200"
               >
                 {marcados.size === visiveis.length
                   ? "Desmarcar todos"
@@ -649,7 +652,7 @@ export function PainelBiblioteca({
               <p className="mt-3.5 text-sm font-medium text-zinc-300">
                 Nada aqui
               </p>
-              <p className="mt-1 max-w-[44ch] text-sm leading-relaxed text-zinc-500">
+              <p className="mt-1 max-w-[44ch] text-sm leading-relaxed text-zinc-400">
                 {busca.trim()
                   ? "Nenhum ativo bate com essa busca."
                   : "Marque ativos em outro filtro e mova para cá, ou salve mais coisas no Radar."}

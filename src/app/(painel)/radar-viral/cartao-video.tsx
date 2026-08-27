@@ -57,12 +57,12 @@ export function CartaoVideo({
 
         <div className="absolute top-2 left-2 flex items-center gap-1">
           <span
-            className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white ${plataforma.cor}`}
+            className={`placa rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white ${plataforma.cor}`}
           >
             {plataforma.rotulo}
           </span>
           {posicao !== undefined && posicao <= 3 && (
-            <span className="rounded-md bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+            <span className="numero-placa rounded-md bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
               #{posicao}
             </span>
           )}
@@ -96,7 +96,7 @@ export function CartaoVideo({
           </button>
         </div>
 
-        <span className="absolute right-2 bottom-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white backdrop-blur">
+        <span className="numero-placa absolute right-2 bottom-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
           {video.duracao_s}s
         </span>
 
@@ -105,7 +105,7 @@ export function CartaoVideo({
         {eng >= 4 && (
           <span
             title="Curtidas dividido por visualizações"
-            className={`absolute bottom-2 left-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold tabular-nums backdrop-blur ${corDoEngajamento(eng)}`}
+            className={`numero-placa absolute bottom-2 left-2 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-bold backdrop-blur ${corDoEngajamento(eng)}`}
           >
             {eng.toFixed(1)}%
           </span>
@@ -116,19 +116,24 @@ export function CartaoVideo({
         <h3 className="line-clamp-2 text-sm font-medium leading-snug text-zinc-100">
           {video.titulo}
         </h3>
-        <p className="mt-1 truncate text-xs text-zinc-500">{video.canal}</p>
+        <p className="mt-1 truncate text-xs text-zinc-400">{video.canal}</p>
 
-        {/* Métricas numa linha só, com tabular-nums pra não dançar entre cartões. */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-zinc-500">
-          <span className="flex items-center gap-1">
+        {/*
+          Métricas numa linha só. .numero-placa só entra nos NÚMEROS — ele
+          troca a fonte pra Bebas (a "gamer" da identidade), e aplicar isso na
+          linha inteira também mudaria a fonte de "hoje"/"3 dias", que é
+          texto, não métrica.
+        */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-400">
+          <span className="numero-placa flex items-center gap-1">
             <Eye size={12} />
             {formatarNumero(video.visualizacoes)}
           </span>
-          <span className="flex items-center gap-1">
+          <span className="numero-placa flex items-center gap-1">
             <Heart size={12} />
             {formatarNumero(video.curtidas)}
           </span>
-          <span className="text-zinc-600">{tempoRelativo(video.publicado_em)}</span>
+          <span className="text-zinc-400">{tempoRelativo(video.publicado_em)}</span>
         </div>
 
         {/*
@@ -139,7 +144,7 @@ export function CartaoVideo({
         <div className="mt-3 flex items-center gap-1.5 border-t border-zinc-800 pt-3">
           <Link
             href={`/analisador?nicho=${encodeURIComponent(video.nicho)}`}
-            className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-800 px-2.5 py-1.5 text-[11px] font-medium text-zinc-400 transition group-hover:border-orange-900/70 group-hover:text-orange-400 hover:!bg-orange-600 hover:!text-white active:scale-[0.98]"
+            className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-800 px-2.5 py-1.5 text-[11px] font-medium text-zinc-400 transition group-hover:border-orange-900/70 group-hover:text-orange-400 hover:!bg-orange-600 hover:!text-white active:scale-[0.98]"
           >
             <MagnifyingGlass size={12} weight="bold" />
             <span className="truncate">Já gravei assim</span>
@@ -150,7 +155,7 @@ export function CartaoVideo({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Abrir "${video.titulo}" no ${plataforma.rotulo}`}
-              className="flex shrink-0 items-center justify-center rounded-lg border border-zinc-800 p-1.5 text-zinc-500 transition hover:border-zinc-700 hover:text-zinc-200 active:scale-[0.98]"
+              className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border border-zinc-800 p-1.5 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200 active:scale-[0.98]"
             >
               <ArrowSquareOut size={13} />
             </a>

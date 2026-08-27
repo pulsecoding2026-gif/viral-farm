@@ -23,6 +23,20 @@ import { useEffect, useRef, useState } from "react";
  * O material novo entrou como veio, sem reencode. Se ele travar no loop, é
  * quase certo que seja um dos dois motivos acima — e o conserto é o comando
  * de reencode, não trocar o arquivo.
+ *
+ * MEDIDO NO ARQUIVO ATUAL (sonda de caixas MP4, sem ffprobe — ver
+ * docs/gta/performance.md):
+ *   - 1280x720, 8s, 24 fps EXATOS (192 quadros / 8s) — a taxa é constante,
+ *     então a primeira armadilha acima não se aplica a este material;
+ *   - keyframes: UM SÓ, no primeiro quadro. A segunda armadilha ESTÁ AQUI.
+ *     Cada volta do loop reconstrói a imagem desde o início. É o motivo de
+ *     reencodar com `-g 24` (um keyframe por segundo);
+ *   - `faststart` já está correto: o `moov` vem antes do `mdat`. Não adianta
+ *     repetir `-movflags +faststart` esperando ganho — ele já está feito;
+ *   - TEM TRILHA DE ÁUDIO: 128 kbps, 125,7 KB. O vídeo toca com `muted` e
+ *     `aria-hidden`, ou seja, é 100% peso morto que ninguém jamais ouve.
+ *   - 3,77 MB para 8 segundos = 3810 kbps de vídeo. Para 720p isso é o dobro
+ *     do necessário. O reencode está documentado e pendente na VPS.
  */
 export function HeroVideo({ className = "" }: { className?: string }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -66,7 +80,21 @@ export function HeroVideo({ className = "" }: { className?: string }) {
       muted
       loop
       playsInline
-      preload="auto"
+      /*
+       * `metadata`, não `auto`: com `auto` o navegador puxava os 3,8 MB
+       * inteiros como custo de entrada da home, ANTES de o visitante decidir
+       * se fica. Em 4G brasileira isso é a página toda travada atrás de um
+       * enfeite de fundo.
+       *
+       * O autoplay NÃO quebra: `preload` é só uma dica de quanto baixar
+       * adiantado, e `autoPlay` continua mandando o navegador tocar — ele
+       * busca o que precisa e começa. O vídeo entra um pouco depois, por cima
+       * do fundo escuro que já está pintado, em vez de segurar o resto.
+       *
+       * `muted` + `playsInline` continuam obrigatórios: sem os dois o
+       * navegador bloqueia o autoplay e o iOS abre em tela cheia.
+       */
+      preload="metadata"
       aria-hidden="true"
       className={"h-full w-full object-cover object-center " + className}
     >

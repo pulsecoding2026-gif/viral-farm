@@ -1,10 +1,30 @@
 import type { Metadata } from "next";
 import { PaginaLegal } from "../pagina-legal";
 
+/*
+ * Mesma regra do /termos: título curto (o sufixo da marca vem do template da
+ * raiz) e `canonical` próprio, senão a página herda o "/" declarado lá.
+ *
+ * A descrição cita o prazo de 24 horas do vídeo original porque é a dúvida
+ * concreta que traz alguém a esta página — e é a resposta que faz a pessoa
+ * confiar o arquivo à plataforma. Snippet que responde converte; snippet que
+ * anuncia uma seção, não.
+ */
 export const metadata: Metadata = {
   title: "Política de privacidade",
   description:
-    "Como o GTA VIRAL coleta, usa e protege seus dados — em conformidade com a LGPD.",
+    "Quais dados o GTA VIRAL coleta e por quanto tempo guarda — o vídeo " +
+    "original é apagado em até 24 horas. Escrita para a LGPD.",
+  alternates: { canonical: "/politica" },
+  openGraph: {
+    type: "article",
+    locale: "pt_BR",
+    title: "Política de privacidade",
+    description:
+      "Quais dados o GTA VIRAL coleta, por quanto tempo guarda e quais são " +
+      "os seus direitos pela LGPD.",
+    url: "/politica",
+  },
 };
 
 export default function PoliticaPage() {

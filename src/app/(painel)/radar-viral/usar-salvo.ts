@@ -52,7 +52,9 @@ export function engajamento(v: ItemBiblioteca): number {
 export function corDoEngajamento(pct: number): string {
   if (pct >= 8) return "text-emerald-400";
   if (pct >= 4) return "text-zinc-300";
-  return "text-zinc-600";
+  // zinc-600 (~2,5:1 sobre o fundo novo) reprovava contraste — este selo
+  // carrega um número real, não é decoração.
+  return "text-zinc-400";
 }
 
 export function formatarNumero(n: number): string {

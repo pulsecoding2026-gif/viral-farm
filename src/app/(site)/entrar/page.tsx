@@ -3,10 +3,13 @@ import Link from "next/link";
 import { AcessoLayout } from "../acesso-layout";
 import { FormularioAcesso } from "../formulario-acesso";
 import { mandarLogadoProPainel } from "../acesso-guarda";
+import { MARCA } from "@/lib/gta/marca";
 
 export const metadata: Metadata = {
   title: "Entrar",
-  description: "Acesse sua conta do Viral Farm.",
+  // MARCA é texto de tela (nome que o usuário lê) — nunca um identificador
+  // de servidor. Ver docs/gta/mapa-da-marca.md.
+  description: `Acesse sua conta do ${MARCA}.`,
 };
 
 export default async function EntrarPage() {

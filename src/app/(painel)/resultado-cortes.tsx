@@ -62,11 +62,16 @@ function Ajuste({
   valor: number;
   onMudar: (delta: number) => void;
 }) {
+  // Botões de ±1s/±5s eram um pill de ~24px de altura — bem abaixo do alvo
+  // de toque mínimo de 44px. min-h/min-w garantem a área clicável sem
+  // depender de padding extra pra centralizar o texto.
   const botao =
-    "rounded-lg border border-zinc-700 px-2 py-1 font-mono text-[11px] text-zinc-300 transition hover:border-zinc-600 hover:bg-white/5 active:scale-95";
+    "inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-zinc-700 px-2 py-1 font-mono text-[11px] text-zinc-300 transition hover:border-zinc-600 hover:bg-white/5 active:scale-95";
   return (
     <div className="flex items-center gap-1.5">
-      <span className="w-10 text-xs text-zinc-500">{rotulo}</span>
+      {/* zinc-500 mede ~4:1 sobre o fundo do app, abaixo do piso de 4,5:1
+          pra texto normal — --texto-2 mede 11,5:1. */}
+      <span className="w-10 text-xs text-[var(--texto-2)]">{rotulo}</span>
       <button type="button" onClick={() => onMudar(-5)} className={botao}>
         −5s
       </button>
@@ -153,7 +158,7 @@ function Editor({
             setFim((v) => Math.min(duracaoVideo, Math.max(v + d, inicio + 5)))
           }
         />
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-[var(--texto-2)]">
           Novo corte: <b className="font-medium text-zinc-300">{duracao({ inicio_s: inicio, fim_s: fim })}</b>
           {" "}· a legenda se realinha sozinha às palavras
         </p>
@@ -163,18 +168,22 @@ function Editor({
       <SeletorFormato valor={estilo} onEscolher={setEstilo} permitirAuto={false} />
 
       {erro && (
-        <p className="flex items-start gap-2 text-xs text-rose-400">
+        <p role="alert" className="flex items-start gap-2 text-xs text-rose-400">
           <WarningCircle size={14} weight="fill" className="mt-px shrink-0" />
           {erro}
         </p>
       )}
 
       <div className="flex items-center gap-2">
+        {/* orange-600 com texto branco mede 3,37:1 — reprova o mínimo de
+            4,5:1. orange-700 é o mesmo rosa da marca, mais escuro, e mede
+            4,85:1 (ver nota completa em estudio-cortes.tsx). */}
         <button
           type="button"
           onClick={renderizar}
           disabled={enviando || !valido}
-          className="flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          aria-busy={enviando}
+          className="flex min-h-11 items-center gap-2 rounded-xl bg-orange-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {enviando ? (
             <CircleNotch size={15} className="animate-spin" />
@@ -186,7 +195,7 @@ function Editor({
         <button
           type="button"
           onClick={onFechar}
-          className="rounded-xl px-3 py-2 text-sm text-zinc-500 transition hover:bg-white/5 hover:text-zinc-300"
+          className="min-h-11 rounded-xl px-3 py-2 text-sm text-[var(--texto-2)] transition hover:bg-white/5 hover:text-zinc-300"
         >
           Cancelar
         </button>
@@ -234,13 +243,13 @@ function CartaoCorte({
 
       <div className="flex min-w-0 flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base leading-snug font-semibold text-zinc-50">
+          <h3 className="text-base leading-snug font-bold text-zinc-50">
             {corte.titulo}
           </h3>
           <CorSCore score={corte.score} />
         </div>
 
-        <p className="mt-1 font-mono text-xs tabular-nums text-zinc-600">
+        <p className="mt-1 font-mono text-xs tabular-nums text-[var(--texto-3)]">
           {tempo(corte.inicio_s)}–{tempo(corte.fim_s)} do vídeo · {duracao(corte)} de corte
         </p>
 
@@ -252,19 +261,28 @@ function CartaoCorte({
         )}
 
         {corte.motivo && (
-          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+          <p className="mt-2 text-xs leading-relaxed text-[var(--texto-2)]">
             {corte.motivo}
           </p>
         )}
 
-        <div className="mt-auto pt-4">
+        {/*
+          aria-live: o status deste corte muda sozinho (o polling do
+          Dashboard troca "renderizando" → "pronto"/"erro" sem clique
+          nenhum). Sem isto, quem usa leitor de tela nunca fica sabendo que
+          o corte terminou — só descobriria navegando de novo até aqui.
+        */}
+        <div className="mt-auto pt-4" aria-live="polite">
           {corte.status === "pronto" && corte.url ? (
             editando ? null : (
               <div className="flex flex-wrap items-center gap-2">
+                {/* orange-600 com texto branco mede 3,37:1 — reprova o
+                    mínimo de 4,5:1. orange-700 mede 4,85:1 (nota completa em
+                    estudio-cortes.tsx). min-h-11 cobre o alvo de toque. */}
                 <a
                   href={corte.url}
                   download={`corte-${corte.ordem}.mp4`}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-500 active:scale-[0.98]"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-orange-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-800 active:scale-[0.98]"
                 >
                   <DownloadSimple size={15} weight="bold" />
                   Baixar MP4
@@ -272,7 +290,7 @@ function CartaoCorte({
                 <button
                   type="button"
                   onClick={() => setEditando(true)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-white/5"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-white/5"
                 >
                   <PencilSimple size={15} />
                   Editar
@@ -284,21 +302,24 @@ function CartaoCorte({
               Este corte falhou na renderização — os demais não são afetados.
             </p>
           ) : (
-            <p className="text-xs text-zinc-500">Renderizando…</p>
+            <p className="text-xs text-[var(--texto-2)]">Renderizando…</p>
           )}
         </div>
 
         {editando && corte.status === "pronto" && (
           <div>
             <div className="flex items-center justify-between">
-              <p className="mt-4 text-xs font-semibold tracking-wider text-orange-400 uppercase">
+              <p className="placa mt-4 text-xs text-orange-400">
                 Reeditar corte
               </p>
+              {/* Botão só de ícone (15px) sem padding: alvo de toque bem
+                  abaixo de 44px. p-2.5 + -m-2.5 cresce a área clicável sem
+                  mexer no espaçamento visual da linha. */}
               <button
                 type="button"
                 onClick={() => setEditando(false)}
                 aria-label="Fechar edição"
-                className="mt-4 text-zinc-600 transition hover:text-zinc-300"
+                className="-m-2.5 mt-1.5 p-2.5 text-zinc-600 transition hover:text-zinc-300"
               >
                 <X size={15} />
               </button>
@@ -339,18 +360,18 @@ export function ResultadoCortes({
     <div className="surgir space-y-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-zinc-50">
+          <h2 className="flex items-center gap-2 text-lg font-bold text-zinc-50">
             <Scissors size={18} className="text-orange-500" />
             {cortes.length} {cortes.length === 1 ? "corte pronto" : "cortes prontos"}
           </h2>
           {resumo?.titulo && (
-            <p className="mt-0.5 truncate text-sm text-zinc-500">
+            <p className="mt-0.5 truncate text-sm text-[var(--texto-2)]">
               de “{resumo.titulo}”
             </p>
           )}
         </div>
         {resumo?.duracao_total_ms && (
-          <p className="text-xs tabular-nums text-zinc-600">
+          <p className="text-xs tabular-nums text-[var(--texto-3)]">
             processado em {Math.round(resumo.duracao_total_ms / 1000)}s
           </p>
         )}

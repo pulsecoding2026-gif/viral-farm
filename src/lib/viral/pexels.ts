@@ -20,14 +20,28 @@ import type { ClipeViral } from "./tipos";
 
 type Nicho = (typeof NICHOS_BIBLIOTECA)[number];
 
+/**
+ * O QUE BUSCAR NO PEXELS PARA CADA NICHO — e por que não é o nome do nicho.
+ *
+ * Os nichos da biblioteca viraram GTA ("gta rp", "gta online", "gta v
+ * engraçado") na virada para o produto novo. O Pexels é banco de imagem de
+ * STOCK: procurar "gta rp" lá devolve zero resultado, porque material de jogo
+ * é justamente o que um banco livre de direitos não tem.
+ *
+ * O que ele tem é a AMBIENTAÇÃO — cidade à noite, néon, carro, praia,
+ * perseguição — que é o B-roll que um canal de cortes usa para cobrir corte,
+ * abrir vídeo e tapar buraco de edição. É isso que cada nicho passa a
+ * consultar.
+ *
+ * Vale registrar o contexto: a tela do Banco de Vídeos saiu do menu na virada
+ * (ver `src/lib/modulos.ts`). Este arquivo continua compilando e correto para
+ * o dia em que ela voltar — corrigi o mapa em vez de deixar quebrado, mas
+ * ninguém chega nesta tela pela navegação hoje.
+ */
 const CONSULTA_POR_NICHO: Record<Nicho, string> = {
-  curiosidades: "space universe",
-  "mar e vida marinha": "ocean underwater",
-  natureza: "forest nature",
-  automotivo: "car driving",
-  "culinária": "cooking food",
-  fitness: "workout gym",
-  "finanças pessoais": "money business",
+  "gta rp": "city night neon street",
+  "gta online": "sports car speed highway",
+  "gta v engraçado": "miami beach palm sunset",
 };
 
 const ARQUIVO_CACHE = path.join(process.cwd(), "data", "viral.json");

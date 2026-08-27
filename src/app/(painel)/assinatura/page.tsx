@@ -63,10 +63,13 @@ export default async function AssinaturaPage({
   return (
     <div className="surgir mx-auto max-w-5xl space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+        <h1 className="fonte-titulo text-2xl font-semibold tracking-tight text-zinc-50">
           Assinatura
         </h1>
-        <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-zinc-500">
+        {/* zinc-500 media 4,02:1 — abaixo do mínimo de 4,5:1. zinc-400 mede 7,58:1.
+            Mesma correção repetida nesta tela onde o texto carrega informação
+            (não em ícone nem em decoração). */}
+        <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-zinc-400">
           Onde você está no ciclo de hoje e o que muda se você subir de plano.
         </p>
       </header>
@@ -99,7 +102,7 @@ export default async function AssinaturaPage({
         <h2 className="text-sm font-semibold tracking-wide text-zinc-300 uppercase">
           {assina ? "Trocar de plano" : "Planos"}
         </h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-zinc-400">
           Cada análise lê um vídeo inteiro e devolve vários cortes prontos.
           Cancele quando quiser.
         </p>
@@ -137,7 +140,7 @@ function CartaoUso({ uso }: { uso: Uso }) {
     <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <span className="text-[11px] font-semibold tracking-[0.14em] text-zinc-500 uppercase">
+          <span className="text-[11px] font-semibold tracking-[0.14em] text-zinc-400 uppercase">
             Seu plano
           </span>
           <h2 className="mt-1.5 flex items-center gap-2 text-xl font-semibold tracking-tight text-zinc-50">
@@ -154,7 +157,7 @@ function CartaoUso({ uso }: { uso: Uso }) {
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <span className="text-sm text-zinc-500">
+          <span className="text-sm text-zinc-400">
             {p.precoMensal === 0 ? (
               "Sem cobrança"
             ) : (
@@ -186,9 +189,9 @@ function CartaoUso({ uso }: { uso: Uso }) {
             de <span className="tabular-nums">{total}</span> análises usadas
             neste ciclo
           </p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-400">
             renova em{" "}
-            <span className="text-zinc-400">{dataLonga(uso.renovaEm)}</span>
+            <span className="text-zinc-300">{dataLonga(uso.renovaEm)}</span>
           </p>
         </div>
 
@@ -209,7 +212,7 @@ function CartaoUso({ uso }: { uso: Uso }) {
           />
         </div>
 
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-xs text-zinc-400">
           {uso.analisesRestantes > 0 ? (
             <>
               Restam{" "}
@@ -254,7 +257,7 @@ function UsoIndisponivel() {
         <p className="text-sm font-medium text-zinc-300">
           Não consegui ler o seu consumo agora
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+        <p className="mt-1 text-sm leading-relaxed text-zinc-400">
           Recarregue em instantes. Sua assinatura não foi afetada — só este
           resumo não carregou.
         </p>
@@ -275,8 +278,11 @@ function CartaoPlano({ plano: p, atual }: { plano: Plano; atual: boolean }) {
           : "border-zinc-800 bg-zinc-900/30")
       }
     >
+      {/* orange-600 (rosa da marca) com texto branco em 11px mede 3,39:1 —
+          reprova o mínimo de 4,5:1. orange-700 mede 4,85:1 e passa; mesmo
+          selo, um degrau mais escuro. */}
       {p.destaque && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-600 px-3 py-1 text-[11px] font-bold text-white">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-700 px-3 py-1 text-[11px] font-bold text-white">
           Mais popular
         </span>
       )}
@@ -292,9 +298,10 @@ function CartaoPlano({ plano: p, atual }: { plano: Plano; atual: boolean }) {
         <span className="text-4xl font-semibold tracking-tight tabular-nums text-zinc-50">
           {precoEmReais(p.precoMensal)}
         </span>
-        <span className="text-sm text-zinc-500">/mês</span>
+        <span className="text-sm text-zinc-400">/mês</span>
       </div>
-      <p className="mt-1 text-xs text-zinc-600">cancele a qualquer momento</p>
+      {/* zinc-600 media ~2,5:1 aqui — bem abaixo do mínimo. zinc-400 mede 7,58:1. */}
+      <p className="mt-1 text-xs text-zinc-400">cancele a qualquer momento</p>
 
       <div
         className={

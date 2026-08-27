@@ -66,7 +66,13 @@ export function PainelErro({
 
   return (
     <div className="surgir overflow-hidden rounded-2xl border border-rose-900/60 bg-rose-950/20">
-      <div className="flex items-start gap-3 p-5">
+      {/*
+        role="alert": esta tela nasce porque algo falhou, muitas vezes
+        enquanto a pessoa estava noutra aba (o polling do Dashboard troca
+        "processando" por "erro" sozinho). O leitor de tela precisa anunciar
+        isso assim que aparece, não só quando alguém tropeça nela navegando.
+      */}
+      <div role="alert" className="flex items-start gap-3 p-5">
         <WarningCircle
           size={19}
           weight="fill"
@@ -78,9 +84,15 @@ export function PainelErro({
             {job.mensagem ?? "Não consegui processar esse vídeo."}
           </p>
 
-          {/* O link fica visível: numa falha o campo do formulário já foi
-              limpo, e sem isto a pessoa tem que ir caçar a URL de novo. */}
-          <p className="mt-3 flex items-center gap-1.5 font-mono text-[11px] text-rose-400/60">
+          {/*
+            O link fica visível: numa falha o campo do formulário já foi
+            limpo, e sem isto a pessoa tem que ir caçar a URL de novo.
+            Era rose-400/60: a opacidade reduzida jogava o contraste medido
+            pra ~3,3:1, abaixo do piso de 4,5:1 — rose-400 sólido mede 6,5:1
+            e continua discreto o bastante pra não competir com a mensagem
+            de erro acima.
+          */}
+          <p className="mt-3 flex items-center gap-1.5 font-mono text-[11px] text-rose-400">
             <LinkSimple size={12} className="shrink-0" />
             <span className="truncate">{job.link}</span>
           </p>
@@ -88,7 +100,7 @@ export function PainelErro({
       </div>
 
       {erro && (
-        <p className="px-5 pb-3 text-xs text-rose-400">{erro}</p>
+        <p role="alert" className="px-5 pb-3 text-xs text-rose-400">{erro}</p>
       )}
 
       <div className="flex flex-wrap items-center gap-2 border-t border-rose-900/50 bg-rose-950/30 px-5 py-3.5">
@@ -97,7 +109,8 @@ export function PainelErro({
             type="button"
             onClick={retomar}
             disabled={enviando}
-            className="flex items-center gap-2 rounded-xl bg-rose-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60"
+            aria-busy={enviando}
+            className="flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60"
           >
             {enviando ? (
               <CircleNotch size={15} className="animate-spin" />
@@ -112,7 +125,7 @@ export function PainelErro({
           type="button"
           onClick={onOutroLink}
           className={
-            "flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition " +
+            "flex min-h-11 items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition " +
             (podeRepetir
               ? "text-rose-300 hover:bg-rose-900/40 hover:text-rose-100"
               : "bg-rose-600 font-semibold text-white hover:bg-rose-500")
@@ -123,7 +136,7 @@ export function PainelErro({
         </button>
 
         {podeRepetir && (
-          <span className="ml-auto text-[11px] text-rose-400/70">
+          <span className="ml-auto text-[11px] text-rose-400">
             As mesmas opções são reaproveitadas
           </span>
         )}

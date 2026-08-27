@@ -3,11 +3,11 @@ import Link from "next/link";
 import { AcessoLayout } from "../acesso-layout";
 import { FormularioAcesso } from "../formulario-acesso";
 import { mandarLogadoProPainel } from "../acesso-guarda";
+import { MARCA } from "@/lib/gta/marca";
 
 export const metadata: Metadata = {
   title: "Criar conta",
-  description:
-    "Crie sua conta no Viral Farm e transforme vídeo longo em cortes prontos.",
+  description: `Crie sua conta no ${MARCA} e transforme sua live de GTA VI em cortes prontos.`,
 };
 
 export default async function CadastroPage() {
@@ -16,7 +16,7 @@ export default async function CadastroPage() {
   return (
     <AcessoLayout
       titulo="Criar conta"
-      subtitulo="Cole o link de um vídeo longo e veja os cortes saírem."
+      subtitulo="Cole o link da sua live de GTA VI e veja os cortes saírem."
       rodape={
         <>
           Já tem conta?{" "}

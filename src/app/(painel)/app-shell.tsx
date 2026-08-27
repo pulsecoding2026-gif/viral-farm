@@ -73,7 +73,12 @@ function Lateral({
     "flex items-center gap-3 rounded-lg text-sm font-medium transition " +
     (recolhida ? "justify-center px-0 py-2.5 " : "px-3 py-2 ") +
     (ativo
-      ? "bg-orange-600 text-white shadow-[0_2px_12px_rgb(255_62_2/0.35)]"
+      // -700, não -600: branco sobre --acao-600 mede 3,12:1 e reprova o
+      // mínimo de 4,5 que docs/gta/tokens.css exige pra texto normal; -700
+      // mede 4,85:1 e passa. Sem glow aqui — o preenchimento sólido já
+      // distingue o item ativo, e o brilho fica reservado pro botão
+      // primário da tela (a regra do brandbook: um objeto aceso por vez).
+      ? "bg-orange-700 text-white"
       : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100");
 
   return (
@@ -122,11 +127,22 @@ function Lateral({
                   aria-label={
                     (aberta ? "Recolher " : "Expandir ") + secao.rotulo
                   }
+                  // O botão visível fica pequeno de propósito (cabe na régua
+                  // de 36px da linha), mas o alvo de toque cresce por um
+                  // pseudo-elemento invisível (before:-inset-2), a técnica que
+                  // docs/gta/identidade.md chama de `.gv-alvo`: aumenta a área
+                  // de clique sem aumentar o ícone. -2 (8px) e não -3: os
+                  // blocos da lateral têm só 6px de respiro entre si
+                  // (gap-1.5 do <nav>), e um alvo maior passaria a invadir o
+                  // bloco vizinho.
                   className={
-                    "absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 opacity-0 transition focus-visible:opacity-100 group-hover/bloco:opacity-100 " +
+                    // "absolute" já dá ao botão o próprio contexto de
+                    // posicionamento — o `before` se ancora nele sem precisar
+                    // de mais nada.
+                    "absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-1 opacity-0 transition before:absolute before:-inset-2 focus-visible:opacity-100 group-hover/bloco:opacity-100 " +
                     (ativa
                       ? "text-white/70 hover:bg-white/20"
-                      : "text-zinc-500 hover:bg-white/10 hover:text-zinc-200")
+                      : "text-zinc-400 hover:bg-white/10 hover:text-zinc-200")
                   }
                 >
                   <CaretDown
@@ -154,7 +170,7 @@ function Lateral({
                 <div className="overflow-hidden">
                   <ul
                     inert={!aberta}
-                    className="mt-1 mb-0.5 ml-[21px] space-y-0.5 border-l border-zinc-800/70 pl-2.5"
+                    className="mt-1 mb-0.5 ml-[21px] space-y-0.5 border-l border-zinc-800 pl-2.5"
                   >
                     {secao.modulos.map((m) => {
                       const ativo = m.slug === slug || m === pai;
@@ -169,7 +185,11 @@ function Lateral({
                               "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] transition " +
                               (ativo
                                 ? "bg-white/[0.09] font-medium text-zinc-50"
-                                : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-300")
+                                // zinc-400, não zinc-500: sobre o fundo desta
+                                // tela (--fundo, luminância ~0,004) o -500
+                                // mede 4,02:1 e reprova o mínimo de 4,5; o
+                                // -400 mede 7,57:1.
+                                : "text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-300")
                             }
                           >
                             <Icone size={15} weight={ativo ? "fill" : "regular"} />
@@ -242,7 +262,7 @@ function AreaConta({
     <div
       ref={caixa}
       className={
-        "relative border-t border-zinc-800/60 " + (recolhida ? "p-2" : "px-2 py-2.5")
+        "relative border-t border-zinc-800 " + (recolhida ? "p-2" : "px-2 py-2.5")
       }
     >
       {aberto && (
@@ -293,7 +313,12 @@ function AreaConta({
           (naConta || aberto ? " bg-white/[0.09]" : " hover:bg-white/[0.06]")
         }
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-600 to-orange-800 text-[13px] font-semibold text-white">
+        {/*
+          -700→-900, não -600→-800: a letra branca cai em algum ponto do
+          degradê, e -600 (3,12:1) reprova sozinho. -700 é o ponto mais claro
+          que ainda passa (4,85:1) — o resto do degradê só melhora a partir daí.
+        */}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-700 to-orange-900 text-[13px] font-semibold text-white">
           {(usuario.nome[0] ?? "?").toUpperCase()}
         </span>
         {!recolhida && (
@@ -302,7 +327,8 @@ function AreaConta({
               <span className="block truncate text-[13px] font-medium text-zinc-200">
                 {usuario.nome}
               </span>
-              <span className="block truncate text-[11px] text-zinc-500">
+              {/* zinc-400: -500 reprova o contraste mínimo mesmo em 11px. */}
+              <span className="block truncate text-[11px] text-zinc-400">
                 {usuario.email}
               </span>
             </span>
@@ -330,9 +356,9 @@ function Submenu() {
   if (subs.length === 0) return null;
 
   return (
-    <div className="sticky top-0 z-20 border-b border-zinc-800/80 bg-[var(--background)]/85 backdrop-blur">
+    <div className="sticky top-0 z-20 border-b border-zinc-800 bg-[var(--background)]/85 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-3 sm:px-8">
-        <span className="shrink-0 text-xs text-zinc-500">{pai?.rotulo}</span>
+        <span className="shrink-0 text-xs text-zinc-400">{pai?.rotulo}</span>
         <div
           role="tablist"
           aria-label={pai?.rotulo}
@@ -351,7 +377,7 @@ function Submenu() {
                   "flex shrink-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs transition " +
                   (ativo
                     ? "bg-zinc-800 font-medium text-zinc-100"
-                    : "text-zinc-500 hover:bg-white/5 hover:text-zinc-300")
+                    : "text-zinc-400 hover:bg-white/5 hover:text-zinc-300")
                 }
               >
                 <Icone size={14} weight={ativo ? "fill" : "regular"} />
@@ -395,7 +421,12 @@ export function AppShell({
     });
   }
 
-  const marca = <Logo />;
+  // max-w explícito: sem ele, dentro de um Link `flex-1` o lockup ocupa toda
+  // a largura sobrando da lateral (~164px) e, na proporção 2:1 da arte atual
+  // (era 7,7:1, depois 2,7:1 — ver comentário de logo.tsx), vira ~82px de
+  // altura só de logo. 140px de largura = 70px de altura: cabe folgado no
+  // cabeçalho de 64px de padding vertical sem espremer o botão ao lado.
+  const marca = <Logo className="max-w-[140px]" />;
 
   return (
     <div className="flex h-full">
@@ -405,17 +436,16 @@ export function AppShell({
         // "lateral" fica congelado, então só o conteúdo se move na navegação.
         style={{ viewTransitionName: "lateral" }}
         // Mais escura que o conteúdo de propósito: a lateral recua, o
-        // conteúdo avança. Antes era zinc-950/40 sobre um corpo #09090b — na
-        // prática, a mesma cor, sem separação nenhuma.
+        // conteúdo avança. bg-[var(--fundo-poco)] em vez de um hex solto:
+        // #080808 é o "GTA Black" oficial do brandbook pra lateral/poço
+        // (docs/gta/tokens.css), não um valor escolhido no olho.
         className={
-          "hidden h-full shrink-0 flex-col border-r border-zinc-800/60 bg-[#060609] transition-[width] duration-300 ease-out lg:flex " +
+          "hidden h-full shrink-0 flex-col border-r border-zinc-800 bg-[var(--fundo-poco)] transition-[width] duration-300 ease-out lg:flex " +
           (recolhida ? "w-[68px]" : "w-60")
         }
       >
         {/*
-          Marca e controle na mesma linha. Isso só passou a caber depois que o
-          lockup perdeu o "IA": a 9,7:1 dividir a faixa derrubava a altura para
-          ~21px; a 6,6:1 sobra espaço e o texto ainda fica em ~25px.
+          Marca e controle na mesma linha.
 
           px-5 alinha a ponta esquerda do play com os ícones do menu
           (nav px-2 + item px-3 = 20px).
@@ -444,7 +474,10 @@ export function AppShell({
             onClick={alternarLateral}
             aria-label={recolhida ? "Expandir menu" : "Recolher menu"}
             title={recolhida ? "Expandir menu" : "Recolher menu"}
-            className="shrink-0 rounded-lg p-1.5 text-zinc-600 transition hover:bg-white/[0.06] hover:text-zinc-300"
+            // h-11 w-11 = 44px: o alvo de toque mínimo, sem crescer o ícone.
+            // zinc-600 media 2,5:1 aqui e reprovava até o piso de 3:1 de
+            // ícone (não-texto); zinc-400 mede 7,57:1.
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-300"
           >
             <SidebarSimple size={17} />
           </button>
@@ -465,23 +498,23 @@ export function AppShell({
             onClick={() => setGaveta(false)}
             className="absolute inset-0 bg-black/60"
           />
-          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-zinc-800 bg-[#060609]">
+          <aside className="absolute inset-y-0 left-0 flex w-64 flex-col border-r border-zinc-800 bg-[var(--fundo-poco)]">
             <div className="flex items-center gap-3 px-5 pt-8 pb-8">
-              {/* max-w para casar com a lateral do desktop (~24px de altura):
-                  sem ele o flex-1 estica o lockup para 27px e a marca muda de
-                  tamanho conforme a tela, o que lê como descuido. */}
+              {/* Mesma largura da lateral do desktop (140px = 70px de altura
+                  na proporção 2:1 real da arte): a marca não muda de tamanho
+                  conforme a tela. */}
               <Link
                 href={INICIO}
                 onClick={() => setGaveta(false)}
                 aria-label={MARCA}
                 className="min-w-0 flex-1 transition-opacity hover:opacity-80"
               >
-                <Logo className="max-w-[152px]" />
+                <Logo className="max-w-[140px]" />
               </Link>
               <button
                 onClick={() => setGaveta(false)}
                 aria-label="Fechar menu"
-                className="shrink-0 rounded-lg p-1 text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-300"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-300"
               >
                 <X size={19} />
               </button>
@@ -497,15 +530,18 @@ export function AppShell({
       <div className="flex h-full min-w-0 flex-1 flex-col">
         {/*
           O max-w não é enfeite: o lockup é `w-full`, e num flex sem limite ele
-          esticava para 299px de largura (45px de altura) — quase o dobro do
-          logo da lateral no desktop. Travado em 132px ele fica em ~20px de
-          altura, que é o tamanho certo para uma barra compacta.
+          esticaria até a largura do cabeçalho. Na proporção real da arte
+          (2:1 — largura × 0,5 = altura), 108px de largura dão 54px de altura:
+          cabe com folga nos py-4 (32px) da barra, sem estourar a altura dela.
+          Mesma conta em src/app/(site)/navegacao-site.tsx, que usa 132px
+          porque o cabeçalho de lá tem mais respiro vertical (pílula com
+          padding próprio) — aqui a barra é mais justa, então o lockup é menor.
         */}
-        <header className="flex items-center gap-3 border-b border-zinc-800/60 px-4 py-4 lg:hidden">
+        <header className="flex items-center gap-3 border-b border-zinc-800 px-4 py-4 lg:hidden">
           <button
             onClick={() => setGaveta(true)}
             aria-label="Abrir menu"
-            className="shrink-0 rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-200"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-200"
           >
             <List size={20} />
           </button>
@@ -514,7 +550,7 @@ export function AppShell({
             aria-label={MARCA}
             className="min-w-0 transition-opacity hover:opacity-80"
           >
-            <Logo className="max-w-[132px]" />
+            <Logo className="max-w-[108px]" />
           </Link>
         </header>
 

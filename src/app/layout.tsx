@@ -8,6 +8,12 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { MARCA, TEMPLATE_TITULO } from "@/lib/gta/marca";
+import {
+  DESCRICAO,
+  PALAVRAS_CHAVE,
+  SITE_URL,
+  URL_BASE,
+} from "@/lib/gta/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -75,13 +81,90 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+/**
+ * METADADOS DA RAIZ — o que o Google, o WhatsApp e o Discord leem.
+ *
+ * Herdado por TODA rota. Cada página pública sobrescreve só o que muda
+ * (`title`, `description`), e o resto — imagem de compartilhamento, locale,
+ * regras de robô — desce daqui de graça. Ver a regra de merge em
+ * `node_modules/next/dist/docs/.../generate-metadata.md`: campos aninhados
+ * como `openGraph` são SUBSTITUÍDOS por inteiro quando a página redefine o
+ * objeto, então página nenhuma deve redeclarar `openGraph` só para trocar o
+ * título.
+ *
+ * `metadataBase` é o que permite escrever caminho relativo aqui embaixo — sem
+ * ele, canonical e og:image relativos quebram o build.
+ */
 export const metadata: Metadata = {
+  metadataBase: URL_BASE,
+
   title: {
-    default: MARCA,
+    default: `${MARCA} — cortes de GTA VI com IA`,
     template: TEMPLATE_TITULO,
   },
-  description:
-    "Sua live de GTA VI vira uma semana de Shorts enquanto você ainda está jogando. Cole o link e a IA devolve cortes verticais com legenda animada, prontos pra postar. Projeto independente, não afiliado à Rockstar Games.",
+  description: DESCRICAO,
+  keywords: PALAVRAS_CHAVE,
+
+  applicationName: MARCA,
+  category: "technology",
+  /*
+   * `authors`/`creator`/`publisher` são a mesma entidade porque isto é um
+   * projeto de uma pessoa só. Repetir o nome nos três é o que o Google usa
+   * para amarrar site, autoria e organização — e é a mesma entidade declarada
+   * no JSON-LD de `src/lib/gta/seo.ts`.
+   */
+  authors: [{ name: MARCA, url: SITE_URL }],
+  creator: MARCA,
+  publisher: MARCA,
+
+  /*
+   * Canonical na raiz aponta para a raiz. Cada página define a sua própria em
+   * `alternates.canonical`, e o `metadataBase` monta a URL absoluta.
+   *
+   * Isto importa mais do que parece aqui: o site vai receber link de fórum,
+   * Discord e Reddit cheios de `?utm_source=...`. Sem canonical, cada variante
+   * de parâmetro vira um candidato a página separada.
+   */
+  alternates: { canonical: "/" },
+
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: MARCA,
+    title: `${MARCA} — cortes de GTA VI com IA`,
+    description: DESCRICAO,
+    url: "/",
+    /*
+     * A imagem NÃO é listada aqui: `src/app/opengraph-image.tsx` a gera e o
+     * Next injeta `og:image` (com tipo, largura e altura) sozinho. Declarar
+     * nos dois lugares produziria duas og:image e o WhatsApp escolheria uma.
+     */
+  },
+
+  twitter: {
+    // O card grande é o que faz diferença em nicho de games: a arte é metade
+    // do motivo de alguém clicar num link colado no meio de uma thread.
+    card: "summary_large_image",
+    title: `${MARCA} — cortes de GTA VI com IA`,
+    description: DESCRICAO,
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      // Sem teto de trecho, de imagem nem de vídeo na pré-visualização: o
+      // padrão do Google corta o snippet curto, e aqui a descrição é o
+      // argumento de venda.
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+
+  formatDetection: { telephone: false, address: false, email: false },
 };
 
 /**

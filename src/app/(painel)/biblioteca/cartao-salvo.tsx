@@ -101,10 +101,10 @@ export function CartaoSalvo({
 
           {item.tipo === "video" ? (
             <>
-              <p className="mt-0.5 truncate text-xs text-zinc-500">
+              <p className="mt-0.5 truncate text-xs text-zinc-400">
                 {item.video.canal} · {item.video.nicho}
               </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-zinc-500">
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-zinc-400">
                 <span className="flex items-center gap-1">
                   <Eye size={11} />
                   {compacto(item.video.visualizacoes)}
@@ -113,11 +113,11 @@ export function CartaoSalvo({
                   <Heart size={11} />
                   {compacto(item.video.curtidas)}
                 </span>
-                <span className="text-zinc-600">salvo {quando(item.salvo_em)}</span>
+                <span className="text-zinc-400">salvo {quando(item.salvo_em)}</span>
               </div>
             </>
           ) : (
-            <p className="mt-0.5 text-xs text-zinc-500">
+            <p className="mt-0.5 text-xs text-zinc-400">
               {item.nicho} · {item.qtd_roteiros}{" "}
               {item.qtd_roteiros === 1 ? "roteiro" : "roteiros"} · salvo{" "}
               {quando(item.salvo_em)}
@@ -152,7 +152,7 @@ export function CartaoSalvo({
               setEditandoNota(false);
             }}
             aria-label="Cancelar"
-            className="rounded-lg border border-zinc-800 p-1.5 text-zinc-500 transition hover:text-zinc-300"
+            className="rounded-lg border border-zinc-800 p-1.5 text-zinc-400 transition hover:text-zinc-300"
           >
             <X size={14} />
           </button>
@@ -195,7 +195,7 @@ export function CartaoSalvo({
           <button
             type="button"
             onClick={() => setEditandoNota(true)}
-            className="flex items-center gap-1 rounded-lg border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-500 transition hover:border-zinc-700 hover:text-zinc-300"
+            className="flex items-center gap-1 rounded-lg border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-300"
           >
             <NotePencil size={12} />
             Anotar
@@ -206,7 +206,7 @@ export function CartaoSalvo({
           <>
             <Link
               href={`/analisador?nicho=${encodeURIComponent(item.video.nicho)}`}
-              className="flex items-center gap-1 rounded-lg border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-500 transition hover:border-orange-900/70 hover:text-orange-400"
+              className="flex items-center gap-1 rounded-lg border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-400 transition hover:border-orange-900/70 hover:text-orange-400"
             >
               <MagnifyingGlass size={12} weight="bold" />
               Já gravei assim
@@ -217,7 +217,7 @@ export function CartaoSalvo({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Abrir vídeo original"
-                className="rounded-lg border border-zinc-800 p-1 text-zinc-500 transition hover:border-zinc-700 hover:text-zinc-200"
+                className="rounded-lg border border-zinc-800 p-1 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
               >
                 <ArrowSquareOut size={12} />
               </a>
@@ -226,7 +226,7 @@ export function CartaoSalvo({
         ) : (
           <Link
             href={`/analisador?analise=${encodeURIComponent(item.id)}`}
-            className="flex items-center gap-1 rounded-lg border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-500 transition hover:border-orange-900/70 hover:text-orange-400"
+            className="flex items-center gap-1 rounded-lg border border-zinc-800 px-2 py-1 text-[11px] font-medium text-zinc-400 transition hover:border-orange-900/70 hover:text-orange-400"
           >
             <FileText size={12} />
             Abrir análise

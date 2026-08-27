@@ -1,10 +1,34 @@
 import type { Metadata } from "next";
 import { PaginaLegal } from "../pagina-legal";
 
+/*
+ * O `title` continua curto: o sufixo "· GTA VIRAL" vem do `template` da raiz,
+ * repetir a marca aqui daria "Termos de uso GTA VIRAL · GTA VIRAL".
+ *
+ * A descrição diz o que a página tem de INCOMUM — a regra sobre material de
+ * terceiros e material vazado. "Termos de uso da plataforma" descreve dez mil
+ * páginas iguais; esta descreve esta.
+ *
+ * `canonical` explícito porque a raiz declara `alternates.canonical: "/"`, e
+ * campos de metadata são substituídos pelo segmento mais próximo — sem esta
+ * linha, /termos herdaria o canonical da home e pediria ao Google para não
+ * indexar a si mesma.
+ */
 export const metadata: Metadata = {
   title: "Termos de uso",
   description:
-    "Termos de uso do GTA VIRAL — condições de acesso e uso da plataforma.",
+    "As condições de uso do GTA VIRAL, incluindo a regra sobre vídeo de " +
+    "terceiros, crédito ao streamer e a proibição de material vazado ou de " +
+    "build não lançada.",
+  alternates: { canonical: "/termos" },
+  openGraph: {
+    type: "article",
+    locale: "pt_BR",
+    title: "Termos de uso",
+    description:
+      "Condições de uso do GTA VIRAL e a regra sobre conteúdo de terceiros.",
+    url: "/termos",
+  },
 };
 
 export default function TermosPage() {

@@ -12,13 +12,13 @@ export default function BibliotecaPage() {
   return (
     <div>
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-50">
           Biblioteca
         </h1>
-        <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-zinc-500">
-          Seu acervo. Referências de formato salvas no Radar e nas Lives, mais
-          as análises do seu material — organizadas em coleções. É daqui que sai
-          o que você vai planejar e criar.
+        <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-zinc-400">
+          Seu acervo de cortes de GTA. Referências de formato salvas no Radar
+          e nas Lives, mais as análises do seu material — organizadas em
+          coleções. É daqui que sai o que você vai cortar em seguida.
         </p>
       </header>
 

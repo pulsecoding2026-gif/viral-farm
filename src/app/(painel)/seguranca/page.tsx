@@ -13,10 +13,11 @@ export default function SegurancaPage() {
   return (
     <div className="surgir">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+        <h1 className="fonte-titulo text-2xl font-semibold tracking-tight text-zinc-50">
           Configurações
         </h1>
-        <p className="mt-1.5 text-sm text-zinc-500">
+        {/* zinc-500 media 4,02:1 — abaixo do mínimo de 4,5:1. zinc-400 mede 7,58:1. */}
+        <p className="mt-1.5 text-sm text-zinc-400">
           Seus dados, seu acesso e as preferências do painel.
         </p>
       </header>
@@ -51,7 +52,7 @@ export default function SegurancaPage() {
         titulo="Verificação em duas etapas"
         descricao="Uma segunda barreira caso alguém descubra a sua senha."
       >
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-zinc-400">
           Ainda não configurada.
         </p>
         <BotaoSalvar rotulo="Ativar 2FA" />

@@ -19,28 +19,34 @@ import type { ItemBiblioteca } from "./tipos";
  * prendia tudo em pt/BR.
  *
  * Cota: `search.list` custa 100 unidades por chamada, `videos.list` custa 1
- * por chamada (não por vídeo). Rodar pros 7 nichos × ~3 línguas gasta
- * ~2.100 unidades por atualização, contra uma cota diária gratuita de
- * 10.000 — por isso o resultado fica em cache local por 12h em vez de bater
- * na API a cada carregamento de página.
+ * por chamada (não por vídeo). Rodar pros 3 nichos × 2 línguas gasta ~600
+ * unidades por atualização, contra uma cota diária gratuita de 10.000 — por
+ * isso o resultado fica em cache local por 12h em vez de bater na API a
+ * cada carregamento de página.
+ *
+ * NICHOS TROCADOS PRA GTA (26/08/2026) — a GTA VIRAL é dedicada à franquia
+ * (docs/gta/plano-mestre.md), então "o que performa no nicho" agora quer
+ * dizer "o que performa dentro de GTA", não categorias genéricas de canal.
+ * Os três nichos abaixo são formatos DENTRO da franquia, não jogos
+ * diferentes — é por isso que a busca continua "roleplay gta v", nunca só
+ * "roleplay".
+ *
+ * NUNCA adicionar consulta de "gta vi" aqui: o jogo lança em 19/11/2026 e não
+ * existe gameplay dele em vídeo nenhum ainda (docs/gta/pesquisa-jogo.md).
+ * Buscar por "gta vi" devolveria zero resultado sempre — pior que devolver o
+ * resultado errado, porque não avisa nada, só fica vazio.
  */
 
 type Nicho = (typeof NICHOS_BIBLIOTECA)[number];
 
-// Uma consulta por língua, não uma tradução 1:1 — cada idioma traz um
-// corpus de canais diferente, o que é o objetivo (diversidade de país).
+// Duas línguas por nicho: português (a base de RP brasileira, que é onde o
+// produto mira primeiro) e inglês (servidores de RP e canais de GTA Online
+// em inglês também viralizam, e ampliam o pool antes do filtro "sem
+// legenda" de baixo).
 const CONSULTAS_POR_NICHO: Record<Nicho, string[]> = {
-  curiosidades: ["curiosidades incríveis", "amazing facts", "datos curiosos increíbles"],
-  "mar e vida marinha": ["vida marinha oceano", "ocean marine life", "vida marina océano"],
-  natureza: ["natureza selvagem", "wild nature", "naturaleza salvaje"],
-  automotivo: ["carros motor", "cars engine", "coches motor"],
-  "culinária": ["receita fácil", "easy recipe", "receta fácil"],
-  fitness: ["treino academia", "gym workout", "entrenamiento gimnasio"],
-  "finanças pessoais": [
-    "educação financeira investir",
-    "personal finance investing",
-    "finanzas personales invertir",
-  ],
+  "gta rp": ["roleplay gta v cortes", "gta rp funny moments"],
+  "gta online": ["gta online melhores momentos", "gta online funny moments"],
+  "gta v engraçado": ["gta v momentos engraçados", "gta 5 funny moments compilation"],
 };
 
 const ARQUIVO_CACHE = path.join(process.cwd(), "data", "biblioteca.json");

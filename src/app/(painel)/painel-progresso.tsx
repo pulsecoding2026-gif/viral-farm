@@ -108,10 +108,22 @@ export function PainelProgresso({
 
   return (
     <div className="surgir overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/40">
-      <div className="border-b border-zinc-800 px-5 py-4 sm:px-6">
+      {/*
+        aria-live no CONTAINER inteiro, não só num texto solto: quem usa
+        leitor de tela precisa saber que a etapa mudou ("transcrevendo" →
+        "escolhendo os melhores trechos"...) sem precisar navegar a lista de
+        novo. "polite" espera uma pausa em vez de interromper — a etapa muda
+        a cada segundos, e "assertive" aqui viraria uma narração sem fim.
+      */}
+      <div
+        aria-live="polite"
+        className="border-b border-zinc-800 px-5 py-4 sm:px-6"
+      >
         <div className="flex items-baseline justify-between gap-3">
           <p className="text-sm font-medium text-zinc-100">Fazendo seus cortes</p>
-          <span className="font-mono text-xs tabular-nums text-zinc-500">
+          {/* zinc-500 mede ~4:1 sobre o fundo do app — abaixo do piso de
+              4,5:1. --texto-2 mede 11,5:1. */}
+          <span className="font-mono text-xs tabular-nums text-[var(--texto-2)]">
             {pct}%
           </span>
         </div>
@@ -145,7 +157,7 @@ export function PainelProgresso({
                     (estado === "feito"
                       ? "bg-emerald-600/15 text-emerald-400"
                       : estado === "atual"
-                        ? "bg-orange-600 text-white shadow-[0_0_0_4px_rgb(255_62_2/0.15)]"
+                        ? "bg-orange-600 text-white shadow-[0_0_0_4px_rgb(238_79_156/0.15)]"
                         : "border border-zinc-800 text-zinc-700")
                   }
                 >
@@ -172,7 +184,7 @@ export function PainelProgresso({
                   className={
                     "text-sm transition-colors " +
                     (estado === "pendente"
-                      ? "text-zinc-600"
+                      ? "text-[var(--texto-3)]"
                       : estado === "atual"
                         ? "font-medium text-zinc-50"
                         : "text-zinc-400")
@@ -181,7 +193,7 @@ export function PainelProgresso({
                   {e.rotulo}
                 </p>
                 {estado === "atual" && (
-                  <p className="mt-0.5 text-xs text-zinc-500">
+                  <p className="mt-0.5 text-xs text-[var(--texto-2)]">
                     {detalheVivo ?? e.detalhe}
                   </p>
                 )}
@@ -192,18 +204,21 @@ export function PainelProgresso({
       </ol>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 px-5 py-3.5 sm:px-6">
-        <p className="max-w-[58ch] text-xs leading-relaxed text-zinc-500">
+        <p className="max-w-[58ch] text-xs leading-relaxed text-[var(--texto-2)]">
           Vídeo longo leva alguns minutos. Pode fechar esta aba — o trabalho
           continua no servidor e os cortes ficam salvos no histórico.
         </p>
         {/* Link errado ou opção errada não deveria custar a espera do
-            pipeline inteiro. O worker mata o processo em andamento. */}
+            pipeline inteiro. O worker mata o processo em andamento.
+            min-h-11: era um botão de 30px de altura — abaixo do alvo de
+            toque mínimo. */}
         {onCancelar && (
           <button
             type="button"
             onClick={onCancelar}
             disabled={cancelando}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-rose-900 hover:bg-rose-950/30 hover:text-rose-300 disabled:opacity-50"
+            aria-busy={cancelando}
+            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-rose-900 hover:bg-rose-950/30 hover:text-rose-300 disabled:opacity-50"
           >
             {cancelando ? (
               <CircleNotch size={13} className="animate-spin" />

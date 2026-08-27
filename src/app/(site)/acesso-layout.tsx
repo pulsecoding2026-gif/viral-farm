@@ -1,17 +1,21 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft, ShieldCheck, Check } from "@phosphor-icons/react/dist/ssr";
-import { Logo } from "../logo";
+import { Logo, Simbolo } from "../logo";
 import { MARCA } from "@/lib/gta/marca";
 
 /**
  * Moldura das telas de entrar e criar conta.
  *
- * A coluna da direita usa o pôster do vídeo do hero, não fundo liso: antes
- * eram dois blocos pretos separados por uma linha reta, com o texto solto no
- * meio de muito espaço vazio. O pôster é estático (não o vídeo) porque numa
- * tela de formulário o movimento disputa atenção com o que a pessoa precisa
- * preencher — e pesa 155 KB contra 2 MB.
+ * A coluna da direita ERA o pôster `/acesso-viral-farm.png` (1,8 MB, arte da
+ * marca antiga) — trocado por uma composição 100% CSS na identidade nova
+ * (céu de Miami + símbolo gigante translúcido). Dois motivos, não só um:
+ * a arte antiga não combina mais com nada, e uma tela de formulário some no
+ * celular de qualquer forma (ver abaixo), então pagar 1,8 MB de download por
+ * uma vitrine que a maioria das visitas nem carrega nunca fez sentido — a
+ * composição em CSS pesa zero.
+ *
+ * O arquivo `/acesso-viral-farm.png` continua em `public/`: não apago porque
+ * outro agente mexe em `public/` nesta mesma virada. Só parei de referenciá-lo.
  *
  * No celular a coluna some por inteiro: depois do clique em "criar conta",
  * argumento de venda é ruído entre a pessoa e o campo.
@@ -28,7 +32,9 @@ export function AcessoLayout({
   rodape: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-[#09090b]">
+    // bg-zinc-950 aponta para --fundo-poco (#080808, GTA Black) — a rampa foi
+    // reescrita em globals.css, então não precisa mais do hex solto daqui.
+    <div className="flex min-h-screen bg-zinc-950">
       {/* ----------------------------------------------------- formulário */}
       <div className="flex w-full flex-col px-5 py-7 sm:px-10 lg:w-[54%] lg:px-16">
         <div className="flex items-center justify-between gap-4">
@@ -39,9 +45,11 @@ export function AcessoLayout({
           >
             <Logo className="max-w-[164px]" />
           </Link>
+          {/* zinc-500 (medido: 4,02:1 sobre o fundo desta página) reprova o
+              mínimo de 4,5:1 pra texto normal. zinc-400 mede 7,58:1. */}
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-zinc-500 transition hover:bg-white/[0.06] hover:text-zinc-300"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs text-zinc-400 transition hover:bg-white/[0.06] hover:text-zinc-300"
           >
             <ArrowLeft size={13} weight="bold" />
             Voltar
@@ -53,20 +61,37 @@ export function AcessoLayout({
             abria vãos enormes em cima e embaixo. */}
         <div className="flex flex-1 flex-col justify-center py-8">
           <div className="mx-auto w-full max-w-sm lg:mx-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">
+            {/* Archivo 700 em caixa mista — nunca uppercase em título, é
+                regra da identidade (docs/gta/identidade.md). */}
+            <h1 className="fonte-titulo text-2xl font-bold tracking-tight text-white">
               {titulo}
             </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">
+            {/* zinc-500 media 4,02:1 aqui — abaixo dos 4,5:1 exigidos pra
+                texto normal. zinc-400 mede 7,58:1. */}
+            <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
               {subtitulo}
             </p>
 
             <div className="mt-6">{children}</div>
 
-            <div className="mt-5 text-sm text-zinc-500">{rodape}</div>
+            <div className="mt-5 text-sm text-zinc-400">{rodape}</div>
 
-            <p className="mt-6 flex items-center gap-2 text-[11px] text-zinc-600">
+            <p className="mt-6 flex items-center gap-2 text-[11px] text-zinc-400">
               <ShieldCheck size={13} className="shrink-0 text-emerald-600" />
               O vídeo é processado e apagado. Fica só a análise.
+            </p>
+
+            {/*
+              Aviso de não afiliação — obrigatório no rodapé de toda página
+              PÚBLICA (docs/gta/identidade.md §9). Entrar e cadastro são
+              acessíveis sem login, então contam como página pública mesmo
+              vivendo fora do site de marketing. `--texto-3` sobre o fundo
+              desta coluna mede ~5,4:1 — passa AA com folga, medido à mão
+              (ver relatório da tarefa).
+            */}
+            <p className="mt-4 text-[11px] leading-relaxed text-[var(--texto-3,#858585)]">
+              {MARCA} é um projeto independente de fãs, sem afiliação com a
+              Rockstar Games ou a Take-Two Interactive.
             </p>
           </div>
         </div>
@@ -74,41 +99,34 @@ export function AcessoLayout({
 
       {/* --------------------------------------------------------- vitrine */}
       {/*
-        A arte é quadrada e a coluna é alta e estreita, então `object-cover`
-        recortaria as laterais e comeria os painéis de neon — que são metade
-        da composição. Por isso ela fica CONTIDA no topo, em proporção
-        própria, e o texto ocupa o resto. Nada é cortado.
+        Composição 100% CSS — sem imagem baixada. `.ceu-noturno` (definido em
+        gta-tokens.css, que este agente não edita) já dá a parede de preto com
+        a brasa de rosa/roxo que o brandbook pede; o símbolo gigante e quase
+        invisível no canto é o mesmo truque de "arte de personagem" que
+        `.mancha-cartao` usa em outros lugares — decoração da marca, não uma
+        imagem de terceiro.
       */}
-      <aside className="relative hidden overflow-hidden border-l border-zinc-800/60 lg:flex lg:w-[46%] lg:flex-col">
-        {/* Sem `priority` no <Image>: a coluna some no celular, e o preload
-            dispara mesmo com a imagem em display:none — seriam centenas de KB
-            baixados no celular pra nada. */}
-        <div className="relative aspect-square w-full shrink-0">
-          <Image
-            src="/acesso-viral-farm.png"
-            alt=""
-            fill
-            sizes="46vw"
-            className="object-cover object-center"
-          />
-          {/* Fecha a base da arte no fundo da página, sem corte reto. */}
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-[#09090b]" />
-        </div>
+      <aside className="ceu-noturno relative hidden overflow-hidden border-l border-zinc-800 lg:flex lg:w-[46%] lg:flex-col">
+        {/* Símbolo decorativo gigante, bem apagado — textura, não logo. */}
+        <Simbolo
+          tamanho={420}
+          className="pointer-events-none absolute -right-20 -bottom-24 text-white/[0.05]"
+        />
 
-        <div className="relative -mt-16 flex flex-1 flex-col justify-center px-12 pb-10 xl:px-16">
-          <p className="text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
-            Comece a farmar
+        <div className="relative flex flex-1 flex-col justify-center px-12 pb-10 xl:px-16">
+          <p className="placa text-[11px] text-orange-400">
+            Cortes para criadores de GTA VI
           </p>
-          <p className="mt-3 max-w-[20ch] text-3xl leading-[1.1] font-semibold tracking-tight text-zinc-50">
-            Uma hora de vídeo vira{" "}
-            <span className="text-orange-500 italic">vários cortes.</span>
+          <p className="fonte-titulo mt-3 max-w-[20ch] text-3xl leading-[1.1] font-bold tracking-tight text-white">
+            Sua live vira{" "}
+            <span className="acento-rosa">uma semana de Shorts.</span>
           </p>
 
           <ul className="mt-6 space-y-2.5">
             {[
               ["Transcrição por palavra", "cada uma com seu tempo"],
-              ["Melhores momentos", "escolhidos e pontuados"],
-              ["Cortes 9:16", "com legenda animada"],
+              ["Melhores momentos de gameplay", "com nota e o motivo escrito"],
+              ["Cortes 9:16 legendados", "com o seu rosto sempre no quadro"],
             ].map(([titulo, detalhe]) => (
               <li key={titulo} className="flex items-start gap-2.5">
                 <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-600/20 text-blue-400">
@@ -116,13 +134,13 @@ export function AcessoLayout({
                 </span>
                 <span className="text-sm text-zinc-300">
                   {titulo}
-                  <span className="text-zinc-600"> — {detalhe}</span>
+                  <span className="text-zinc-400"> — {detalhe}</span>
                 </span>
               </li>
             ))}
           </ul>
 
-          <p className="mt-6 border-t border-zinc-800/80 pt-4 text-xs leading-relaxed text-zinc-600">
+          <p className="mt-6 border-t border-zinc-800 pt-4 text-xs leading-relaxed text-zinc-400">
             De 40 a 90 segundos por análise. Pode fechar a aba — o processamento
             continua no servidor.
           </p>

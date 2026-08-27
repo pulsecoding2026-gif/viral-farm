@@ -8,6 +8,7 @@ import {
   ClosedCaptioning,
 } from "@phosphor-icons/react/dist/ssr";
 import type { ItemBiblioteca } from "@/lib/biblioteca/tipos";
+import { ROTULOS_NICHO } from "@/lib/biblioteca/videos-exemplo";
 import {
   useSalvo,
   engajamento,
@@ -39,7 +40,7 @@ export function LinhaVideo({
   return (
     <li className="group flex items-center gap-3 px-3 py-2 transition hover:bg-white/[0.02]">
       {/* Slot sempre presente, mesmo sem número — ver o comentário das ações. */}
-      <span className="w-4 shrink-0 text-right text-[11px] tabular-nums text-zinc-600">
+      <span className="numero-placa w-4 shrink-0 text-right text-[11px] text-zinc-400">
         {posicao ?? ""}
       </span>
 
@@ -68,7 +69,7 @@ export function LinhaVideo({
             gastava 68px de largura que o título aproveita melhor.
             A legenda embutida também vive aqui — dentro das ações ela variava
             a largura da coluna e entortava tudo à esquerda dela. */}
-        <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-zinc-600">
+        <p className="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-zinc-400">
           <span
             title={plataforma.rotulo}
             aria-label={plataforma.rotulo}
@@ -79,7 +80,7 @@ export function LinhaVideo({
             <span
               title="Já tem legenda queimada no vídeo"
               aria-label="Já tem legenda queimada no vídeo"
-              className="shrink-0 text-zinc-700"
+              className="shrink-0 text-zinc-400"
             >
               <ClosedCaptioning size={12} weight="fill" />
             </span>
@@ -87,32 +88,32 @@ export function LinhaVideo({
         </p>
       </div>
 
-      <span className="hidden w-24 shrink-0 truncate text-[11px] capitalize text-zinc-600 lg:block">
-        {video.nicho}
+      <span className="hidden w-24 shrink-0 truncate text-[11px] text-zinc-400 lg:block">
+        {ROTULOS_NICHO[video.nicho as keyof typeof ROTULOS_NICHO] ?? video.nicho}
       </span>
 
-      <span className="hidden w-10 shrink-0 text-right text-[11px] tabular-nums text-zinc-500 md:block">
+      <span className="numero-placa hidden w-10 shrink-0 text-right text-[11px] text-zinc-400 md:block">
         {video.duracao_s}s
       </span>
 
-      <span className="w-14 shrink-0 text-right text-[11px] tabular-nums text-zinc-400">
+      <span className="numero-placa w-14 shrink-0 text-right text-[11px] text-zinc-400">
         {formatarNumero(video.visualizacoes)}
       </span>
 
-      <span className="hidden w-14 shrink-0 text-right text-[11px] tabular-nums text-zinc-500 sm:block">
+      <span className="numero-placa hidden w-14 shrink-0 text-right text-[11px] text-zinc-400 sm:block">
         {formatarNumero(video.curtidas)}
       </span>
 
       {/* O número que o filtro de engajamento usa. Antes dava pra filtrar por
           ele sem nunca vê-lo — agora ele aparece, com faixa de cor. */}
       <span
-        className={`w-12 shrink-0 text-right text-[11px] font-semibold tabular-nums ${corDoEngajamento(eng)}`}
+        className={`numero-placa w-12 shrink-0 text-right text-[11px] font-semibold ${corDoEngajamento(eng)}`}
         title="Curtidas dividido por visualizações"
       >
         {eng.toFixed(1)}%
       </span>
 
-      <span className="hidden w-14 shrink-0 text-right text-[11px] tabular-nums text-zinc-600 xl:block">
+      <span className="hidden w-14 shrink-0 text-right text-[11px] text-zinc-400 xl:block">
         {tempoRelativo(video.publicado_em)}
       </span>
 
@@ -133,7 +134,7 @@ export function LinhaVideo({
             "flex h-6 w-6 items-center justify-center rounded-md border transition active:scale-90 disabled:opacity-60 " +
             (salvo
               ? "border-orange-700 bg-orange-600 text-white"
-              : "border-zinc-800 text-zinc-500 opacity-0 group-hover:opacity-100 hover:text-zinc-200 focus-visible:opacity-100")
+              : "border-zinc-800 text-zinc-400 opacity-0 group-hover:opacity-100 hover:text-zinc-200 focus-visible:opacity-100")
           }
         >
           <BookmarkSimple size={12} weight={salvo ? "fill" : "bold"} />
@@ -141,7 +142,7 @@ export function LinhaVideo({
         <Link
           href={`/analisador?nicho=${encodeURIComponent(video.nicho)}`}
           title="Analisar meu material parecido"
-          className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-zinc-500 opacity-0 transition group-hover:opacity-100 hover:border-orange-900/70 hover:text-orange-400 focus-visible:opacity-100"
+          className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-zinc-400 opacity-0 transition group-hover:opacity-100 hover:border-orange-900/70 hover:text-orange-400 focus-visible:opacity-100"
         >
           <MagnifyingGlass size={12} weight="bold" />
         </Link>
@@ -151,7 +152,7 @@ export function LinhaVideo({
             target="_blank"
             rel="noopener noreferrer"
             title={`Abrir no ${plataforma.rotulo}`}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-zinc-500 opacity-0 transition group-hover:opacity-100 hover:text-zinc-200 focus-visible:opacity-100"
+            className="flex h-6 w-6 items-center justify-center rounded-md border border-zinc-800 text-zinc-400 opacity-0 transition group-hover:opacity-100 hover:text-zinc-200 focus-visible:opacity-100"
           >
             <ArrowSquareOut size={12} />
           </a>

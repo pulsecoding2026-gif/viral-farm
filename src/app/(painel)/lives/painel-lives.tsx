@@ -138,10 +138,10 @@ export function PainelLives({
                 {a.rotulo}
                 <span
                   className={
-                    "rounded-full px-1.5 text-[11px] tabular-nums " +
+                    "numero-placa rounded-full px-1.5 text-[11px] " +
                     (ativa
                       ? "bg-zinc-700 text-zinc-200"
-                      : "bg-zinc-800/70 text-zinc-600")
+                      : "bg-zinc-800/70 text-zinc-400")
                   }
                 >
                   {a.n}
@@ -157,9 +157,10 @@ export function PainelLives({
           })}
         </div>
 
-        <p className="flex items-center gap-1.5 text-xs tabular-nums text-zinc-500">
+        <p className="flex items-center gap-1.5 text-xs text-zinc-400">
           <Users size={13} />
-          {compacto(totalEspectadores)} assistindo agora
+          <span className="numero-placa">{compacto(totalEspectadores)}</span>{" "}
+          assistindo agora
         </p>
       </div>
 
@@ -179,7 +180,7 @@ export function PainelLives({
           />
         </div>
 
-        <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <label className="flex items-center gap-1.5 text-xs text-zinc-400">
           Ordenar
           <select
             value={ordem}
@@ -192,7 +193,7 @@ export function PainelLives({
           </select>
         </label>
 
-        <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+        <label className="flex items-center gap-1.5 text-xs text-zinc-400">
           Mínimo
           <select
             value={minimo}
@@ -213,8 +214,10 @@ export function PainelLives({
           <p className="mt-3.5 text-sm font-medium text-zinc-300">
             Nenhuma live com esse recorte
           </p>
-          <p className="mt-1 max-w-[44ch] text-sm leading-relaxed text-zinc-500">
-            Baixe o mínimo de espectadores ou limpe a busca.
+          <p className="mt-1 max-w-[44ch] text-sm leading-relaxed text-zinc-400">
+            Baixe o mínimo de espectadores ou limpe a busca. Se a lista
+            inteira estiver vazia, é porque nenhuma live de GTA está no ar
+            neste minuto — não porque o filtro está errado.
           </p>
         </div>
       ) : (
@@ -241,18 +244,18 @@ export function PainelLives({
                   <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/75 to-transparent" />
 
                   {/* Ponto pulsando: é o sinal universal de "isto é ao vivo". */}
-                  <span className="absolute top-2 left-2 flex items-center gap-1.5 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  <span className="placa absolute top-2 left-2 flex items-center gap-1.5 rounded-md bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                     <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
                     AO VIVO
                   </span>
 
                   <span
-                    className={`absolute top-2 right-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white ${PLATAFORMA[l.plataforma].cor}`}
+                    className={`placa absolute top-2 right-2 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white ${PLATAFORMA[l.plataforma].cor}`}
                   >
                     {PLATAFORMA[l.plataforma].rotulo}
                   </span>
 
-                  <span className="absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-white backdrop-blur">
+                  <span className="numero-placa absolute bottom-2 left-2 flex items-center gap-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
                     <Users size={10} weight="fill" />
                     {compacto(l.espectadores)}
                   </span>
@@ -267,7 +270,7 @@ export function PainelLives({
                     i < 3 &&
                     aba === "geral" &&
                     ordem === "espectadores" && (
-                      <span className="absolute top-9 left-2 rounded-md bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      <span className="placa absolute top-9 left-2 rounded-md bg-orange-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
                         TOP {i + 1}
                       </span>
                     )}
@@ -277,24 +280,26 @@ export function PainelLives({
                   <h3 className="line-clamp-2 text-sm font-medium leading-snug text-zinc-100">
                     {l.titulo}
                   </h3>
-                  <p className="mt-1 truncate text-xs text-zinc-500">
+                  <p className="mt-1 truncate text-xs text-zinc-400">
                     {l.canal} · {l.categoria}
                   </p>
 
                   <div className="mt-auto flex items-center gap-1.5 pt-3">
                     <Link
                       href="/analisador"
-                      className="flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-800 px-2.5 py-1.5 text-[11px] font-medium text-zinc-400 transition group-hover:border-orange-900/70 group-hover:text-orange-400 hover:!bg-orange-600 hover:!text-white"
+                      className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border border-zinc-800 px-2.5 py-1.5 text-[11px] font-medium text-zinc-400 transition group-hover:border-orange-900/70 group-hover:text-orange-400 hover:!bg-orange-600 hover:!text-white"
                     >
                       <Scissors size={12} weight="bold" />
                       <span className="truncate">Cortar isso</span>
                     </Link>
+                    {/* min-h/min-w 11 (44px): alvo de toque mínimo — o ícone
+                        continua pequeno, só a área clicável cresce. */}
                     <a
                       href={l.link}
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`Abrir ${l.canal} no ${PLATAFORMA[l.plataforma].rotulo}`}
-                      className="flex shrink-0 items-center justify-center rounded-lg border border-zinc-800 p-1.5 text-zinc-500 transition hover:border-zinc-700 hover:text-zinc-200"
+                      className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg border border-zinc-800 p-1.5 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
                     >
                       <ArrowSquareOut size={13} />
                     </a>

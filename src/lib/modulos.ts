@@ -1,10 +1,12 @@
 /**
  * Registro central da navegação.
  *
- * A lateral tem CINCO blocos fixos e nada mais. A profundidade não vira item
- * de menu: vira aba dentro da página. Com poucos módulos, acordeão na lateral
- * só esconde coisa e cobra um clique a mais — o menu precisa ser uma espinha
- * estável, previsível, que não muda de altura enquanto o usuário navega.
+ * A lateral tem DOIS blocos fixos e nada mais (ver `docs/gta/plano-mestre.md`
+ * §5 — 15 módulos em 4 blocos viraram 5 módulos em 2). A profundidade não vira
+ * item de menu: vira aba dentro da página. Com poucos módulos, acordeão na
+ * lateral só esconde coisa e cobra um clique a mais — o menu precisa ser uma
+ * espinha estável, previsível, que não muda de altura enquanto o usuário
+ * navega.
  *
  * São três níveis, e cada um mora num lugar diferente da tela:
  *
@@ -16,23 +18,13 @@
  * a ordem do menu é a ordem em que o trabalho acontece:
  *
  *   Dashboard → onde eu começo
- *   Descobrir → o que funciona, lá fora e no meu próprio material
- *   Planejar  → escrevo roteiro, hook e título com IA
- *   Criar     → monto o vídeo de verdade
- *   Viralizar → publico e vejo o que deu certo
+ *   Descobrir → de onde tiro o material (Lives, depois Radar Viral)
+ *   Criar     → do link ao Short pronto (Analisador, Editor, Biblioteca)
  *
- * Dentro de Descobrir a ordem também é a do trabalho:
- *   Analisador  → analiso o MEU material
- *   Radar Viral → vejo o que está em alta LÁ FORA, por categoria
- *   Biblioteca  → guardo o que interessa dos dois, pra usar depois
- *
- * Os quatro blocos são verbos na ordem em que o trabalho acontece. O último
- * chama Viralizar, não Workspace, porque nomeia o objetivo do usuário e não
- * a ferramenta — e porque era a única palavra em inglês do menu.
- *
- * O Analisador mora em Descobrir porque o trabalho dele é diagnóstico: ler o
- * material bruto e dizer o que dá pra aproveitar. O Voice Viral mora em Criar
- * porque a saída dele é asset pronto, não plano.
+ * LIVES VEM ANTES DE RADAR VIRAL dentro de Descobrir, e é a virada mais
+ * importante do menu: o público antigo chegava com vídeo próprio na mão e ia
+ * direto ao Analisador; o novo chega sem nada e precisa de matéria-prima antes
+ * de precisar de máquina — ver detalhe no comentário de `SECOES` abaixo.
  *
  * `pronto: true` significa que existe rota real em src/app/<slug>/, que ganha
  * do catch-all `[modulo]` (segmento estático vence dinâmico no App Router).
