@@ -350,7 +350,26 @@ body {
   color: var(--texto);
   font-family: var(--fonte-corpo);
   font-size: var(--t-corpo);
+  /*
+   * 450, não 400. O corpo do site do GTA VI roda em peso 500, e a diferença
+   * aparece: em fundo escuro o texto regular parece mais fino do que é, porque
+   * o branco sobre preto "come" o traço. Meio grau acima devolve a densidade
+   * sem virar negrito.
+   */
+  font-weight: 450;
   -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * O CONTORNO SÓ VALE POR CIMA DE IMAGEM.
+ *
+ * Em título dentro de seção de fundo chapado ele não protege nada — só
+ * engorda a letra, que é exatamente a reclamação de "muito grosso". Fica no
+ * hero, onde há um vídeo por baixo.
+ */
+section:not(:first-of-type) .titulo-letreiro {
+  -webkit-text-stroke-width: 0;
+  text-shadow: none;
 }
 
 /* ========================================================================= */
@@ -390,20 +409,48 @@ body {
  *
  * O rosa continua na frase, mas como ACENTO — uma palavra, não a linha toda.
  */
+/*
+ * A RECEITA MEDIDA NO SITE DA ROCKSTAR, e ela contraria o que eu tinha feito.
+ *
+ * Lendo o estilo computado do site do GTA VI:
+ *   título de seção → peso 700, 51px, tracking +7,7px (≈ +0,15em), uppercase
+ *   corpo           → peso 500, tracking levemente negativo
+ *   botão           → peso 500, 11px
+ *
+ * Ou seja: a presença vem de peso MÉDIO com a letra bem ABERTA, que é o gesto
+ * art déco. Eu tinha usado peso 900 colado (tracking negativo), que é o
+ * extremo oposto — e o resultado foi o que se esperava de peso máximo sem ar:
+ * um tijolo. Título de seção pequeno ficou pesado demais.
+ *
+ * O tracking positivo é o detalhe que mais muda a percepção aqui. Ele custa
+ * largura, e por isso o título precisa ser curto — o que o brandbook já pedia
+ * por outro motivo.
+ */
 .titulo-letreiro {
   font-family: var(--fonte-titulo);
   text-transform: uppercase;
   color: #ffffff;
-  /* Tracking negativo, -2% a -5%, como manda a hierarquia do brandbook. */
-  letter-spacing: -0.03em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   /*
-   * O contorno preto é o que faz o texto sobreviver por cima de imagem
-   * cinematográfica. Sem ele, a headline branca some no céu claro do frame e
-   * ninguém lê a promessa.
+   * Contorno mais fino: em peso 700 o traço de 2px engorda a letra e desfaz o
+   * ar que o tracking abriu. Ele existe para a headline sobreviver por cima da
+   * imagem, não para dar peso.
    */
-  -webkit-text-stroke: 2px #080808;
+  -webkit-text-stroke: 1px #080808;
   paint-order: stroke fill;
   text-shadow: 0 4px 18px rgb(0 0 0 / 0.65);
+}
+
+/*
+ * O HERO é a exceção: ali o peso extremo funciona, porque a headline ocupa a
+ * tela e compete com um vídeo de fundo. Mesmo assim o tracking fica só
+ * levemente aberto — em corpo de 60px, +0,12em separaria demais as palavras.
+ */
+.titulo-hero {
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  -webkit-text-stroke-width: 1.5px;
 }
 
 /* O acento: UMA área rosa por composição, e é esta. */

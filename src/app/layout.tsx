@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Geist,
   Geist_Mono,
-  Archivo_Black,
+  Archivo,
   Bebas_Neue,
   Inter,
 } from "next/font/google";
@@ -47,10 +47,21 @@ const geistMono = Geist_Mono({
  * Todas do Google Fonts, carregadas pelo `next/font`: nada de requisição a
  * host externo em tempo de execução.
  */
-const archivo = Archivo_Black({
+/*
+ * ARCHIVO — a família inteira, não a Black.
+ *
+ * Isto veio de MEDIR o site do GTA VI em vez de supor. Os títulos de lá usam
+ * peso 700 com tracking de +0,15em, e o corpo usa 500. A presença vem do
+ * espaçamento aberto em caixa alta — desenho art déco —, não de peso extremo.
+ *
+ * Archivo Black é 900 e tem um peso só. Colada, ela vira um tijolo: foi o que
+ * deixou o FAQ "grosso demais". Com a família variável dá para usar 700 nos
+ * títulos, 600 nos subtítulos e 500 no corpo, que é a hierarquia real.
+ */
+const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
-  weight: "400", // é o único peso; o desenho já é preto
+  weight: ["500", "600", "700"],
 });
 
 const bebas = Bebas_Neue({

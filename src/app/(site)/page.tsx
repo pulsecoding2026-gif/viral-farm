@@ -143,7 +143,7 @@ export default function LandingPage() {
               pequenas". Encurtar a frase é a resposta certa; diminuir a letra
               seria a errada.
             */}
-            <h1 className="titulo-letreiro mt-6 text-4xl leading-[1.02] sm:text-6xl">
+            <h1 className="titulo-letreiro titulo-hero mt-6 text-4xl leading-[1.02] sm:text-6xl">
               GTA V fez milionários.
               <br />
               Os do VI <span className="acento-rosa">ainda não</span>.
