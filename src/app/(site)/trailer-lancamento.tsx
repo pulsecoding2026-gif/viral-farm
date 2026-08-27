@@ -152,9 +152,17 @@ function TrailerEmbed() {
         style={{ background: "var(--grad-noite)" }}
       >
         <PlayCircle size={48} weight="fill" className="text-white/60" />
+        {/*
+          O texto anterior falava de "ID do vídeo confirmado para incorporar",
+          que é conversa de quem programa, não de quem visita. O visitante não
+          precisa saber por que o vídeo não toca aqui dentro — ele precisa
+          saber que o trailer existe, quanto dura e onde assistir. A razão
+          técnica está documentada no topo deste arquivo, que é onde ela serve
+          para alguma coisa.
+        */}
         <p className="max-w-[38ch] text-sm leading-relaxed text-zinc-200">
-          Ainda não temos o ID do vídeo oficial confirmado para incorporar
-          aqui sem risco de link errado — assista direto na fonte.
+          26 minutos de gameplay, capturados no PlayStation 5. Assista no canal
+          oficial da Rockstar.
         </p>
         {/* Alvo de toque ≥44px, mesmo sendo um link de texto com ícone. */}
         <a
@@ -164,7 +172,7 @@ function TrailerEmbed() {
           className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-orange-700 px-5 text-sm font-semibold text-white shadow-[0_4px_24px_rgb(199_58_125/0.35)] transition hover:bg-orange-600 active:scale-[0.98]"
         >
           <YoutubeLogo size={18} weight="fill" />
-          Assistir na Rockstar Newswire
+          Assistir o trailer
         </a>
       </div>
     );

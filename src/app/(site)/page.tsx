@@ -4,6 +4,7 @@ import { NavegacaoSite } from "./navegacao-site";
 import { HeroVideo } from "./hero-video";
 import { HeroEntrada } from "./hero-entrada";
 import { ComoFunciona } from "./como-funciona";
+import { TrailerLancamento } from "./trailer-lancamento";
 import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
 import { Perguntas } from "./perguntas";
@@ -295,6 +296,13 @@ export default function LandingPage() {
       */}
       {/* A linha de horizonte com o gradiente oficial separando os blocos —
           o detalhe mais barato que amarra a página ao logo. */}
+      {/*
+        O TRAILER LOGO DEPOIS DO HERO, e a ordem tem razão de ser: o hero
+        promete ("o VI está começando agora") e esta seção é a prova de que o
+        relógio anda de verdade — o trailer saiu, o jogo não. Urgência
+        abstrata vira urgência com data.
+      */}
+      <TrailerLancamento />
       <hr className="horizonte" />
       <ComoFunciona />
       <Monetizacao />
