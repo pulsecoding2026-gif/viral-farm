@@ -4,7 +4,7 @@ import { PaginaLegal } from "../pagina-legal";
 export const metadata: Metadata = {
   title: "Política de privacidade",
   description:
-    "Como o Viral Farm coleta, usa e protege seus dados — em conformidade com a LGPD.",
+    "Como o GTA VIRAL coleta, usa e protege seus dados — em conformidade com a LGPD.",
 };
 
 export default function PoliticaPage() {
@@ -14,14 +14,14 @@ export default function PoliticaPage() {
       atualizadoEm="7 de agosto de 2026"
     >
       <p>
-        Esta política explica quais dados o <strong>Viral Farm</strong> coleta,
+        Esta política explica quais dados o <strong>GTA VIRAL</strong> coleta,
         por que coleta, com quem compartilha e quais são os seus direitos. Foi
         escrita para atender a Lei Geral de Proteção de Dados (Lei 13.709/2018).
       </p>
 
       <h2>1. Quem é o controlador</h2>
       <p>
-        O Viral Farm é o controlador dos dados pessoais tratados na plataforma.
+        O GTA VIRAL é o controlador dos dados pessoais tratados na plataforma.
         Contato para assuntos de privacidade:{" "}
         <a href="mailto:privacidade@viralfarm.com.br">
           privacidade@viralfarm.com.br
@@ -116,7 +116,7 @@ export default function PoliticaPage() {
       <p>
         Alguns desses serviços processam dados fora do Brasil. A transferência
         internacional ocorre com base na execução do contrato entre você e o
-        Viral Farm, conforme o artigo 33 da LGPD.
+        GTA VIRAL, conforme o artigo 33 da LGPD.
       </p>
 
       <h2>6. Redes sociais conectadas</h2>

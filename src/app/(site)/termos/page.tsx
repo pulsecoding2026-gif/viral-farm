@@ -4,21 +4,53 @@ import { PaginaLegal } from "../pagina-legal";
 export const metadata: Metadata = {
   title: "Termos de uso",
   description:
-    "Termos de uso do Viral Farm — condições de acesso e uso da plataforma.",
+    "Termos de uso do GTA VIRAL — condições de acesso e uso da plataforma.",
 };
 
 export default function TermosPage() {
   return (
-    <PaginaLegal titulo="Termos de uso" atualizadoEm="7 de agosto de 2026">
+    <PaginaLegal titulo="Termos de uso" atualizadoEm="27 de agosto de 2026">
       <p>
-        Estes termos regem o uso do <strong>Viral Farm</strong>, plataforma que
+        Estes termos regem o uso do <strong>GTA VIRAL</strong>, plataforma que
         analisa vídeos e gera cortes verticais com legendas. Ao criar uma conta
         ou usar o serviço, você concorda com o que está escrito aqui.
       </p>
 
+      {/*
+        Esta seção é curta de propósito e não tenta ser um contrato completo.
+        A plataforma passou a se dirigir a quem monta canal de cortes com
+        material de terceiros, e isso muda a natureza do que se combina com o
+        usuário — é assunto para um advogado de propriedade intelectual, não
+        para texto escrito junto com o resto do site. O que está aqui é o
+        mínimo honesto: dizer a regra que a plataforma de fato aplica.
+      */}
+      <h2>Conteúdo de terceiros e material não oficial</h2>
+      <p>
+        Você é responsável por ter o direito de usar o vídeo que enviar. Se o
+        material for de outra pessoa — a live de um streamer, por exemplo —
+        cabe a você obter a permissão de quem gravou e creditar a origem no
+        conteúdo publicado.
+      </p>
+      <p>
+        É <strong>proibido</strong> enviar material vazado ou obtido sem
+        autorização, incluindo gameplay de versões não lançadas, capturas,
+        áudio ou arte que não tenham sido divulgados oficialmente. Conteúdo
+        assim é removido e a conta pode ser encerrada.
+      </p>
+      <p>
+        O GTA VIRAL é um projeto independente feito por fãs, sem qualquer
+        afiliação, patrocínio ou endosso da Rockstar Games ou da Take-Two
+        Interactive. Grand Theft Auto e GTA são marcas de seus respectivos
+        titulares.
+      </p>
+      <p>
+        Para reportar uso indevido de conteúdo de sua titularidade, escreva
+        para o contato indicado ao final desta página.
+      </p>
+
       <h2>1. O que o serviço faz</h2>
       <p>
-        Você fornece um vídeo (por link ou envio de arquivo). O Viral Farm baixa
+        Você fornece um vídeo (por link ou envio de arquivo). O GTA VIRAL baixa
         ou recebe esse vídeo, transcreve o áudio, usa inteligência artificial
         para identificar trechos com potencial para formato curto e gera vídeos
         no formato 9:16 com legendas.
@@ -92,14 +124,14 @@ export default function TermosPage() {
         dele também são seus, para uso comercial ou pessoal.
       </p>
       <p>
-        O software, a marca, a interface e os modelos de análise do Viral Farm
-        permanecem de propriedade do Viral Farm. Você não pode copiar, revender
+        O software, a marca, a interface e os modelos de análise do GTA VIRAL
+        permanecem de propriedade do GTA VIRAL. Você não pode copiar, revender
         ou fazer engenharia reversa da plataforma.
       </p>
 
       <h2>7. Limitação de responsabilidade</h2>
       <p>
-        Na máxima extensão permitida pela legislação aplicável, o Viral Farm não
+        Na máxima extensão permitida pela legislação aplicável, o GTA VIRAL não
         responde por lucros cessantes, perda de dados, danos indiretos ou
         consequenciais decorrentes do uso ou da impossibilidade de uso do
         serviço.
@@ -112,7 +144,7 @@ export default function TermosPage() {
 
       <h2>8. Integrações com terceiros</h2>
       <p>
-        Ao conectar contas de redes sociais, você autoriza o Viral Farm a
+        Ao conectar contas de redes sociais, você autoriza o GTA VIRAL a
         realizar as ações que você solicitar por meio dessas integrações, dentro
         das permissões concedidas. O uso dessas plataformas também está sujeito
         aos termos delas.

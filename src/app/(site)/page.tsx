@@ -71,8 +71,23 @@ export default function LandingPage() {
             o vídeo começa logo abaixo dele e, sem isso, aparece uma linha reta
             cortando a tela. O da base costura com a seção seguinte.
           */}
-          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#09090b] via-[#09090b]/70 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-[38%] bg-gradient-to-b from-transparent to-[#09090b]" />
+          {/*
+            A CORTINA DO TOPO — mais alta e mais opaca do que era.
+
+            Dois problemas se somavam: ela ainda usava #09090b, o preto neutro
+            da marca anterior, sobre um fundo que virou #080808; e tinha 112px
+            num vídeo que agora sobe em rosa e roxo saturados até a borda. O
+            resultado era o logo do cabeçalho disputando espaço com um letreiro
+            néon logo atrás — dois elementos brilhantes no mesmo lugar, e
+            nenhum dos dois legível.
+
+            A altura cobre o cabeçalho inteiro (77px) com folga, e a opacidade
+            só cede depois dele. É a mesma técnica que o material do GTA VI usa
+            para assentar texto sobre arte: escurecer a área que vai receber a
+            informação, em vez de pedir que a informação brigue com a imagem.
+          */}
+          <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-[#080808] via-[#080808]/85 via-40% to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-[38%] bg-gradient-to-b from-transparent to-[#080808]" />
         </div>
 
         {/*
