@@ -487,6 +487,22 @@ body {
   opacity: 0.8;
 }
 
+/*
+ * O cabeçalho é `sticky` e tem 77px. Sem isto, clicar em "Planos" no menu rola
+ * a seção até o topo da janela — e o cabeçalho, que está por cima, come o
+ * título dela. O usuário vê a seção começando no meio de uma frase e conclui
+ * que o site está quebrado.
+ *
+ * `scroll-margin-top` resolve no lugar certo: é o elemento que diz "pare um
+ * pouco antes de mim", sem precisar de JavaScript nem de espaçador invisível.
+ * O valor é a altura do cabeçalho mais uma folga para o ar respirar.
+ */
+section[id],
+[id^="planos"],
+[id^="perguntas"] {
+  scroll-margin-top: 6.5rem;
+}
+
 h1, h2, h3, .fonte-titulo {
   font-family: var(--fonte-titulo);
   letter-spacing: -0.02em;

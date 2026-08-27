@@ -83,9 +83,8 @@ export function Monetizacao() {
           {/* Sem `italic`: Archivo Black não tem itálico e o navegador
               simularia inclinando, o que engrossa e suja a letra. A ênfase
               vem do rosa, que é o acento único da seção. */}
-          <h2 className="titulo-letreiro mt-5 text-3xl leading-[1.05] sm:text-5xl">
-            Como um canal de cortes{" "}
-            <span className="acento-rosa">paga as contas</span>
+          <h2 className="titulo-letreiro mt-5 text-2xl leading-[1.05] sm:text-4xl">
+            Onde isso vira <span className="acento-rosa">dinheiro</span>
           </h2>
           {/*
             O gargalo aqui é VOLUME, e é isso que amarra a seção ao produto.

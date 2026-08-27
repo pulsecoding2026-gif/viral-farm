@@ -3,7 +3,7 @@ import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { NavegacaoSite } from "./navegacao-site";
 import { HeroVideo } from "./hero-video";
 import { HeroEntrada } from "./hero-entrada";
-import { DestaqueGrande } from "./destaques";
+import { ComoFunciona } from "./como-funciona";
 import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
 import { Perguntas } from "./perguntas";
@@ -218,8 +218,8 @@ export default function LandingPage() {
       {/* A linha de horizonte com o gradiente oficial separando os blocos —
           o detalhe mais barato que amarra a página ao logo. */}
       <hr className="horizonte" />
+      <ComoFunciona />
       <Monetizacao />
-      <DestaqueGrande />
       <hr className="horizonte" />
       <Planos />
       <Perguntas />
