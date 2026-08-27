@@ -88,12 +88,26 @@ export function Perguntas() {
                   aria-expanded={abertaAgora}
                   className="flex w-full items-center gap-3.5 px-4 py-4 text-left sm:px-5"
                 >
+                  {/*
+                    O estado fechado usava `bg-zinc-800`, e `zinc-800` foi
+                    remapeado pra `--borda` — uma cor JÁ translúcida (branco a
+                    12%), pensada pra CONTORNO, não pra preenchimento. Usada
+                    como fundo de um círculo sólido, ela quase some contra o
+                    fundo escuro da página. `bg-white/[0.06]` é o preenchimento
+                    sutil de verdade, o mesmo do ícone em como-funciona.tsx.
+                    O número também sobe de zinc-500 (4,14:1) pra zinc-400
+                    (7,81:1): "01".."08" é conteúdo (a ordem da pergunta), não
+                    decoração.
+                  */}
                   <span
                     className={
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-bold tabular-nums transition " +
                       (abertaAgora
-                        ? "bg-orange-600 text-white"
-                        : "bg-zinc-800 text-zinc-500")
+                        // bg-orange-700, não 600: texto branco em 11px sobre
+                        // acao-600 mede 3,37:1 (reprova o 4,5:1); acao-700
+                        // dá 4,85:1.
+                        ? "bg-orange-700 text-white"
+                        : "bg-white/[0.06] text-zinc-400")
                     }
                   >
                     0{i + 1}
@@ -101,11 +115,14 @@ export function Perguntas() {
                   <span className="min-w-0 flex-1 text-sm font-medium text-zinc-100 sm:text-base">
                     {q.p}
                   </span>
+                  {/* zinc-600 (2,59:1) reprova até o 3:1 mínimo de componente
+                      gráfico — e esta seta indica um ESTADO (aberta/fechada),
+                      não é só enfeite. zinc-500 dá 4,14:1. */}
                   <CaretDown
                     size={15}
                     weight="bold"
                     className={
-                      "shrink-0 text-zinc-600 transition-transform duration-200 " +
+                      "shrink-0 text-zinc-500 transition-transform duration-200 " +
                       (abertaAgora ? "rotate-180" : "")
                     }
                   />

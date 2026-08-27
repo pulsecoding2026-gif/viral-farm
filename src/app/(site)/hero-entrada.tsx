@@ -80,11 +80,27 @@ export function HeroEntrada({
           onChange={(e) => setLink(e.target.value)}
           placeholder="Cole o link de um vídeo longo"
           aria-label="Link do vídeo"
-          className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600"
+          /*
+           * `outline-none` tira o anel PADRÃO do navegador no `:focus` — mas
+           * sem repor nada, o campo dependia só da regra global
+           * `:focus-visible` de gta-tokens.css pra mostrar foco. Ela deveria
+           * vencer (é CSS solto, fora de `@layer`, e por spec bate qualquer
+           * regra em camada — que é onde o Tailwind injeta `outline-none`),
+           * mas depender de uma sutileza de cascata pro único indicador de
+           * foco de um campo de formulário é frágil. `focus-visible:` explícito
+           * garante o anel rosa sem depender de ordem de import nenhuma.
+           */
+          className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus-visible:outline-2 focus-visible:outline-orange-600 focus-visible:outline-offset-2"
         />
+        {/*
+          `bg-orange-700`, não `bg-orange-600`: branco sobre acao-600 mede
+          3,37:1 neste corpo de 14px — reprova o 4,5:1 de texto normal.
+          Acao-700 dá 4,85:1. O glow também deixa de ser `rgb(255 62 2)`
+          (laranja da marca anterior) e passa a ser o rosa do próprio botão.
+        */}
         <button
           type="submit"
-          className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
+          className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-700 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] transition hover:bg-orange-600 active:scale-[0.98]"
         >
           <MagnifyingGlass size={16} weight="bold" />
           Gerar meus cortes
@@ -104,7 +120,10 @@ export function HeroEntrada({
         {ACEITOS.map(({ icone: Icone, nome }) => (
           <span
             key={nome}
-            className="flex items-center gap-1.5 text-[11px] text-zinc-500"
+            /* Mesmo ajuste do rótulo acima: os nomes das plataformas
+               estavam um degrau mais escuros (zinc-500, 4,14:1) que o texto
+               ao lado, sem motivo — os dois são a mesma informação. */
+            className="flex items-center gap-1.5 text-[11px] text-zinc-400"
           >
             <Icone size={13} weight="fill" />
             {nome}

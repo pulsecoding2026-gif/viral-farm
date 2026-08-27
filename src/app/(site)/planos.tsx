@@ -80,7 +80,9 @@ export function Planos() {
   const [anual, setAnual] = useState(false);
 
   return (
-    <section id="planos" className="border-y border-zinc-800/60 bg-[#060609]">
+    // `bg-zinc-950` (#080808, via token) no lugar de `#060609` — um terceiro
+    // preto que nada mais no site usava. Ver o comentário em page.tsx.
+    <section id="planos" className="border-y border-zinc-800/60 bg-zinc-950">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[46ch] text-center">
           <span className="placa inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-orange-500">
@@ -100,34 +102,48 @@ export function Planos() {
         </div>
 
         <div className="mt-8 flex items-center justify-center gap-3">
+          {/* zinc-500 no estado inativo dava 4,14:1 — abaixo do 4,5:1 de texto
+              normal. zinc-400 dá 7,81:1. */}
           <span
             className={
-              "text-sm transition " + (anual ? "text-zinc-500" : "text-zinc-100")
+              "text-sm transition " + (anual ? "text-zinc-400" : "text-zinc-100")
             }
           >
             Mensal
           </span>
+          {/*
+            O alvo de toque real deste botão precisa ser 44×44px, mas a
+            TRILHA visual do switch não pode crescer pra isso — um switch de
+            44px de altura não lê mais como switch. A saída é separar as duas
+            coisas: o `<button>` vira a área de toque (h-11 w-11, centralizada)
+            e um `<span>` interno desenha a trilha do tamanho de sempre
+            (h-6 w-11). O switch parece igual; só fica fácil de acertar.
+          */}
           <button
             type="button"
             role="switch"
             aria-checked={anual}
             aria-label="Cobrança anual"
             onClick={() => setAnual((v) => !v)}
-            className={
-              "relative h-6 w-11 shrink-0 rounded-full transition " +
-              (anual ? "bg-orange-600" : "bg-zinc-700")
-            }
+            className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
           >
             <span
               className={
-                "absolute top-1 h-4 w-4 rounded-full bg-white transition-all " +
-                (anual ? "left-6" : "left-1")
+                "relative h-6 w-11 rounded-full transition " +
+                (anual ? "bg-orange-600" : "bg-zinc-700")
               }
-            />
+            >
+              <span
+                className={
+                  "absolute top-1 h-4 w-4 rounded-full bg-white transition-all " +
+                  (anual ? "left-6" : "left-1")
+                }
+              />
+            </span>
           </button>
           <span
             className={
-              "text-sm transition " + (anual ? "text-zinc-100" : "text-zinc-500")
+              "text-sm transition " + (anual ? "text-zinc-100" : "text-zinc-400")
             }
           >
             Anual
@@ -143,15 +159,24 @@ export function Planos() {
             return (
               <div
                 key={p.id}
+                /*
+                 * Cartão sólido, não translúcido — mesmo ajuste de
+                 * monetizacao.tsx. O destaque ia de `orange-600/10` (tingido)
+                 * até `zinc-900/40` (ainda translúcido); agora fecha em
+                 * `zinc-900` sólido, então o degradê pinta só a parte de cima
+                 * do cartão e a base é o mesmo #111111 dos outros dois planos.
+                 */
                 className={
                   "relative flex flex-col rounded-2xl border p-6 " +
                   (p.destaque
-                    ? "border-orange-900/60 bg-gradient-to-b from-orange-600/10 to-zinc-900/40 lg:-mt-3 lg:pb-9"
-                    : "border-zinc-800 bg-zinc-900/30")
+                    ? "border-orange-900/60 bg-gradient-to-b from-orange-600/10 to-zinc-900 lg:-mt-3 lg:pb-9"
+                    : "border-zinc-800 bg-zinc-900")
                 }
               >
                 {p.destaque && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-600 px-3 py-1 text-[11px] font-bold text-white">
+                  /* bg-orange-700, não 600: texto branco em 11px sobre
+                     acao-600 mede 3,37:1 (reprova); sobre acao-700, 4,85:1. */
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-700 px-3 py-1 text-[11px] font-bold text-white">
                     Mais popular
                   </span>
                 )}
@@ -169,34 +194,55 @@ export function Planos() {
                   <span className="numero-placa text-5xl leading-none text-zinc-50">
                     R$ {brl(preco)}
                   </span>
-                  <span className="text-sm text-zinc-500">/mês</span>
+                  {/* zinc-500 dava 4,14:1 — abaixo do 4,5:1. zinc-400 dá 7,81:1. */}
+                  <span className="text-sm text-zinc-400">/mês</span>
                 </div>
-                <p className="mt-1 text-xs text-zinc-600">
+                {/* zinc-600 media 2,59:1, bem abaixo do mínimo. zinc-400 dá 7,81:1. */}
+                <p className="mt-1 text-xs text-zinc-400">
                   {anual ? "cobrado anualmente" : "cancele a qualquer momento"}
                 </p>
 
                 <div
                   className={
                     "mt-5 flex items-center gap-2 rounded-xl px-3.5 py-2.5 " +
-                    (p.destaque ? "bg-orange-600/15" : "bg-zinc-800/60")
+                    /*
+                     * `bg-white/[0.06]` no lugar de `bg-zinc-800/60`.
+                     * `zinc-800` foi remapeado pra `--borda`, que já É uma
+                     * cor translúcida (branco a 12%) — pedir mais 40% de
+                     * transparência em cima disso (o "/60") deixava o chip
+                     * quase invisível nos planos Lite e Viral, exatamente o
+                     * chip que mostra o número de análises do plano. O
+                     * `bg-white/[0.06]` é o mesmo truque usado no ícone de
+                     * como-funciona.tsx: opacidade pensada para SER a cor de
+                     * fundo, não emprestada de um token de borda.
+                     */
+                    (p.destaque ? "bg-orange-600/15" : "bg-white/[0.06]")
                   }
                 >
                   <Lightning
                     size={15}
                     weight="fill"
-                    className={p.destaque ? "text-orange-400" : "text-zinc-500"}
+                    className={p.destaque ? "text-orange-400" : "text-zinc-400"}
                   />
                   <span className="text-sm tabular-nums text-zinc-200">
                     {p.analises} análises por mês
                   </span>
                 </div>
 
+                {/*
+                  `bg-orange-700`, mesmo ajuste do botão "Ver os planos" em
+                  monetizacao.tsx: branco sobre acao-600 reprova o texto
+                  normal (3,37:1); sobre acao-700, passa (4,85:1). O glow
+                  também troca de `rgb(255 62 2)` — o laranja da marca
+                  anterior — pro rosa `rgb(199 58 125)` que combina com o
+                  novo fundo do botão.
+                */}
                 <Link
                   href="/cadastro"
                   className={
-                    "mt-5 rounded-xl px-4 py-2.5 text-center text-sm font-semibold transition active:scale-[0.98] " +
+                    "mt-5 rounded-xl px-4 py-3 text-center text-sm font-semibold transition active:scale-[0.98] " +
                     (p.destaque
-                      ? "bg-orange-600 text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] hover:bg-orange-500"
+                      ? "bg-orange-700 text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] hover:bg-orange-600"
                       : "border border-zinc-700 text-zinc-100 hover:border-zinc-600 hover:bg-white/[0.04]")
                   }
                 >

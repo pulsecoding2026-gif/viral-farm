@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ShieldCheck, Check } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "../logo";
+import { MARCA } from "@/lib/gta/marca";
 
 /**
  * Moldura das telas de entrar e criar conta.
@@ -33,7 +34,7 @@ export function AcessoLayout({
         <div className="flex items-center justify-between gap-4">
           <Link
             href="/"
-            aria-label="Viral Farm"
+            aria-label={MARCA}
             className="min-w-0 transition-opacity hover:opacity-80"
           >
             <Logo className="max-w-[164px]" />

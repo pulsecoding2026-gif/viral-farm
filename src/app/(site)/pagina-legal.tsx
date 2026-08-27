@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "../logo";
+import { MARCA } from "@/lib/gta/marca";
 
 /**
  * Moldura das páginas jurídicas (termos, política).
@@ -24,7 +25,7 @@ export function PaginaLegal({
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
           <Link
             href="/"
-            aria-label="Viral Farm"
+            aria-label={MARCA}
             className="min-w-0 transition-opacity hover:opacity-80"
           >
             <Logo className="max-w-[150px]" />

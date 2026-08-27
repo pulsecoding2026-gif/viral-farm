@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { List, X } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "../logo";
+import { MARCA } from "@/lib/gta/marca";
 
 const SECOES = [
   // "#metodo" saiu quando a seção foi removida da home. Âncora sem destino
@@ -35,7 +36,7 @@ export function NavegacaoSite() {
         <div className="flex items-center gap-5 px-4 py-2.5 sm:px-5">
           <Link
             href="/"
-            aria-label="Viral Farm"
+            aria-label={MARCA}
             className="shrink-0 transition-opacity hover:opacity-80"
           >
             {/*
@@ -61,27 +62,44 @@ export function NavegacaoSite() {
             ))}
           </nav>
 
+          {/*
+            `bg-orange-700`, não `bg-orange-600`, nos dois "Começar" (aqui e
+            no menu mobile). Medido: branco sobre acao-600 (#ee4f9c) dá
+            3,37:1 — reprova o 4,5:1 de texto normal, e o botão é 14px. Sobre
+            acao-700 (#c73a7d) dá 4,85:1. O glow também deixa de citar
+            `rgb(255 62 2)`, o laranja da marca anterior, e passa a ser o
+            tom do próprio botão.
+
+            `py-2` → `py-3` nos dois links: 8px de padding + a linha de texto
+            fechava em ~36px de altura, abaixo do alvo de toque mínimo de
+            44px. `py-3` fecha em 44px.
+          */}
           <div className="ml-auto hidden items-center gap-1.5 sm:flex">
             <Link
               href="/entrar"
-              className="rounded-full px-3.5 py-2 text-sm font-medium text-zinc-300 transition hover:bg-white/[0.06] hover:text-zinc-100"
+              className="rounded-full px-3.5 py-3 text-sm font-medium text-zinc-300 transition hover:bg-white/[0.06] hover:text-zinc-100"
             >
               Entrar
             </Link>
             <Link
               href="/cadastro"
-              className="rounded-full bg-orange-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
+              className="rounded-full bg-orange-700 px-4 py-3 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] transition hover:bg-orange-600 active:scale-[0.98]"
             >
               Começar
             </Link>
           </div>
 
+          {/*
+            `h-11 w-11` (44×44) em vez de `p-2` em volta de um ícone de 18px
+            (~34×34 no total). É o único jeito de abrir o menu no celular —
+            não pode ficar abaixo do alvo de toque mínimo.
+          */}
           <button
             type="button"
             onClick={() => setAberto((v) => !v)}
             aria-expanded={aberto}
             aria-label={aberto ? "Fechar menu" : "Abrir menu"}
-            className="ml-auto rounded-full p-2 text-zinc-400 transition hover:bg-white/[0.06] sm:ml-0 lg:hidden"
+            className="ml-auto flex h-11 w-11 items-center justify-center rounded-full text-zinc-400 transition hover:bg-white/[0.06] sm:ml-0 lg:hidden"
           >
             {aberto ? <X size={18} /> : <List size={18} />}
           </button>
@@ -95,7 +113,10 @@ export function NavegacaoSite() {
                   key={s.href}
                   href={s.href}
                   onClick={() => setAberto(false)}
-                  className="rounded-xl px-3 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.06]"
+                  /* py-2 → py-3.5: cada item de menu mobile é uma faixa de
+                     toque própria e precisa dos 44px, não só o botão que abre
+                     o menu. */
+                  className="rounded-xl px-3 py-3.5 text-sm text-zinc-300 transition hover:bg-white/[0.06]"
                 >
                   {s.rotulo}
                 </a>
@@ -104,13 +125,13 @@ export function NavegacaoSite() {
             <div className="mt-2 flex gap-2 border-t border-zinc-800/80 pt-3 sm:hidden">
               <Link
                 href="/entrar"
-                className="flex-1 rounded-full border border-zinc-700 px-4 py-2.5 text-center text-sm font-medium text-zinc-200"
+                className="flex-1 rounded-full border border-zinc-700 px-4 py-3 text-center text-sm font-medium text-zinc-200"
               >
                 Entrar
               </Link>
               <Link
                 href="/cadastro"
-                className="flex-1 rounded-full bg-orange-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                className="flex-1 rounded-full bg-orange-700 px-4 py-3 text-center text-sm font-semibold text-white"
               >
                 Começar
               </Link>

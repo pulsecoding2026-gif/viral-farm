@@ -106,7 +106,18 @@ export function Monetizacao() {
             return (
               <div
                 key={c.titulo}
-                className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-5"
+                /*
+                 * `bg-zinc-900` sólido (#111111), não `/30`.
+                 *
+                 * Era um cartão translúcido a 30% sobre o `ceu-miami` da
+                 * seção — a única diferença real entre isso e o cartão de
+                 * `como-funciona.tsx` (que usa #111111 cheio) era a
+                 * transparência, sem motivo funcional: aqui não há vídeo por
+                 * baixo que precise transparecer, e o brandbook pede fundo de
+                 * cartão sólido. Translúcido sobra pra chrome flutuante sobre
+                 * imagem — cabeçalho, campo do hero.
+                 */
+                className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-5"
               >
                 <span
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${c.cor} text-white`}
@@ -114,7 +125,12 @@ export function Monetizacao() {
                   <Icone size={19} weight="fill" />
                 </span>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-zinc-50">{c.titulo}</h3>
+                  {/* text-base: sem tamanho, o título herdava o mesmo 14px do
+                      parágrafo abaixo — só o peso os separava, e "quase do
+                      mesmo tamanho" lê como hierarquia quebrada. */}
+                  <h3 className="text-base font-semibold text-zinc-50">
+                    {c.titulo}
+                  </h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">
                     {c.texto}
                   </p>
@@ -124,13 +140,16 @@ export function Monetizacao() {
           })}
         </div>
 
-        {/* A conta que justifica o plano — números nossos, conferíveis. */}
-        <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/30">
+        {/* A conta que justifica o plano — números nossos, conferíveis.
+            `bg-zinc-900` sólido pelo mesmo motivo do grid acima. */}
+        <div className="mt-10 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
           <div className="border-b border-zinc-800 px-6 py-5 text-center">
             <h3 className="text-lg font-semibold tracking-tight text-zinc-50">
               O que cada corte custa
             </h3>
-            <p className="mx-auto mt-1.5 max-w-[54ch] text-sm leading-relaxed text-zinc-500">
+            {/* zinc-500 media 4,14:1 sobre este fundo — abaixo do 4,5:1 de
+                texto normal. zinc-400 dá 7,81:1. */}
+            <p className="mx-auto mt-1.5 max-w-[54ch] text-sm leading-relaxed text-zinc-400">
               Uma análise devolve até 8 cortes. Dividindo a mensalidade pelo
               número de análises do plano, dá pra ver o custo real de cada
               vídeo que sai daqui.
@@ -151,14 +170,23 @@ export function Monetizacao() {
                     "px-6 py-6 text-center " + (p.destaque ? "bg-orange-600/[0.07]" : "")
                   }
                 >
-                  <p className="text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                    {p.nome}
-                  </p>
+                  {/*
+                    `.placa` no lugar do `uppercase` cru.
+                    A regra da virada é caixa alta só na classe `.placa`
+                    (Bebas Neue) — este rótulo estava maiúsculo com a fonte de
+                    corpo (Inter) e `tracking-wide` escrito à mão, dois jeitos
+                    de pedir o mesmo efeito que a classe já resolve sozinha.
+                    Cor também sobe de zinc-500 (4,14:1, reprova) pra zinc-400
+                    (7,81:1).
+                  */}
+                  <p className="placa text-zinc-400">{p.nome}</p>
                   <p className="mt-3 text-3xl font-semibold tracking-tight tabular-nums text-zinc-50">
                     R$ {brl(porCorte)}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-500">por corte</p>
-                  <p className="mt-3 text-[11px] tabular-nums text-zinc-600">
+                  <p className="mt-1 text-xs text-zinc-400">por corte</p>
+                  {/* zinc-600 media 2,59:1 — bem abaixo do mínimo. zinc-400
+                      dá 7,81:1. */}
+                  <p className="mt-3 text-[11px] tabular-nums text-zinc-400">
                     R$ {brl(p.mensal)} ÷ {p.analises} análises ÷ 8 cortes
                   </p>
                 </div>
@@ -166,10 +194,16 @@ export function Monetizacao() {
             })}
           </div>
 
-          {/* O aviso que impede a seção de virar promessa de renda. */}
+          {/*
+            O aviso que impede a seção de virar promessa de renda.
+            Ícone zinc-600→zinc-500 (3,29:1 → passa o 3:1 de elemento gráfico)
+            e texto zinc-500→zinc-400 (4,14:1 → 7,81:1): é o parágrafo que
+            mais precisa ser lido nesta seção, o disclaimer legal, e era o que
+            estava com a cor mais apagada.
+          */}
           <div className="flex items-start gap-2.5 border-t border-zinc-800 bg-zinc-950/40 px-6 py-4">
-            <Info size={15} weight="fill" className="mt-px shrink-0 text-zinc-600" />
-            <p className="text-xs leading-relaxed text-zinc-500">
+            <Info size={15} weight="fill" className="mt-px shrink-0 text-zinc-500" />
+            <p className="text-xs leading-relaxed text-zinc-400">
               O painel entrega roteiro e direção — não entrega audiência nem
               receita. Quanto cada pessoa ganha depende do nicho, da execução e
               da constância. Não prometemos resultado financeiro, e desconfie de
@@ -179,9 +213,18 @@ export function Monetizacao() {
         </div>
 
         <div className="mt-10 text-center">
+          {/*
+            `bg-orange-700`, não `bg-orange-600`, com texto branco.
+            Medido: branco sobre acao-600 (#ee4f9c) dá 3,37:1 — reprova o
+            4,5:1 de texto normal (este botão é 14px, não conta como "grande").
+            Branco sobre acao-700 (#c73a7d) dá 4,85:1, e é exatamente o papel
+            que o token já reserva pra isso (ver o comentário de --acao-700 em
+            gta-tokens.css). O glow também trocou: `rgb(255_62_2)` é o laranja
+            da marca ANTERIOR — o brilho ficava laranja num botão rosa.
+          */}
           <Link
             href="#planos"
-            className="inline-flex items-center gap-2 rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_24px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-full bg-orange-700 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_24px_rgb(199_58_125/0.35)] transition hover:bg-orange-600 active:scale-[0.98]"
           >
             Ver os planos
             <ArrowRight size={16} weight="bold" />

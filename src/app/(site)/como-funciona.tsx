@@ -45,7 +45,11 @@ const PASSOS = [
 
 export function ComoFunciona() {
   return (
-    <section id="como-funciona" className="border-y border-zinc-800/60 bg-[#080808]">
+    // `bg-zinc-950`, o mesmo token de page.tsx e planos.tsx — ver o porquê lá.
+    // Era o único dos três já com o valor certo (#080808), mas em hex solto;
+    // uma seção mudando de paleta no futuro só precisa mudar o token, não
+    // caçar os três lugares que repetiam o mesmo número.
+    <section id="como-funciona" className="border-y border-zinc-800/60 bg-zinc-950">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[46ch] text-center">
           <span className="placa inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-orange-500">

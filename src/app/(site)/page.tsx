@@ -46,7 +46,18 @@ export default function LandingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#09090b]">
+    /*
+     * `bg-zinc-950`, não o `#09090b` que estava aqui.
+     *
+     * #09090b é o preto neutro da marca ANTERIOR — a virada trocou o fundo
+     * oficial para #080808 (GTA Black). `zinc-950` já é remapeado para
+     * `--fundo-poco` em globals.css, que É #080808: usar a classe em vez do
+     * hex solto garante que este fundo, o de `planos.tsx` e o de
+     * `como-funciona.tsx` sejam sempre o MESMO preto. Antes eram três valores
+     * (#09090b, #080808, #060609) — imperceptíveis isolados, mas a costura
+     * entre seções aparecia como uma friagem de 1-2 níveis de cinza.
+     */
+    <div className="min-h-screen bg-zinc-950">
       <NavegacaoSite />
 
       {/* ------------------------------------------------------------ hero */}
@@ -231,7 +242,9 @@ export default function LandingPage() {
               Ele volta ao hero quando faltar pouco para 19/11, e aí é uma
               linha.
             */}
-            <p className="mt-8 flex items-center justify-center gap-2 text-xs text-zinc-600">
+            {/* zinc-600 media 2,59:1 sobre #080808 — reprova até o mínimo de
+                3:1 de texto grande, e este é texto de 12px. zinc-400 dá 7,81:1. */}
+            <p className="mt-8 flex items-center justify-center gap-2 text-xs text-zinc-400">
               <ShieldCheck size={14} className="text-emerald-600" />O vídeo é
               processado e apagado. Fica só a análise.
             </p>
@@ -285,24 +298,30 @@ export default function LandingPage() {
       <footer className="border-t border-zinc-800/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <Logo className="max-w-[150px]" />
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-600">
+          {/*
+            zinc-600 (a cor que estava aqui) mede 2,59:1 sobre #080808 — nem
+            perto do 4,5:1 que link de rodapé precisa. zinc-400 dá 7,81:1, e o
+            hover sobe pra zinc-200 pra continuar havendo uma diferença visível
+            entre parado e em foco/hover.
+          */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-400">
             {/* "#metodo" saiu junto com a seção — âncora sem destino rola
                 para lugar nenhum e parece site quebrado. */}
-            <a href="#monetizacao" className="transition hover:text-zinc-400">
+            <a href="#monetizacao" className="transition hover:text-zinc-200">
               Monetização
             </a>
-            <a href="#planos" className="transition hover:text-zinc-400">
+            <a href="#planos" className="transition hover:text-zinc-200">
               Planos
             </a>
-            <Link href="/entrar" className="transition hover:text-zinc-400">
+            <Link href="/entrar" className="transition hover:text-zinc-200">
               Entrar
             </Link>
             {/* Exigidos na revisão de app do TikTok e do Google — precisam
                 estar acessíveis de qualquer página pública. */}
-            <Link href="/termos" className="transition hover:text-zinc-400">
+            <Link href="/termos" className="transition hover:text-zinc-200">
               Termos
             </Link>
-            <Link href="/politica" className="transition hover:text-zinc-400">
+            <Link href="/politica" className="transition hover:text-zinc-200">
               Privacidade
             </Link>
           </div>
@@ -311,12 +330,15 @@ export default function LandingPage() {
         {/*
           O aviso de não-afiliação, em toda página pública.
           Custa uma linha e é o que separa "site de fã" de "site que se passa
-          por oficial" — ver docs/gta/politica-de-conteudo.md. Fica legível de
-          verdade (zinc-500, não 600): aviso que ninguém consegue ler não
-          cumpre a função de avisar.
+          por oficial" — ver docs/gta/politica-de-conteudo.md.
+
+          MEDIDO, não só "mais claro que antes": zinc-500 (o que estava aqui)
+          dá 4,14:1 sobre #080808 — chega perto mas reprova o 4,5:1 mínimo de
+          texto normal, e este é exatamente o tipo de texto que não pode falhar
+          por ilegibilidade. zinc-400 dá 7,81:1.
         */}
         <div className="border-t border-zinc-800/40">
-          <p className="mx-auto max-w-6xl px-5 py-5 text-[11px] leading-relaxed text-zinc-500 sm:px-8">
+          <p className="mx-auto max-w-6xl px-5 py-5 text-[11px] leading-relaxed text-zinc-400 sm:px-8">
             {NAO_AFILIADO}
           </p>
         </div>
