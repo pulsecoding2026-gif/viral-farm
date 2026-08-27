@@ -197,13 +197,23 @@ export default function LandingPage() {
               habilidade. E se o jogo adiar pela terceira vez, perde-se a
               urgência da campanha — não a matéria-prima do produto.
             */}
-            <p className="mx-auto mt-5 max-w-[52ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
+            {/*
+              A PRIMEIRA FRASE NOMEIA O FURO, de propósito.
+              "Ninguém jogou GTA VI ainda" é a coisa que o visitante ia
+              descobrir sozinho no primeiro clique — e descobrir sozinho vira
+              decepção, enquanto ouvir de nós vira confiança. Só depois disso
+              vem a promessa funcional, e a frase fecha devolvendo a régua para
+              o VI: o RP de hoje é degrau, não destino.
+            */}
+            <p className="mx-auto mt-5 max-w-[54ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
               <b className="font-semibold text-zinc-100">
-                Comece hoje com o RP que já bomba
+                Ninguém jogou GTA VI ainda
               </b>{" "}
-              — sem aparecer, sem gravar, sem editar. Cole o link de uma live da
-              Twitch ou do Kick e a IA devolve os Shorts prontos. Quando o VI
-              sair, seu canal já tem público.
+              — hoje o material é o RP de GTA V, o mesmo formato que já criou os
+              maiores canais de corte do Brasil. Cole o link de uma live da
+              Twitch ou do Kick e a IA devolve os Shorts prontos: sem aparecer,
+              sem gravar, sem editar. Quando o VI sair, seu canal já está
+              andando.
             </p>
 
             {/* O campo de link é a demonstração mais barata que existe —
