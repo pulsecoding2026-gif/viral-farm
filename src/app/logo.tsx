@@ -71,7 +71,7 @@ export function Logo({ className = "" }: { className?: string }) {
        * faria quem já visitou continuar vendo a arte antiga, e esse é o tipo de
        * bug que só aparece para os outros — nunca para quem acabou de mexer.
        */
-      src="/logo-gta-viral-v2.png"
+      src="/logo-gta-viral-v3.png"
       alt={MARCA}
       width={1774}
       height={887}
