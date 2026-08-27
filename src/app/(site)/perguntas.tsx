@@ -14,16 +14,20 @@ import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 
 const PERGUNTAS = [
   {
-    p: "O que é o Viral Farm?",
-    r: "É um painel que transforma vídeo longo em cortes prontos pra postar. Você cola um link — uma live, um podcast, uma gravação sua — e a IA transcreve, acha os melhores momentos e renderiza cortes verticais com legenda animada. Junto vêm as ferramentas de descoberta: o que está em alta, o que estão pesquisando e quem está com audiência ao vivo.",
+    p: "O que é a GTA VIRAL?",
+    r: "É um painel que transforma live longa em cortes prontos pra postar. Você cola um link — uma stream de RP, um VOD, um vídeo de 6 horas — e a IA transcreve, acha os melhores momentos e renderiza cortes verticais com legenda animada. É a ferramenta pra montar um canal de cortes de GTA sem gravar nem aparecer.",
+  },
+  {
+    p: "Posso usar vídeo de outra pessoa?",
+    r: "Tecnicamente sim, e é o que a maioria dos canais de cortes faz. Mas o vídeo é de quem gravou, e isso não muda por passar por aqui: o certo é ter a permissão do streamer e creditar o canal de origem em todo corte. Muitos streamers liberam e até incentivam — clipe é divulgação de graça pra eles — e vários têm regra publicada sobre isso. Peça antes: um pedido educado costuma virar um sim, e um sim escrito é o que te protege se o canal crescer. O que não dá é material vazado ou de build não lançada, que a gente não aceita de jeito nenhum.",
   },
   {
     p: "Preciso ter audiência pra usar?",
-    r: "Não. A análise lê o vídeo em si — o que é falado, quais trechos prendem, onde está o gancho. Um vídeo com zero visualização funciona igual a um com um milhão. É justamente pra quem ainda não emplacou.",
+    r: "Não. A análise lê o vídeo em si — o que é falado, quais trechos prendem, onde está o gancho. Um canal com zero inscrito funciona igual a um com um milhão. No pré-lançamento de GTA VI o interesse pelo tema é tão grande que o tamanho do canal deixa de ser o filtro — é justamente pra quem ainda não emplacou.",
   },
   {
     p: "De onde posso mandar o link?",
-    r: "YouTube, TikTok, Instagram e Facebook. O vídeo precisa estar público ou não listado, e ter até 90 minutos. Se quiser testar sem publicar pra ninguém, suba como não listado no YouTube e cole o link.",
+    r: "Twitch, Kick, YouTube, TikTok, Instagram e Facebook. O vídeo precisa estar público ou não listado, e ter até 90 minutos. Live em andamento ainda não funciona: espere a transmissão terminar e cole o link do VOD.",
   },
   {
     p: "Meu vídeo fica guardado?",
@@ -56,11 +60,11 @@ export function Perguntas() {
       className="mx-auto max-w-3xl px-5 py-16 sm:px-8 sm:py-24"
     >
       <div className="text-center">
-        <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
+        <span className="placa inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-orange-500">
           FAQ
         </span>
-        <h2 className="mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
-          Perguntas frequentes
+        <h2 className="titulo-letreiro mt-5 text-2xl leading-[1.05] sm:text-4xl">
+          Antes de <span className="acento-rosa">começar</span>
         </h2>
       </div>
 

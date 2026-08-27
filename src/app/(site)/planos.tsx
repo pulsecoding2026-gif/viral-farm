@@ -83,15 +83,18 @@ export function Planos() {
     <section id="planos" className="border-y border-zinc-800/60 bg-[#060609]">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[46ch] text-center">
-          <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
+          <span className="placa inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-orange-500">
             Planos
           </span>
-          <h2 className="mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
+          {/* "grava" era o verbo do público antigo. Quem monta canal de cortes
+              não grava nada — ele POSTA, e é o volume de posts que decide o
+              plano. */}
+          <h2 className="titulo-letreiro mt-5 text-2xl leading-[1.05] sm:text-4xl">
             Escolha pelo quanto você{" "}
-            <span className="text-orange-500 italic">grava</span>
+            <span className="acento-rosa">posta</span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-400">
-            Cada análise lê um vídeo inteiro e devolve vários cortes prontos.
+            Cada análise lê uma live inteira e devolve vários cortes prontos.
             Cancele quando quiser.
           </p>
         </div>
@@ -153,7 +156,7 @@ export function Planos() {
                   </span>
                 )}
 
-                <h3 className="text-lg font-semibold tracking-tight text-zinc-50">
+                <h3 className="fonte-titulo text-lg text-zinc-50 uppercase">
                   {p.nome}
                 </h3>
                 <p className="mt-1.5 min-h-[2.5rem] text-sm leading-relaxed text-zinc-400">
@@ -161,7 +164,9 @@ export function Planos() {
                 </p>
 
                 <div className="mt-5 flex items-baseline gap-1.5">
-                  <span className="text-4xl font-semibold tracking-tight tabular-nums text-zinc-50">
+                  {/* O preço em Bebas: é número grande, e é onde a condensada
+                      trabalha melhor — lê como painel de placar. */}
+                  <span className="numero-placa text-5xl leading-none text-zinc-50">
                     R$ {brl(preco)}
                   </span>
                   <span className="text-sm text-zinc-500">/mês</span>

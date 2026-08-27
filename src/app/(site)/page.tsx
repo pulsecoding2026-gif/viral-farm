@@ -7,9 +7,9 @@ import { ComoFunciona } from "./como-funciona";
 import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
 import { Perguntas } from "./perguntas";
-import { ContagemLancamento } from "./contagem-lancamento";
 import { Logo } from "../logo";
 import { NAO_AFILIADO } from "@/lib/gta/marca";
+import { LANCAMENTO } from "@/lib/gta/lancamento";
 
 /**
  * Chips de capacidade sob o hero.
@@ -30,6 +30,21 @@ const CAPACIDADES = [
 
 
 export default function LandingPage() {
+  /*
+   * Contado no SERVIDOR, a cada requisição.
+   *
+   * Não é `useState` nem efeito: um número de dias não muda enquanto a pessoa
+   * lê a página, então não há motivo para mandar relógio ao navegador. Assim
+   * ele já chega pronto no HTML — sem piscar, sem divergência de hidratação, e
+   * o componente continua sendo servidor.
+   */
+  const diasParaLancamento = Math.max(
+    0,
+    Math.ceil(
+      (new Date(LANCAMENTO.quando).getTime() - Date.now()) / 86_400_000,
+    ),
+  );
+
   return (
     <div className="min-h-screen bg-[#09090b]">
       <NavegacaoSite />
@@ -70,9 +85,19 @@ export default function LandingPage() {
         */}
         <div className="relative mx-auto max-w-6xl px-5 pt-[17rem] pb-16 sm:px-8 sm:pt-[22rem] sm:pb-20 lg:pt-[26rem] xl:pt-[28rem]">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="placa inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-              Feito por fãs · não afiliado à Rockstar Games
+            {/*
+              O selo passou a carregar a URGÊNCIA, que era o trabalho do
+              contador. A diferença é que aqui ela é uma informação de contexto
+              — quantos dias faltam para o lançamento — e não um relógio
+              animado disputando atenção com o campo de link.
+
+              A contagem sai de `lancamento.ts`, a mesma fonte única de sempre:
+              se a Rockstar adiar pela terceira vez, este número se corrige
+              sozinho junto com o resto do site.
+            */}
+            <p className="placa inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-300">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500" />
+              {diasParaLancamento} dias para o GTA VI
             </p>
 
             {/*
@@ -165,16 +190,17 @@ export default function LandingPage() {
             <HeroEntrada />
 
             {/*
-              A contagem vem DEPOIS do campo, não antes.
-              A urgência só ajuda quem já entendeu o que o produto faz; em cima
-              do título ela rouba a atenção da única frase que explica a
-              plataforma para quem chegou agora.
+              O CONTADOR SAIU DO HERO — o Extended Look estreou em 27/08.
+              Ele continua existindo em `contagem-lancamento.tsx` e continua
+              apontando sozinho para o próximo marco oficial (preload em 12/11,
+              lançamento em 19/11). O que mudou foi o lugar: com o evento da
+              semana já no ar, um relógio marcando 80 dias não cria urgência —
+              cria distração, e concorre com o campo de link, que é a única
+              coisa que a pessoa precisa fazer nesta tela.
+              Ele volta ao hero quando faltar pouco para 19/11, e aí é uma
+              linha.
             */}
-            <div className="mt-10">
-              <ContagemLancamento />
-            </div>
-
-            <p className="mt-6 flex items-center justify-center gap-2 text-xs text-zinc-600">
+            <p className="mt-8 flex items-center justify-center gap-2 text-xs text-zinc-600">
               <ShieldCheck size={14} className="text-emerald-600" />O vídeo é
               processado e apagado. Fica só a análise.
             </p>

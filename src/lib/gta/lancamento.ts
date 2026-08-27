@@ -74,22 +74,18 @@ export const LANCAMENTO: MarcoOficial = {
  * metade da janela.
  */
 export const MARCOS: MarcoOficial[] = [
-  {
-    id: "extended-look-netflix",
-    rotulo: "Extended Look — estreia na Netflix",
-    quando: "2026-08-27T19:00:00Z", // 15h ET / 16h BRT
-    fonte:
-      "https://www.rockstargames.com/newswire/article/9k2kaa1o3297k9/grand-theft-auto-vi-an-extended-look",
-    confirmado: true,
-  },
-  {
-    id: "extended-look-youtube",
-    rotulo: "Extended Look — aberto no YouTube",
-    quando: "2026-08-28T01:00:00Z", // 21h ET / 22h BRT
-    fonte:
-      "https://www.rockstargames.com/newswire/article/9k2kaa1o3297k9/grand-theft-auto-vi-an-extended-look",
-    confirmado: true,
-  },
+  /*
+   * O Extended Look estreou em 27/08/2026 e por isso saiu desta lista.
+   *
+   * Marco que já aconteceu não é marco, é histórico: mantê-lo aqui só fazia
+   * `proximoMarco()` gastar duas comparações para descartá-lo, e deixava um
+   * item na tela do futuro anunciando uma coisa do passado. As datas ficam
+   * registradas neste comentário porque são referência de calendário — o
+   * aniversário de um trailer é pico de tráfego previsível:
+   *
+   *   27/08/2026 19:00Z — estreia na Netflix (15h ET)
+   *   28/08/2026 01:00Z — aberto no YouTube (21h ET)
+   */
   {
     id: "preload",
     rotulo: "Preload digital libera",
