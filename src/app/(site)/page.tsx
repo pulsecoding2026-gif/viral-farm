@@ -97,12 +97,16 @@ export default function LandingPage() {
               aparece como letra suja. A ênfase da segunda linha vem da cor, que
               é o recurso que a fonte realmente tem.
             */}
-            <h1 className="fonte-titulo mt-6 text-4xl leading-[1.05] tracking-tight text-zinc-50 uppercase sm:text-6xl">
+            {/*
+              Branco, pesado, com contorno preto — e UMA palavra em rosa.
+              É a fórmula do brandbook: a tipografia não disputa com o
+              gradiente, ela se impõe por cima da imagem cinematográfica, e o
+              rosa aparece uma vez só, onde está o soco da frase.
+            */}
+            <h1 className="titulo-letreiro mt-6 text-4xl leading-[1.02] sm:text-6xl">
               O GTA V criou canais milionários.
               <br />
-              <span className="text-orange-500">
-                Os do GTA VI ainda não existem.
-              </span>
+              Os do GTA VI <span className="acento-rosa">ainda não existem</span>.
             </h1>
 
             {/*
@@ -196,8 +200,12 @@ export default function LandingPage() {
         numa página que promete foco em GTA, isso não é só ruído, é
         desmentido. O componente continua no repositório.
       */}
+      {/* A linha de horizonte com o gradiente oficial separando os blocos —
+          o detalhe mais barato que amarra a página ao logo. */}
+      <hr className="horizonte" />
       <Monetizacao />
       <DestaqueGrande />
+      <hr className="horizonte" />
       <Planos />
       <Perguntas />
 

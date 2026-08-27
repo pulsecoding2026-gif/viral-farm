@@ -71,8 +71,10 @@ const brl = (n: number) =>
   n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function Monetizacao() {
+  // `ceu-miami` no lugar do #060609 chapado: preto com uma brasa de pôr do sol
+  // ao fundo, em vez de uma chapa lisa. Ver a classe em gta-tokens.css.
   return (
-    <section id="monetizacao" className="border-y border-zinc-800/60 bg-[#060609]">
+    <section id="monetizacao" className="ceu-miami border-y border-zinc-800/60">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[50ch] text-center">
           <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">

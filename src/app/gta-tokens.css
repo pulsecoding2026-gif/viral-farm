@@ -44,23 +44,42 @@
 
   /* ---------------------------------------------- superfícies (escuro) --- */
   /*
-   * NIGHT PURPLE é o fundo, não o preto. O guia é explícito: preto puro em
-   * área grande é para evitar. O roxo faz o rosa e o amarelo lerem como néon
-   * — sobre preto neutro eles leem como alerta de sistema.
+   * PRETO É O FUNDO. O roxo é acento.
+   *
+   * Aqui os dois documentos de marca se contradizem, e a contradição foi
+   * desempatada de propósito. O guia GTA VIRAL v1.0 diz que Night Purple é
+   * "preferível ao preto puro" em áreas grandes; o brandbook de referência do
+   * GTA VI diz o oposto — GTA Black #080808 como fundo principal, 40% da peça
+   * em preto/dark, e lista "roxo gamer genérico" e "excesso de glow" entre os
+   * NÃO FAZER.
+   *
+   * Ganhou o brandbook, porque ele responde exatamente à pergunta que estava
+   * em jogo: por que a tela não parecia GTA VI. A resposta é que fundo roxo
+   * com néon em tudo é a estética CYBERPUNK, que o próprio documento separa em
+   * seção própria — GTA VI é Miami, sol e crime, não ficção científica.
+   *
+   * O roxo continua no sistema, no papel que o brandbook dá a ele: 5% da peça,
+   * em sombra e gradiente. Não em 40%.
    */
-  --fundo-poco:     #09000f;  /* lateral, overlay de modal, rodapé */
-  --fundo:          #22033d;  /* NIGHT PURPLE — fundo padrão do app */
-  --superficie:     #2d0a4d;  /* card, painel, input */
-  --superficie-2:   #3a1160;  /* elevada: hover, dropdown, popover */
-  --superficie-3:   #4a1a75;  /* elevada 2: menu sobre popover, tooltip */
-  --borda:          #451a6b;  /* divisor DECORATIVO (não carrega informação) */
-  --borda-forte:    #7c12b9;  /* borda que INFORMA: campo, checkbox, toggle */
+  --fundo-poco:     #080808;  /* GTA BLACK — lateral, overlay, rodapé */
+  --fundo:          #0b0d14;  /* fundo padrão: preto com um sopro de navy */
+  --superficie:     #111111;  /* card — valor exato do brandbook */
+  --superficie-2:   #17203a;  /* NIGHT NAVY — elevada, hover, dropdown */
+  --superficie-3:   #21283f;  /* elevada 2: menu sobre popover, tooltip */
+  /* Borda de card: branco a 12%, como o brandbook especifica. */
+  --borda:          rgb(255 255 255 / 0.12);
+  --borda-forte:    rgb(255 255 255 / 0.24);
 
   /* ----------------------------------------------------------- texto --- */
-  --texto:          #f6eff0;  /* OFF WHITE do guia — título e corpo */
-  --texto-2:        #c9b3d8;  /* secundário, descrição */
-  --texto-3:        #9d84b3;  /* legenda, metadado, placeholder */
-  --texto-sobre-cor:#0a0010;  /* texto por cima de rosa/amarelo sólidos */
+  /*
+   * Texto BRANCO e neutro, com os cinzas do brandbook. O roxo saiu daqui
+   * também: texto secundário arroxeado é a marca do "roxo gamer genérico".
+   */
+  --texto:          #ffffff;  /* título e corpo */
+  --texto-2:        #c7c7c7;  /* secundário, descrição */
+  --texto-3:        #858585;  /* legenda, metadado, placeholder */
+  --texto-4:        #575757;  /* desabilitado */
+  --texto-sobre-cor:#080808;  /* texto por cima de laranja/amarelo sólidos */
 
   /* -------------------------------------------- AÇÃO — VIRAL PINK --- */
   /*
@@ -75,14 +94,14 @@
    * pequeno. Para esses casos existe o --acao-700, que é o mesmo rosa escuro
    * o bastante para carregar branco com folga.
    */
-  --acao-300: #ff9ada;
-  --acao-400: #ff6cc6;  /* rosa como TEXTO sobre o fundo escuro */
-  --acao-500: #f84776;  /* HOT CORAL — hover do botão, como o guia manda */
-  --acao-600: #eb10a6;  /* VIRAL PINK — a cor da ação */
-  --acao-700: #b80b81;  /* pressionado, e fundo quando o texto é branco pequeno */
-  --acao-800: #8c0862;
-  --acao-900: #4a0434;
-  --acao-950: #2a021d;
+  --acao-300: #ffa5cf;
+  --acao-400: #fa7fb8;  /* rosa como TEXTO sobre o fundo escuro */
+  --acao-500: #f74f9d;  /* VICE PINK — o valor do brandbook */
+  --acao-600: #ee4f9c;  /* a cor da ação: CTA, item ativo */
+  --acao-700: #c73a7d;  /* pressionado, e fundo com texto branco pequeno */
+  --acao-800: #99295d;
+  --acao-900: #4d1430;
+  --acao-950: #2a0a1a;
 
   /* ------------------------------------------- APOIO — VICE BLUE --- */
   /*
@@ -91,31 +110,37 @@
    * novo ele é ambientação. Os tons claros existem porque #1B2BCA puro sobre
    * o fundo roxo tem contraste baixo demais para texto.
    */
-  --dado-300: #a8b4ff;
-  --dado-400: #8095ff;  /* número e rótulo de métrica sobre escuro */
-  --dado-500: #5c6dfa;
-  --dado-600: #1b2bca;  /* VICE BLUE — preenchimento, gradiente, luz */
-  --dado-700: #141f96;
-  --dado-800: #0e1670;
-  --dado-900: #080d42;
-  --dado-950: #050826;
+  --dado-300: #9dc4e8;
+  --dado-400: #7fb0dd;  /* número e rótulo de métrica sobre escuro */
+  --dado-500: #67bcd1;  /* MIAMI CYAN — água */
+  --dado-600: #598cc8;  /* OCEAN BLUE — céu, topo do gradiente */
+  --dado-700: #416a9c;
+  --dado-800: #2d4a6e;
+  --dado-900: #17203a;  /* NIGHT NAVY */
+  --dado-950: #0d1322;
 
-  /* ------------------------------------- MARCA/GLOW — VIRAL VIOLET --- */
-  /* A transição entre o azul e o rosa. Glow, sombra néon, borda, foco. */
-  --neon-300: #d99aff;
-  --neon-400: #c26cff;
-  --neon-500: #a13ae8;
-  --neon-600: #7c12b9;  /* VIRAL VIOLET */
-  --neon-700: #5f0e8f;
-  --neon-800: #440a68;
-  --neon-900: #26043a;
-  --neon-950: #150221;
+  /* -------------------------------------------- SOMBRA — VICE PURPLE --- */
+  /*
+   * 5% da peça, e só. O brandbook usa o roxo como PONTE entre o azul e o rosa
+   * dentro dos gradientes, e como sombra — não como cor de superfície. Foi
+   * exatamente confundir esses dois papéis que deixou a tela com cara de
+   * cyberpunk em vez de Miami.
+   */
+  --neon-300: #b5a5e8;
+  --neon-400: #9b86de;
+  --neon-500: #785fd0;  /* VICE PURPLE */
+  --neon-600: #725ccb;
+  --neon-700: #54246e;
+  --neon-800: #3b1a4e;
+  --neon-900: #2c173f;  /* DEEP PURPLE — fundo de seção, com parcimônia */
+  --neon-950: #1a0e26;
 
-  /* ----------------------------------------------- apoio do guia --- */
-  --coral:      #f84776;  /* HOT CORAL */
-  --laranja:    #fa7a3f;  /* SUNSET ORANGE */
-  --amarelo:    #fcba0c;  /* MIAMI SUN */
-  --off-white:  #f6eff0;
+  /* ----------------------------------------------- apoio do brandbook --- */
+  --coral:      #ff6f78;  /* SUNSET CORAL — transições */
+  --laranja:    #ff9756;  /* LEONIDA ORANGE — sol, CTA secundário */
+  --pessego:    #ffc084;  /* SUNSET PEACH — luz, fundo */
+  --amarelo:    #ffc084;
+  --off-white:  #ffffff;
 
   /* ---------------------------------------------------------- estados --- */
   --sucesso: #3ddc97;
@@ -138,37 +163,41 @@
    * As paradas são as do guia, na distribuição que ele especifica.
    * Dose: superfície grande. Nunca em texto pequeno, nunca em tabela.
    */
-  --grad-viral: linear-gradient(
-    180deg,
-    #1b2bca 0%,
-    #7c12b9 25%,
-    #eb10a6 50%,
-    #f84776 65%,
-    #fa7a3f 82%,
-    #fcba0c 100%
-  );
+  /* O gradiente-assinatura: roxo → rosa → laranja, a 135°. */
+  --grad-viral: linear-gradient(135deg, #725ccb 0%, #ee4f9c 52%, #ff9857 100%);
+
+  /*
+   * VICE SUNSET — o pôr do sol, para fundo.
+   *
+   * O brandbook insiste num ponto e ele é o segredo da coisa: NÃO faça
+   * rosa → laranja. O azul e o roxo no topo é que produzem a sensação GTA VI;
+   * sem eles vira um degradê quente qualquer, de qualquer marca.
+   */
+  --grad-sunset: linear-gradient(180deg, #598cc8 0%, #b06fbc 38%, #f74f9d 70%, #ffc084 100%);
+
+  /* VICE NIGHT — para header, card premium e tela noturna. */
+  --grad-noite: linear-gradient(180deg, #17203a 0%, #54246e 55%, #f74f9d 100%);
+
   /* A versão deitada, para faixa e borda. */
-  --grad-marquise: linear-gradient(
-    100deg,
-    #1b2bca 0%,
-    #7c12b9 22%,
-    #eb10a6 52%,
-    #fa7a3f 80%,
-    #fcba0c 100%
-  );
-  /* Fundo: a mesma família, escurecida — o guia dá estas quatro paradas. */
-  --grad-fundo: linear-gradient(160deg, #09000f 0%, #22033d 38%, #51086f 72%, #b00d83 100%);
-  --grad-noite: linear-gradient(180deg, #2d0a4d 0%, #22033d 100%);
+  --grad-marquise: linear-gradient(100deg, #725ccb 0%, #ee4f9c 52%, #ff9857 100%);
+
+  /* Fundo de seção: preto com o navy e uma brasa de roxo ao fundo. */
+  --grad-fundo: linear-gradient(180deg, #080808 0%, #0d1322 45%, #17203a 100%);
 
   /* Compatibilidade: componentes antigos ainda pedem --grad-sol. */
   --grad-sol: var(--grad-viral);
 
   /* ------------------------------------------------------------- raios --- */
-  /* Valores do guia: cards pequenos 12, principais 20, botões 14. */
-  --r-sm:     12px;   /* selo, checkbox, card pequeno */
-  --r-md:     14px;   /* botão, campo */
-  --r-lg:     20px;   /* card, painel */
-  --r-xl:     24px;   /* modal, hero, seção */
+  /*
+   * 8–16px, a faixa do brandbook, com o alerta dele junto: "evite cards
+   * extremamente arredondados estilo fintech". Os 20–24px do guia anterior
+   * puxavam para exatamente esse lugar — canto muito redondo lê como app de
+   * banco, e GTA é blocado e pesado.
+   */
+  --r-sm:     8px;    /* selo, checkbox */
+  --r-md:     12px;   /* botão, campo */
+  --r-lg:     16px;   /* card, painel */
+  --r-xl:     16px;   /* modal, hero, seção */
   --r-pilula: 999px;
   --chanfro:  16px;
 
@@ -183,9 +212,10 @@
    * mancha neon exagerada": rosa entre 30–50% de opacidade e 20–50px de blur;
    * roxo entre 25–40% e 30–70px. Um por tela, no máximo dois.
    */
-  --brilho-acao: 0 0 30px rgb(235 16 166 / 0.35);   /* neon shadow do guia */
-  --brilho-neon: 0 8px 40px -6px rgb(124 18 185 / 0.35);
-  --anel-foco:   0 0 0 3px rgb(235 16 166 / 0.40);
+  /* Rosa e roxo, blur 20–60px, opacidade 20–40% — a faixa do brandbook. */
+  --brilho-acao: 0 0 40px rgb(247 79 157 / 0.30);
+  --brilho-neon: 0 8px 50px -8px rgb(120 95 208 / 0.28);
+  --anel-foco:   0 0 0 3px rgb(247 79 157 / 0.40);
 
   /* Sombras do guia, na íntegra. */
   --sombra-card: 0 15px 40px rgb(0 0 0 / 0.35);
@@ -295,37 +325,19 @@
   --font-mono:    var(--fonte-mono);
 }
 
-/* Rampas reescritas: as classes que já existem nos componentes passam a
-   apontar para a marca nova. Valores literais de propósito — estes não mudam
-   entre temas. */
-@theme {
-  --color-orange-300: #ffc48f;
-  --color-orange-400: #ff9455;
-  --color-orange-500: #ff7333;
-  --color-orange-600: #f95d1e;
-  --color-orange-700: #d64510;
-  --color-orange-800: #b03608;
-  --color-orange-900: #4a1806;
-  --color-orange-950: #2a0d03;
-
-  --color-blue-300: #9beeff;
-  --color-blue-400: #4fd8f5;
-  --color-blue-500: #22c8ea;
-  --color-blue-600: #00a8d6;
-  --color-blue-700: #0079a8;
-  --color-blue-800: #046180;
-  --color-blue-900: #073a4d;
-  --color-blue-950: #04222e;
-
-  --color-pink-300: #ffa8d2;
-  --color-pink-400: #ff6fb5;
-  --color-pink-500: #ff3d9a;
-  --color-pink-600: #ec1d80;
-  --color-pink-700: #c2126a;
-  --color-pink-800: #a10a58;
-  --color-pink-900: #4d0629;
-  --color-pink-950: #2a0316;
-}
+/*
+ * AS RAMPAS DO TAILWIND MORAM EM globals.css, e só lá.
+ *
+ * Havia um segundo `@theme` aqui com os valores literais da paleta anterior
+ * (laranja #f95d1e, ciano, magenta antigo). Ele estava sendo anulado por
+ * acidente: `globals.css` importa este arquivo no topo e declara o seu
+ * `@theme` depois, então o último a falar vencia. Funcionava, e funcionava
+ * pelo motivo errado — bastaria alguém reordenar os imports para a paleta
+ * antiga voltar ao ar inteira, sem erro nenhum que denunciasse.
+ *
+ * Uma fonte só. Este arquivo define os TOKENS da marca; globals.css faz a
+ * ponte deles com as classes do Tailwind.
+ */
 
 /* ========================================================================= */
 /* BASE                                                                      */
@@ -337,6 +349,114 @@ body {
   font-family: var(--fonte-corpo);
   font-size: var(--t-corpo);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ========================================================================= */
+/* O TRATAMENTO — o que faz parecer GTA, e não só ter as cores certas        */
+/* ========================================================================= */
+
+/*
+ * TÍTULO DE LETREIRO: gradiente por dentro, contorno escuro por fora.
+ *
+ * A paleta certa não bastou, e o motivo é que no universo visual do GTA o
+ * título nunca é texto chapado de uma cor só. Ele é uma PLACA: a letra tem
+ * pintura por dentro (o pôr do sol) e um contorno grosso e escuro que a
+ * descola do fundo — é o que o próprio logo GTA VIRAL faz, e é o que faltava
+ * na interface para ela conversar com ele.
+ *
+ * Como se monta:
+ *   - `background-clip: text` pinta o gradiente DENTRO da letra
+ *   - `paint-order: stroke fill` desenha o contorno ANTES do preenchimento,
+ *     senão o traço come metade da letra por dentro e engorda o desenho
+ *   - o `text-shadow` é o glow rosa do guia, não uma sombra de profundidade
+ *
+ * `-webkit-text-stroke` funciona em todo navegador atual apesar do prefixo —
+ * é o caso raro em que a versão prefixada virou o padrão de fato.
+ */
+/*
+ * O TÍTULO É BRANCO. Foi aqui que eu errei antes.
+ *
+ * A fórmula do brandbook é explícita:
+ *   BLACK + WHITE TYPOGRAPHY + SUNSET GRADIENT + CINEMATIC IMAGE
+ *   + ONE HOT-PINK ACCENT
+ *
+ * O gradiente vive no FUNDO e na IMAGEM. A tipografia é branca, pesada,
+ * condensada, com contorno escuro para descolar da foto — é assim no lettering
+ * da franquia inteira. Título degradê é a solução que parece GTA para quem
+ * viu GTA de longe; de perto, é o que o próprio documento chama de "degradê
+ * arco-íris" na lista do que não fazer.
+ *
+ * O rosa continua na frase, mas como ACENTO — uma palavra, não a linha toda.
+ */
+.titulo-letreiro {
+  font-family: var(--fonte-titulo);
+  text-transform: uppercase;
+  color: #ffffff;
+  /* Tracking negativo, -2% a -5%, como manda a hierarquia do brandbook. */
+  letter-spacing: -0.03em;
+  /*
+   * O contorno preto é o que faz o texto sobreviver por cima de imagem
+   * cinematográfica. Sem ele, a headline branca some no céu claro do frame e
+   * ninguém lê a promessa.
+   */
+  -webkit-text-stroke: 2px #080808;
+  paint-order: stroke fill;
+  text-shadow: 0 4px 18px rgb(0 0 0 / 0.65);
+}
+
+/* O acento: UMA área rosa por composição, e é esta. */
+.acento-rosa {
+  color: var(--acao-500);
+}
+
+/*
+ * O contorno em corpo pequeno some e vira só borrão: abaixo de ~28px o traço
+ * de 2px come a contraforma da letra. Aqui ele encolhe junto.
+ */
+@media (max-width: 640px) {
+  .titulo-letreiro {
+    -webkit-text-stroke-width: 1.5px;
+  }
+}
+
+/*
+ * O CÉU DE MIAMI atrás de uma seção.
+ *
+ * O gradiente de fundo do guia (#09000F → #22033D → #51086F → #B00D83) com o
+ * centro mais claro que as bordas, exatamente como ele descreve. Fica em
+ * `::before` para não brigar com o conteúdo e para poder ser desligado com uma
+ * linha.
+ */
+.ceu-miami {
+  position: relative;
+  isolation: isolate;
+}
+
+/*
+ * Preto com uma brasa de pôr do sol ao fundo, não uma parede roxa.
+ * A proporção segue o brandbook: 40% preto, o resto é acento distante.
+ */
+.ceu-miami::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(100% 60% at 50% 100%, rgb(247 79 157 / 0.16) 0%, transparent 62%),
+    radial-gradient(80% 50% at 50% 0%, rgb(89 140 200 / 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #080808 0%, #0b0d14 50%, #17203a 100%);
+}
+
+/*
+ * A LINHA DE HORIZONTE: um fio do gradiente oficial separando seções.
+ * É o detalhe mais barato que existe e amarra a página ao logo — a mesma
+ * transição azul → rosa → amarelo, com 2px de altura.
+ */
+.horizonte {
+  border: 0;
+  height: 2px;
+  background: var(--grad-marquise);
+  opacity: 0.8;
 }
 
 h1, h2, h3, .fonte-titulo {
