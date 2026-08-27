@@ -142,6 +142,54 @@
   --amarelo:    #ffc084;
   --off-white:  #ffffff;
 
+  /* ================================================================== */
+  /* AS CINCO CORES DO LOGO — extraídas do arquivo pelo dono            */
+  /* ================================================================== */
+  /*
+   * Estas são as paradas exatas do gradiente do lockup GTA VIRAL. Valem mais
+   * que qualquer aproximação: são a marca literal, não uma interpretação dela.
+   *
+   * CONTRASTE MEDIDO, e é ele que define onde cada uma pode ser usada — a
+   * mesma cor que funciona como fundo de botão pode ser ilegível como texto,
+   * e vice-versa:
+   *
+   *   cor            texto branco   texto preto   papel que ela aguenta
+   *   #3d45d7 azul       6,93 ✓        2,89 ✗     fundo de botão, texto branco
+   *   #9240d0 roxo       5,43 ✓        3,69 ✗     fundo de botão, texto branco
+   *   #f345aa rosa       3,36 ✗        5,95 ✓     fundo de botão, TEXTO PRETO
+   *   #fe7e71 coral      2,49 ✗        8,05 ✓✓    TEXTO sobre o fundo escuro
+   *   #fda24e laranja    2,01 ✗        9,97 ✓✓    TEXTO sobre o fundo escuro
+   *
+   * Duas leituras que saem daí e vale seguir:
+   *
+   * 1. O rosa do logo (#f345aa) com TEXTO PRETO passa com folga (5,95) e é
+   *    mais vibrante que o rosa escurecido que o botão usa hoje para carregar
+   *    texto branco. O brandbook já prevê isso no "CTA SUNSET" — fundo claro,
+   *    texto #080808.
+   * 2. Coral e laranja são péssimos como fundo de botão e ÓTIMOS como texto
+   *    sobre preto (8:1 e 10:1). São os melhores candidatos a número de
+   *    destaque, preço e acento.
+   *
+   * Ficam declaradas e ainda NÃO ligadas aos papéis: trocar a cor do botão
+   * primário mexe em toda a interface de uma vez, e há trabalho em curso nos
+   * componentes. A troca é uma edição em `--primaria` quando o dono decidir.
+   */
+  --logo-azul:    #3d45d7;
+  --logo-roxo:    #9240d0;
+  --logo-rosa:    #f345aa;
+  --logo-coral:   #fe7e71;
+  --logo-laranja: #fda24e;
+
+  /* O gradiente do lockup, na ordem exata das paradas. */
+  --grad-logo: linear-gradient(
+    135deg,
+    #3d45d7 0%,
+    #9240d0 28%,
+    #f345aa 55%,
+    #fe7e71 80%,
+    #fda24e 100%
+  );
+
   /* ---------------------------------------------------------- estados --- */
   --sucesso: #3ddc97;
   --aviso:   #ffc247;
