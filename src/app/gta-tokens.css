@@ -24,50 +24,98 @@
    ========================================================================= */
 
 :root {
+  /*
+   * ===================================================================
+   * A PALETA OFICIAL DA GTA VIRAL — Brand Identity Guidelines v1.0
+   * ===================================================================
+   *
+   * Estes valores vêm do guia de marca do dono e são a fonte de verdade.
+   * A paleta anterior (laranja=ação, ciano=dado, magenta=marca) foi
+   * substituída: agora o ROSA é a cor de reconhecimento e de ação.
+   *
+   * Hierarquia que o guia manda respeitar, e que vale mais que qualquer
+   * token isolado:
+   *   40% roxo-noite/preto · 25% rosa · 15% azul/roxo · 10% laranja
+   *   ·  5% amarelo ·  5% branco
+   *
+   * A identidade tem que continuar reconhecível só com ROXO + ROSA +
+   * PRETO + BRANCO. As outras cores são tempero, não estrutura.
+   */
+
   /* ---------------------------------------------- superfícies (escuro) --- */
-  --fundo-poco:     #05030a;  /* lateral, overlay de modal, rodapé */
-  --fundo:          #0a0712;  /* FUNDO PADRÃO DO APP */
-  --superficie:     #150f22;  /* card, painel, input */
-  --superficie-2:   #1e1730;  /* elevada: hover, dropdown, popover */
-  --superficie-3:   #2a2140;  /* elevada 2: menu sobre popover, tooltip */
-  --borda:          #2e2545;  /* divisor DECORATIVO (não carrega informação) */
-  --borda-forte:    #7a6d96;  /* borda que INFORMA: campo, checkbox, toggle */
+  /*
+   * NIGHT PURPLE é o fundo, não o preto. O guia é explícito: preto puro em
+   * área grande é para evitar. O roxo faz o rosa e o amarelo lerem como néon
+   * — sobre preto neutro eles leem como alerta de sistema.
+   */
+  --fundo-poco:     #09000f;  /* lateral, overlay de modal, rodapé */
+  --fundo:          #22033d;  /* NIGHT PURPLE — fundo padrão do app */
+  --superficie:     #2d0a4d;  /* card, painel, input */
+  --superficie-2:   #3a1160;  /* elevada: hover, dropdown, popover */
+  --superficie-3:   #4a1a75;  /* elevada 2: menu sobre popover, tooltip */
+  --borda:          #451a6b;  /* divisor DECORATIVO (não carrega informação) */
+  --borda-forte:    #7c12b9;  /* borda que INFORMA: campo, checkbox, toggle */
 
   /* ----------------------------------------------------------- texto --- */
-  --texto:          #f5f1f7;  /* título e corpo */
-  --texto-2:        #bdb2cf;  /* secundário, descrição */
-  --texto-3:        #948aa8;  /* legenda, metadado, placeholder */
-  --texto-sobre-cor:#0a0712;  /* texto por cima de laranja/magenta sólidos */
+  --texto:          #f6eff0;  /* OFF WHITE do guia — título e corpo */
+  --texto-2:        #c9b3d8;  /* secundário, descrição */
+  --texto-3:        #9d84b3;  /* legenda, metadado, placeholder */
+  --texto-sobre-cor:#0a0010;  /* texto por cima de rosa/amarelo sólidos */
 
-  /* ------------------------------------- AÇÃO — laranja (pôr do sol) --- */
-  --acao-300: #ffc48f;
-  --acao-400: #ff9455;  /* laranja como TEXTO sobre escuro — 9.14 */
-  --acao-500: #ff7333;  /* hover do botão sólido */
-  --acao-600: #f95d1e;  /* A COR DA AÇÃO: fundo sólido, item ativo */
-  --acao-700: #d64510;  /* pressionado */
-  --acao-800: #b03608;  /* fundo quando o texto PRECISA ser branco — 6.22 */
-  --acao-900: #4a1806;
-  --acao-950: #2a0d03;
+  /* -------------------------------------------- AÇÃO — VIRAL PINK --- */
+  /*
+   * #EB10A6 é A cor da marca. CTA, destaque, ícone, glow.
+   *
+   * O CONTRASTE, medido e não estimado: branco sobre #EB10A6 dá 4.08:1 —
+   * REPROVA para texto normal (exige 4.5) e passa só em texto grande. Preto
+   * sobre o mesmo rosa dá 5.15:1 e passa em tudo.
+   *
+   * O guia pede botão rosa com texto branco. Isso funciona porque botão de
+   * CTA aqui é bold e grande, onde o mínimo é 3:1 — mas não vale para texto
+   * pequeno. Para esses casos existe o --acao-700, que é o mesmo rosa escuro
+   * o bastante para carregar branco com folga.
+   */
+  --acao-300: #ff9ada;
+  --acao-400: #ff6cc6;  /* rosa como TEXTO sobre o fundo escuro */
+  --acao-500: #f84776;  /* HOT CORAL — hover do botão, como o guia manda */
+  --acao-600: #eb10a6;  /* VIRAL PINK — a cor da ação */
+  --acao-700: #b80b81;  /* pressionado, e fundo quando o texto é branco pequeno */
+  --acao-800: #8c0862;
+  --acao-900: #4a0434;
+  --acao-950: #2a021d;
 
-  /* -------------------------------------- DADO — ciano (água à noite) --- */
-  --dado-300: #9beeff;
-  --dado-400: #4fd8f5;  /* número e rótulo de métrica sobre escuro — 11.86 */
-  --dado-500: #22c8ea;
-  --dado-600: #00a8d6;  /* preenchimento de barra, linha de gráfico */
-  --dado-700: #0079a8;
-  --dado-800: #046180;
-  --dado-900: #073a4d;
-  --dado-950: #04222e;
+  /* ------------------------------------------- APOIO — VICE BLUE --- */
+  /*
+   * O azul é o contraste frio da identidade: topo do gradiente, luz, detalhe
+   * de interface. NÃO é mais a cor de "dado" com papel próprio — no sistema
+   * novo ele é ambientação. Os tons claros existem porque #1B2BCA puro sobre
+   * o fundo roxo tem contraste baixo demais para texto.
+   */
+  --dado-300: #a8b4ff;
+  --dado-400: #8095ff;  /* número e rótulo de métrica sobre escuro */
+  --dado-500: #5c6dfa;
+  --dado-600: #1b2bca;  /* VICE BLUE — preenchimento, gradiente, luz */
+  --dado-700: #141f96;
+  --dado-800: #0e1670;
+  --dado-900: #080d42;
+  --dado-950: #050826;
 
-  /* -------------------------------- MARCA — magenta (néon da marquise) --- */
-  --neon-300: #ffa8d2;
-  --neon-400: #ff6fb5;  /* magenta como TEXTO sobre escuro — 7.79 */
-  --neon-500: #ff3d9a;  /* A COR DA MARCA: foco, logo, hero */
-  --neon-600: #ec1d80;
-  --neon-700: #c2126a;  /* fundo com texto branco — 5.85 */
-  --neon-800: #a10a58;
-  --neon-900: #4d0629;
-  --neon-950: #2a0316;
+  /* ------------------------------------- MARCA/GLOW — VIRAL VIOLET --- */
+  /* A transição entre o azul e o rosa. Glow, sombra néon, borda, foco. */
+  --neon-300: #d99aff;
+  --neon-400: #c26cff;
+  --neon-500: #a13ae8;
+  --neon-600: #7c12b9;  /* VIRAL VIOLET */
+  --neon-700: #5f0e8f;
+  --neon-800: #440a68;
+  --neon-900: #26043a;
+  --neon-950: #150221;
+
+  /* ----------------------------------------------- apoio do guia --- */
+  --coral:      #f84776;  /* HOT CORAL */
+  --laranja:    #fa7a3f;  /* SUNSET ORANGE */
+  --amarelo:    #fcba0c;  /* MIAMI SUN */
+  --off-white:  #f6eff0;
 
   /* ---------------------------------------------------------- estados --- */
   --sucesso: #3ddc97;
@@ -77,27 +125,52 @@
 
   /* ------------------------------------------------------------ papéis --- */
   /* Use estes nos componentes. As rampas acima são a matéria-prima. */
-  --primaria:        var(--acao-600);
-  --primaria-hover:  var(--acao-500);
+  --primaria:        var(--acao-600);  /* VIRAL PINK */
+  --primaria-hover:  var(--acao-500);  /* HOT CORAL, como o guia manda */
   --primaria-ativa:  var(--acao-700);
-  --primaria-texto:  var(--texto-sobre-cor);
-  --destaque:        var(--neon-500);   /* marca, selo, detalhe */
-  --foco:            var(--neon-500);   /* anel de foco — NUNCA laranja */
+  --primaria-texto:  #ffffff;          /* o guia pede branco no botão rosa */
+  --destaque:        var(--acao-600);
+  --foco:            var(--acao-600);  /* rosa: é a cor de reconhecimento */
 
   /* -------------------------------------------------------- gradientes --- */
-  /* Dose: superfície grande. Nunca em texto pequeno, nunca em tabela. */
-  --grad-sol:      linear-gradient(180deg, #ffc247 0%, #ff7333 45%, #ec1d80 100%);
-  --grad-marquise: linear-gradient(100deg, #ff3d9a 0%, #f95d1e 55%, #ffc247 100%);
-  --grad-oceano:   linear-gradient(160deg, #22c8ea 0%, #0079a8 60%, #073a4d 100%);
-  --grad-noite:    linear-gradient(180deg, #1e1730 0%, #0a0712 100%);
+  /*
+   * O GRADIENTE OFICIAL — pôr do sol tropical, azul em cima, amarelo embaixo.
+   * As paradas são as do guia, na distribuição que ele especifica.
+   * Dose: superfície grande. Nunca em texto pequeno, nunca em tabela.
+   */
+  --grad-viral: linear-gradient(
+    180deg,
+    #1b2bca 0%,
+    #7c12b9 25%,
+    #eb10a6 50%,
+    #f84776 65%,
+    #fa7a3f 82%,
+    #fcba0c 100%
+  );
+  /* A versão deitada, para faixa e borda. */
+  --grad-marquise: linear-gradient(
+    100deg,
+    #1b2bca 0%,
+    #7c12b9 22%,
+    #eb10a6 52%,
+    #fa7a3f 80%,
+    #fcba0c 100%
+  );
+  /* Fundo: a mesma família, escurecida — o guia dá estas quatro paradas. */
+  --grad-fundo: linear-gradient(160deg, #09000f 0%, #22033d 38%, #51086f 72%, #b00d83 100%);
+  --grad-noite: linear-gradient(180deg, #2d0a4d 0%, #22033d 100%);
+
+  /* Compatibilidade: componentes antigos ainda pedem --grad-sol. */
+  --grad-sol: var(--grad-viral);
 
   /* ------------------------------------------------------------- raios --- */
-  --r-sm:     8px;    /* selo, checkbox */
-  --r-md:     10px;   /* botão, campo */
-  --r-lg:     14px;   /* card, painel */
-  --r-xl:     20px;   /* modal, hero, seção */
+  /* Valores do guia: cards pequenos 12, principais 20, botões 14. */
+  --r-sm:     12px;   /* selo, checkbox, card pequeno */
+  --r-md:     14px;   /* botão, campo */
+  --r-lg:     20px;   /* card, painel */
+  --r-xl:     24px;   /* modal, hero, seção */
   --r-pilula: 999px;
-  --chanfro:  16px;   /* corte a 45° — só em painel decorativo e selo de hero */
+  --chanfro:  16px;
 
   /* ------------------------------------------------------------ sombra --- */
   /* No escuro, sombra é preta e difusa. Cinza nunca. */
@@ -105,10 +178,18 @@
   --sombra-2: 0 6px 20px -6px rgb(0 0 0 / 0.60);
   --sombra-3: 0 24px 60px -12px rgb(0 0 0 / 0.70);
 
-  /* Brilho de néon. Um por tela, no máximo dois. Ver identidade.md. */
-  --brilho-acao: 0 6px 20px -4px rgb(249 93 30 / 0.45);
-  --brilho-neon: 0 8px 28px -6px rgb(255 61 154 / 0.45);
-  --anel-foco:   0 0 0 3px rgb(255 61 154 / 0.30);
+  /*
+   * GLOW OFICIAL — valores do guia. "O glow deve iluminar, não deve criar uma
+   * mancha neon exagerada": rosa entre 30–50% de opacidade e 20–50px de blur;
+   * roxo entre 25–40% e 30–70px. Um por tela, no máximo dois.
+   */
+  --brilho-acao: 0 0 30px rgb(235 16 166 / 0.35);   /* neon shadow do guia */
+  --brilho-neon: 0 8px 40px -6px rgb(124 18 185 / 0.35);
+  --anel-foco:   0 0 0 3px rgb(235 16 166 / 0.40);
+
+  /* Sombras do guia, na íntegra. */
+  --sombra-card: 0 15px 40px rgb(0 0 0 / 0.35);
+  --sombra-logo: 0 8px 24px rgb(0 0 0 / 0.55);
 
   /* ---------------------------------------------------------- movimento --- */
   --saida:   130ms;   /* o que sai é sempre mais rápido que o que entra */
@@ -117,13 +198,23 @@
 
   /* -------------------------------------------------------- tipografia --- */
   /*
-   * A variável vem do `next/font` (layout.tsx), não do nome da família.
-   * Escrever "Space Grotesk" aqui funcionaria só se a fonte fosse carregada
-   * por conta própria — com next/font o nome real é gerado no build, e o
-   * literal cairia calado no fallback.
+   * ANTON nos títulos e INTER no corpo, como manda o guia.
+   *
+   * Anton é caixa-alta, pesadíssima e de espaçamento apertado — exatamente o
+   * "alto impacto, leitura extremamente rápida" que o guia pede, e é a fonte
+   * de manchete de thumbnail. Ela tem UM peso só (400, que já é preto): pedir
+   * 600 ou 700 dela não engrossa nada, só faz o navegador simular o negrito e
+   * borrar a letra. Por isso os títulos não levam font-weight.
+   *
+   * Inter no corpo porque a interface é cheia de tabela, formulário e número,
+   * e Anton em texto corrido é ilegível depois da segunda linha.
+   *
+   * A variável vem do `next/font` (layout.tsx), não do nome da família: com
+   * next/font o nome real é gerado no build, e o literal cairia calado no
+   * fallback.
    */
-  --fonte-titulo: var(--font-space-grotesk), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --fonte-corpo:  var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --fonte-titulo: var(--font-anton), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --fonte-corpo:  var(--font-inter), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --fonte-mono:   var(--font-geist-mono), ui-monospace, monospace;
 
   --t-hero:     clamp(2.25rem, 6vw, 4rem);  /* 36 → 64 */

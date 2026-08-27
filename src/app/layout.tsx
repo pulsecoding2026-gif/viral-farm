@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Anton, Inter } from "next/font/google";
 import "./globals.css";
 import { MARCA, TEMPLATE_TITULO } from "@/lib/gta/marca";
 
@@ -14,21 +14,29 @@ const geistMono = Geist_Mono({
 });
 
 /**
- * A fonte dos títulos.
+ * ANTON — a fonte dos títulos, conforme o guia de marca.
  *
- * Space Grotesk tem o desenho geométrico meio torto que combina com letreiro
- * de rua, sem ser uma fonte "de games" — dessas que já chegam gritando e
- * envelhecem em seis meses. Fica só nos títulos: o corpo continua em Geist,
- * porque texto longo em display cansa e a interface tem muita tabela e muito
- * formulário.
+ * Tem um peso só (400, que já é praticamente preto). Isso não é limitação: é
+ * como a fonte foi desenhada. Pedir 700 dela faria o navegador simular o
+ * negrito engrossando o contorno, o que borra a letra em tamanho grande —
+ * exatamente onde ela é usada.
  *
- * É do Google Fonts e carrega pelo `next/font`, então nada de requisição a
- * host externo em tempo de execução.
+ * INTER no corpo, também do guia. A interface é cheia de tabela, formulário e
+ * número, e Inter foi desenhada para isso; Anton em texto corrido fica
+ * ilegível depois da segunda linha.
+ *
+ * As duas são do Google Fonts e carregam pelo `next/font`, então nada de
+ * requisição a host externo em tempo de execução.
  */
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const anton = Anton({
+  variable: "--font-anton",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: "400",
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
@@ -60,7 +68,7 @@ export default function RootLayout({
       lang="pt-BR"
       // `dark` fixo: o produto é escuro por identidade, não por preferência
       // do sistema. A variante `dark:` do Tailwind lê esta classe (globals.css).
-      className={`dark ${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} ${anton.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>
     </html>

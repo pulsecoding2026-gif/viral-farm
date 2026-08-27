@@ -44,33 +44,32 @@ export function Simbolo({
 }
 
 /**
- * Lockup da GTA VIRAL. Proporção 774x100 ≈ 7,7:1.
+ * Lockup da GTA VIRAL — a arte do dono. Proporção 2056x765 ≈ 2,7:1.
  *
- * Agora é SVG, e a troca de PNG para vetor foi possível porque o letreiro
- * passou a ser desenhado (traço de tubo de néon com cantos chanfrados) em vez
- * de tipografado — não há mais texto branco a vetorizar, que era o problema do
- * lockup anterior.
+ * ATENÇÃO AO TROCAR ISTO POR OUTRA ARTE: a proporção mudou muito. O lockup
+ * anterior era 7,7:1 (uma faixa comprida e baixa), este é 2,7:1 — quase três
+ * vezes mais alto para a mesma largura. Todo lugar que reservava altura para o
+ * logo com um `max-w` precisou ser reconferido, porque com a mesma largura ele
+ * passou a ocupar o triplo da altura e empurrava o cabeçalho.
  *
- * O nome do arquivo mudou junto com a marca, e isso não é enfeite: trocar o
- * conteúdo mantendo a URL faria o navegador de quem já visitou continuar
- * servindo a arte antiga do cache. Marca nova, nome novo — a URL é a chave de
- * invalidação.
+ * SEM `unoptimized`, ao contrário do SVG que estava aqui antes: o arquivo
+ * original tem 1,3 MB, e é justamente esse o caso em que o otimizador do
+ * next/image ganha o seu salário — ele serve WebP redimensionado para o
+ * tamanho pedido. Mandar 1,3 MB para desenhar um logo de 126px de largura
+ * seria pagar a banda inteira para jogar 99% dela fora.
  *
  * As dimensões precisam bater com o arquivo real: o next/image usa esse par
- * pra reservar o espaço antes da imagem chegar. Erradas, o layout salta
+ * para reservar o espaço antes da imagem chegar. Erradas, o layout salta
  * quando ela carrega.
  */
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <Image
-      src="/gta-viral.svg"
+      src="/logo-gta-viral.png"
       alt={MARCA}
-      width={774}
-      height={100}
+      width={2056}
+      height={765}
       priority
-      // `unoptimized`: o otimizador do next/image não processa SVG, e mandá-lo
-      // pelo pipeline só adiciona um salto de rede para devolver o mesmo byte.
-      unoptimized
       className={"h-auto w-full " + className}
     />
   );

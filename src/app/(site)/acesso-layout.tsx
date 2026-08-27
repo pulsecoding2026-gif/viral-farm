@@ -36,7 +36,7 @@ export function AcessoLayout({
             aria-label="Viral Farm"
             className="min-w-0 transition-opacity hover:opacity-80"
           >
-            <Logo className="max-w-[132px]" />
+            <Logo className="max-w-[164px]" />
           </Link>
           <Link
             href="/"

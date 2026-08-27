@@ -38,7 +38,11 @@ export function NavegacaoSite() {
             aria-label="Viral Farm"
             className="shrink-0 transition-opacity hover:opacity-80"
           >
-            <Logo className="max-w-[124px]" />
+            {/* 148px, não 124: a arte nova tem palmeira, skyline e o bloco
+                "gta" dentro do lockup. Na largura antiga — calibrada para uma
+                faixa 7,7:1 sem desenho dentro — esse detalhe todo virava
+                mancha colorida ilegível. */}
+            <Logo className="max-w-[148px]" />
           </Link>
 
           <nav className="hidden flex-1 items-center gap-5 lg:flex">

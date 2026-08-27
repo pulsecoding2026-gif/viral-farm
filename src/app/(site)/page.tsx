@@ -90,10 +90,17 @@ export default function LandingPage() {
               o GTA V criou canais enormes, e os do GTA VI ainda não existem.
               A oportunidade é real, quem entrega o resultado é a pessoa.
             */}
-            <h1 className="fonte-titulo mt-6 text-4xl leading-[1.05] font-semibold tracking-tight text-zinc-50 sm:text-6xl">
+            {/*
+              Sem `italic` e sem `font-semibold`: Anton tem um peso só e não tem
+              itálico. Pedir os dois faz o navegador SIMULAR — engrossa o
+              contorno e inclina por transformação — e em corpo de 60px isso
+              aparece como letra suja. A ênfase da segunda linha vem da cor, que
+              é o recurso que a fonte realmente tem.
+            */}
+            <h1 className="fonte-titulo mt-6 text-4xl leading-[1.05] tracking-tight text-zinc-50 uppercase sm:text-6xl">
               O GTA V criou canais milionários.
               <br />
-              <span className="text-orange-500 italic">
+              <span className="text-orange-500">
                 Os do GTA VI ainda não existem.
               </span>
             </h1>
@@ -197,7 +204,7 @@ export default function LandingPage() {
       {/* ----------------------------------------------------------- rodapé */}
       <footer className="border-t border-zinc-800/60">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <Logo className="max-w-[126px]" />
+          <Logo className="max-w-[150px]" />
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-600">
             {/* "#metodo" saiu junto com a seção — âncora sem destino rola
                 para lugar nenhum e parece site quebrado. */}

@@ -82,6 +82,24 @@
  * (#09090b): 5.42 e 4.60. Ver a nota no fim deste arquivo.
  */
 @theme {
+  /*
+   * A RAMPA "ORANGE" AGORA É ROSA, e o nome mentiroso é de propósito.
+   *
+   * O código inteiro já pede `bg-orange-600` para o botão principal,
+   * `text-orange-500` para o destaque, `border-orange-500` para o item ativo —
+   * são centenas de ocorrências, e a semântica delas está CERTA: todas querem
+   * dizer "a cor da ação". Só a cor mudou, de laranja para o VIRAL PINK do
+   * guia.
+   *
+   * Renomear as classes daria o mesmo resultado visual e custaria uma varredura
+   * por todo o repositório, com chance de esquecer alguma e deixar um botão
+   * laranja órfão no meio do produto. Reapontar a rampa é uma edição, atinge
+   * tudo de uma vez e não deixa resto.
+   *
+   * O laranja de verdade (SUNSET ORANGE) continua existindo como `--laranja` e
+   * entra pelas rampas de âmbar, no papel que o guia dá a ele: 10% da peça,
+   * tempero, não estrutura.
+   */
   --color-orange-300: var(--acao-300);
   --color-orange-400: var(--acao-400);
   --color-orange-500: var(--acao-500);
@@ -108,22 +126,33 @@
   --color-blue-950: var(--dado-950);
 
   /*
-   * O magenta entra por cima das rampas que os componentes já usavam para
-   * "roxo/rosa" — havia `from-fuchsia-500`, `from-purple-600` e
-   * `from-rose-600` espalhados nos gradientes dos ícones de módulo. Em vez de
-   * caçar cada um, as rampas passam a apontar para o néon da marca e os
-   * gradientes existentes já saem na paleta nova.
+   * ROSA E ROXO nas rampas que os componentes já usavam. Havia
+   * `from-fuchsia-500`, `from-purple-600` e `from-rose-600` espalhados nos
+   * gradientes dos ícones de módulo; em vez de caçar cada um, as rampas
+   * passam a apontar para as cores oficiais e os gradientes existentes saem
+   * na paleta nova sozinhos.
    */
-  --color-fuchsia-400: var(--neon-400);
-  --color-fuchsia-500: var(--neon-500);
-  --color-fuchsia-600: var(--neon-600);
-  --color-pink-400: var(--neon-400);
-  --color-pink-500: var(--neon-500);
-  --color-pink-600: var(--neon-600);
-  --color-rose-500: var(--neon-500);
-  --color-rose-600: var(--neon-600);
-  --color-purple-500: var(--neon-600);
-  --color-purple-600: var(--neon-700);
+  --color-fuchsia-400: var(--acao-400);
+  --color-fuchsia-500: var(--acao-600);
+  --color-fuchsia-600: var(--acao-700);
+  --color-pink-400: var(--acao-400);
+  --color-pink-500: var(--acao-600);
+  --color-pink-600: var(--acao-700);
+  --color-rose-500: var(--coral);
+  --color-rose-600: var(--acao-600);
+  --color-purple-500: var(--neon-500);
+  --color-purple-600: var(--neon-600);
+  --color-violet-500: var(--neon-500);
+  --color-violet-600: var(--neon-600);
+  --color-indigo-500: var(--dado-500);
+  --color-indigo-600: var(--dado-600);
+
+  /* MIAMI SUN nos amarelos/âmbar que os componentes usam para destaque. */
+  --color-amber-400: var(--amarelo);
+  --color-amber-500: var(--amarelo);
+  --color-amber-600: var(--laranja);
+  --color-yellow-400: var(--amarelo);
+  --color-yellow-500: var(--amarelo);
 
   /*
    * O cinza-zinco também puxa para o roxo. É o token mais usado da interface

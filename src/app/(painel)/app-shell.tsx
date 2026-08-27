@@ -25,6 +25,7 @@ import {
 } from "@/lib/modulos";
 import { icone } from "./icones";
 import { Logo, Simbolo } from "../logo";
+import { MARCA } from "@/lib/gta/marca";
 import { sair } from "../(site)/acoes-acesso";
 
 /** Quem está logado — vem do layout do painel, que valida a sessão. */
@@ -427,8 +428,8 @@ export function AppShell({
         >
           <Link
             href={INICIO}
-            title={recolhida ? "Viral Farm" : undefined}
-            aria-label="Viral Farm"
+            title={recolhida ? MARCA : undefined}
+            aria-label={MARCA}
             className={
               "min-w-0 transition-opacity hover:opacity-80 " +
               (recolhida
@@ -472,7 +473,7 @@ export function AppShell({
               <Link
                 href={INICIO}
                 onClick={() => setGaveta(false)}
-                aria-label="Viral Farm"
+                aria-label={MARCA}
                 className="min-w-0 flex-1 transition-opacity hover:opacity-80"
               >
                 <Logo className="max-w-[152px]" />
@@ -510,7 +511,7 @@ export function AppShell({
           </button>
           <Link
             href={INICIO}
-            aria-label="Viral Farm"
+            aria-label={MARCA}
             className="min-w-0 transition-opacity hover:opacity-80"
           >
             <Logo className="max-w-[132px]" />
