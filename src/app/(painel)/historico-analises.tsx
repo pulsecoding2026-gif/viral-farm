@@ -86,7 +86,7 @@ export function HistoricoAnalises({
         <button
           type="button"
           onClick={onNova}
-          className="mt-5 flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
+          className="mt-5 flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
         >
           <Plus size={16} weight="bold" />
           Nova análise

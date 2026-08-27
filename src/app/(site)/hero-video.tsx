@@ -59,13 +59,28 @@ type ConexaoDoNavegador = {
  * Então quem avisa que está economizando dados, ou está em rede lenta, recebe
  * o mesmo fundo chapado do `prefers-reduced-motion`. O site continua de pé —
  * o vídeo é decoração, não conteúdo.
+ *
+ * ONDE A LINHA FOI TRAÇADA, e por quê:
+ *
+ * Só `saveData`, `2g` e `slow-2g` cortam o vídeo. `3g` NÃO corta, de propósito.
+ *
+ * O Chrome carimba de `3g` uma fatia enorme de gente em 4G congestionada — no
+ * teste aqui, uma conexão de 1,45 Mbps veio como `3g`. Cortar o vídeo nesse
+ * grupo tiraria o hero de boa parte do público-alvo, e isso é decisão de
+ * produto, não de performance: quem manda na cara da home não é este arquivo.
+ *
+ * `saveData` é pedido explícito do usuário e `2g` não tem defesa possível para
+ * 3,8 MB — esses dois são seguros de decidir aqui.
+ *
+ * Se depois do reencode (ver docs/gta/performance.md) alguém quiser incluir
+ * `3g`, é só somar `|| c.effectiveType === "3g"` nesta função.
  */
 function redeFraca(): boolean {
   const c = (navigator as Navigator & { connection?: ConexaoDoNavegador })
     .connection;
   if (!c) return false; // navegador não conta: no benefício da dúvida, toca.
   if (c.saveData) return true;
-  return c.effectiveType === "slow-2g" || c.effectiveType === "2g" || c.effectiveType === "3g";
+  return c.effectiveType === "slow-2g" || c.effectiveType === "2g";
 }
 
 export function HeroVideo({ className = "" }: { className?: string }) {

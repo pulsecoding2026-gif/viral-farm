@@ -123,7 +123,7 @@ export function BotaoAssinar({
         className={
           "flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] disabled:cursor-wait disabled:opacity-70 " +
           (destaque
-            ? "bg-orange-600 text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] hover:bg-orange-500 disabled:shadow-none"
+            ? "bg-orange-600 text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] hover:bg-orange-500 disabled:shadow-none"
             : "border border-zinc-700 text-zinc-100 hover:border-zinc-600 hover:bg-white/[0.04]")
         }
       >

@@ -83,7 +83,7 @@ export function Metodo() {
                     className={
                       "relative flex h-14 w-14 items-center justify-center rounded-full font-mono text-sm font-bold tabular-nums " +
                       (iniciado
-                        ? "bg-orange-600 text-white shadow-[0_0_0_6px_rgb(255_62_2/0.12)]"
+                        ? "bg-orange-600 text-white shadow-[0_0_0_6px_rgb(199_58_125/0.12)]"
                         : "border border-zinc-800 bg-zinc-900 text-zinc-600")
                     }
                   >
@@ -177,7 +177,7 @@ export function Metodo() {
           </p>
           <Link
             href="/cadastro"
-            className="inline-flex items-center gap-2 rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_24px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-full bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_4px_24px_rgb(199_58_125/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
           >
             Entrar e ver o painel
             <ArrowRight size={16} weight="bold" />

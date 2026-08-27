@@ -117,7 +117,7 @@ export function PainelLives({
                   "flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition " +
                   (ativa
                     ? "bg-zinc-800 text-zinc-50"
-                    : "text-zinc-500 hover:text-zinc-300")
+                    : "text-zinc-400 hover:text-zinc-200")
                 }
               >
                 {a.id === "geral" ? (
@@ -236,7 +236,7 @@ export function PainelLives({
                       className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
                     />
                   ) : (
-                    <span className="flex h-full items-center justify-center text-xs text-zinc-700">
+                    <span className="flex h-full items-center justify-center text-xs text-zinc-400">
                       sem prévia
                     </span>
                   )}

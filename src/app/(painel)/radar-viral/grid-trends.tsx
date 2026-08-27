@@ -226,10 +226,10 @@ export function GridTrends({
               {p.rotulo}
               <span
                 className={
-                  "rounded-full px-1.5 text-[11px] tabular-nums " +
+                  "numero-placa rounded-full px-1.5 text-[11px] " +
                   (ativa
                     ? "bg-zinc-700 text-zinc-200"
-                    : "bg-zinc-800/70 text-zinc-600")
+                    : "bg-zinc-800/70 text-zinc-400")
                 }
               >
                 {n}
