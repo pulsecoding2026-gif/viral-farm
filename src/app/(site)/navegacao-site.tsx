@@ -32,7 +32,27 @@ export function NavegacaoSite() {
         era isso que travava a reprodução. Com o fundo mais fechado, 8px de
         desfoque bastam para o efeito de vidro custando uma fração disso.
       */}
-      <header className="mx-auto max-w-5xl rounded-3xl border border-zinc-800/80 bg-zinc-900/88 shadow-lg shadow-black/40 backdrop-blur-sm">
+      {/*
+        O ACABAMENTO DA PÍLULA — três camadas, e cada uma resolve uma coisa.
+
+        1. `bg-zinc-900/70` com `backdrop-blur-md`: mais vidro que antes. O
+           comentário abaixo explica por que não vamos além disso.
+        2. O `::before` desenha um fio do gradiente da marca na borda, via a
+           técnica de máscara: um gradiente preenche a borda e o
+           `mask-composite: exclude` recorta o miolo, sobrando só o contorno de
+           1px. É o que dá o brilho de néon na quina sem precisar de imagem
+           nem de segundo elemento posicionado.
+        3. O brilho por baixo (`shadow`) usa o rosa da marca em opacidade
+           baixa, não preto puro — assenta a pílula sobre o vídeo em vez de
+           recortá-la com uma sombra dura.
+      */}
+      {/*
+        82%, e não 70%: sobre um vídeo de Miami saturado o fundo translúcido
+        deixa rosa e laranja atravessarem por trás dos links, e "Como
+        monetizar" em zinc-400 sobre uma mancha rosa não passa perto de 4,5:1.
+        O contraste do texto não pode depender do frame que está tocando atrás.
+      */}
+      <header className="relative mx-auto max-w-5xl rounded-3xl bg-zinc-900/82 shadow-[0_8px_32px_-8px_rgb(0_0_0/0.8),0_0_24px_-6px_rgb(243_69_170/0.25)] backdrop-blur-md before:pointer-events-none before:absolute before:inset-0 before:rounded-3xl before:p-px before:[background:linear-gradient(100deg,rgb(61_69_215/0.55),rgb(243_69_170/0.65),rgb(253_162_78/0.45))] before:![mask:linear-gradient(#000_0_0)_content-box,linear-gradient(#000_0_0)] before:[mask-composite:exclude]">
         <div className="flex items-center gap-5 px-4 py-2.5 sm:px-5">
           <Link
             href="/"

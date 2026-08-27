@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Lightning, Info } from "@phosphor-icons/react/dist/ssr";
+import { ViTextura } from "./vi-textura";
 
 /**
  * Planos.
@@ -80,19 +81,42 @@ export function Planos() {
   const [anual, setAnual] = useState(false);
 
   return (
-    // `bg-zinc-950` (#080808, via token) no lugar de `#060609` — um terceiro
-    // preto que nada mais no site usava. Ver o comentário em page.tsx.
-    <section id="planos" className="border-y border-zinc-800/60 bg-zinc-950">
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+    /*
+     * `ceu-noturno` no lugar do `bg-zinc-950` chapado — mesma receita do
+     * `ceu-alvorada` de como-funciona.tsx, com a dupla de cor puxando mais
+     * pro roxo que pro rosa, pra esta seção não repetir a temperatura de
+     * monetizacao.tsx logo acima. `relative overflow-hidden` contém o "VI"
+     * gigante que sangra pela lateral da seção.
+     */
+    <section
+      id="planos"
+      className="ceu-noturno relative overflow-hidden border-y border-zinc-800/60"
+    >
+      {/* O "VI" do outro lado e espelhado, pra não repetir a composição de
+          como-funciona.tsx — textura, não informação. */}
+      <ViTextura
+        className="pointer-events-none absolute top-0 -left-28 h-[130%] w-auto scale-x-[-1] text-[var(--neon-500)] opacity-[0.05] sm:-left-16"
+      />
+
+      <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[46ch] text-center">
           <span className="placa inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-orange-500">
             Planos
           </span>
-          {/* "grava" era o verbo do público antigo. Quem monta canal de cortes
-              não grava nada — ele POSTA, e é o volume de posts que decide o
-              plano. */}
-          <h2 className="titulo-letreiro mt-5 text-2xl leading-[1.05] sm:text-4xl">
-            Escolha pelo quanto você{" "}
+          {/*
+            "grava" era o verbo do público antigo. Quem monta canal de cortes
+            não grava nada — ele POSTA, e é o volume de posts que decide o
+            plano.
+
+            O espaço entre "você" e "posta" virou um espaço INQUEBRÁVEL
+            (` `). Sem isso, em algumas larguras a quebra de linha caía
+            bem ali e "posta" — uma palavra de cinco letras, sozinha, maiúscula
+            de tamanho — sobrava isolada na segunda linha, órfã. Prender as
+            duas últimas palavras juntas garante que, se a frase quebrar, ela
+            quebra ANTES delas, nunca no meio.
+          */}
+          <h2 className="titulo-letreiro mt-5 text-balance text-2xl leading-[1.05] sm:text-4xl">
+            Escolha pelo quanto você{" "}
             <span className="acento-rosa">posta</span>
           </h2>
           <p className="mt-4 text-base leading-relaxed text-zinc-400">

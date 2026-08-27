@@ -539,15 +539,99 @@ section:not(:first-of-type) .titulo-letreiro {
 }
 
 /*
+ * VARIANTES DE CÉU — mesma receita do .ceu-miami (radial distante + parede de
+ * 40% preto), com o centro de luz deslocado e a dupla de cor trocada. O
+ * motivo de existir mais de uma: da segunda seção em diante toda a página
+ * repetia o MESMO fundo, e isso lê como parede uniforme mesmo com o
+ * conteúdo mudando por cima. Variar a "hora do dia" entre seções (alvorada →
+ * noite de rosa → noite de roxo) dá respiro sem sair da paleta oficial nem
+ * gastar peso: são só dois radiais a mais por seção.
+ */
+
+/* CÉU DE ALVORADA — depois do hero, mais frio e mais alto na tela: o sol
+   ainda não subiu. Fica na primeira seção de conteúdo (como-funciona). */
+.ceu-alvorada {
+  position: relative;
+  isolation: isolate;
+}
+.ceu-alvorada::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(70% 45% at 50% 0%, rgb(89 140 200 / 0.12) 0%, transparent 60%),
+    radial-gradient(55% 40% at 85% 100%, rgb(247 79 157 / 0.09) 0%, transparent 62%),
+    linear-gradient(180deg, #0b0d14 0%, #080808 100%);
+}
+
+/* CÉU NOTURNO — mais roxo que rosa, pra seção de planos não repetir a
+   temperatura de monetização. O roxo aqui é ponte, não parede: continua nos
+   5% do brandbook. */
+.ceu-noturno {
+  position: relative;
+  isolation: isolate;
+}
+.ceu-noturno::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(85% 55% at 12% 0%, rgb(114 92 208 / 0.14) 0%, transparent 62%),
+    radial-gradient(65% 45% at 100% 100%, rgb(247 79 157 / 0.10) 0%, transparent 60%),
+    linear-gradient(180deg, #080808 0%, #0d1322 55%, #080808 100%);
+}
+
+/*
+ * A MANCHA DE COR no topo de um cartão — o substituto de "arte de
+ * personagem" que o brandbook pede e que aqui não pode vir de imagem
+ * nenhuma. Mesmo degradê-assinatura (--grad-viral), escurecido por cima com
+ * a receita literal do brandbook — linear-gradient(180deg, transparent 30%,
+ * rgba(0,0,0,.88) 100%) — até se fundir com o fundo sólido do resto do
+ * cartão. Fica só na "cabeceira" (altura fixa, definida por quem usa),
+ * nunca no cartão inteiro — senão vira glow, que é o item do NÃO FAZER.
+ */
+.mancha-cartao {
+  background-image:
+    linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, 0.88) 100%),
+    var(--grad-viral);
+}
+
+/*
  * A LINHA DE HORIZONTE: um fio do gradiente oficial separando seções.
  * É o detalhe mais barato que existe e amarra a página ao logo — a mesma
- * transição azul → rosa → amarelo, com 2px de altura.
+ * transição azul → rosa → amarelo.
+ *
+ * Estava em 0.8 de opacidade e 2px de altura, ponta a ponta da viewport. Isso
+ * é quase o próprio --grad-marquise em intensidade total, esticado por 100%
+ * da largura — o efeito lido de longe é o "degradê arco-íris" que o
+ * brandbook lista no NÃO FAZER, e ele competia com o título da seção logo
+ * abaixo. Três ajustes, nenhum isolado resolvia:
+ *   altura 2px → 1px       (fio, não faixa)
+ *   opacidade 0.8 → 0.28   (deixa de ser a coisa mais viva da tela)
+ *   mask nas pontas        (esmaece nas bordas em vez de cortar reto, então
+ *                           não lê mais como "barra" e sim como reflexo)
  */
 .horizonte {
   border: 0;
-  height: 2px;
+  height: 1px;
   background: var(--grad-marquise);
-  opacity: 0.8;
+  opacity: 0.28;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 20%,
+    black 80%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 20%,
+    black 80%,
+    transparent 100%
+  );
 }
 
 /*

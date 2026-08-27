@@ -216,14 +216,22 @@ export default function LandingPage() {
               vem a promessa funcional, e a frase fecha devolvendo a régua para
               o VI: o RP de hoje é degrau, não destino.
             */}
-            <p className="mx-auto mt-5 max-w-[54ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
+            {/*
+              METADE DO TAMANHO, e o corte foi por subtração de redundância,
+              não de conteúdo. Saíram:
+                · "o mesmo formato que já criou os maiores canais do Brasil" —
+                  prova social que a seção de monetização desenvolve inteira;
+                · "sem gravar, sem editar" — os chips logo abaixo já listam
+                  exatamente isso, com mais detalhe.
+              Ficou o que só existe aqui: o aviso honesto, a promessa
+              funcional em uma frase, e a ponte para novembro.
+            */}
+            <p className="mx-auto mt-5 max-w-[46ch] text-base leading-relaxed text-zinc-300 sm:text-lg">
               <b className="font-semibold text-zinc-100">
-                Ninguém jogou GTA VI ainda
+                Ninguém jogou GTA VI ainda.
               </b>{" "}
-              — hoje o material é o RP de GTA V, o mesmo formato que já criou os
-              maiores canais de corte do Brasil. Cole o link de uma live da
-              Twitch ou do Kick e a IA devolve os Shorts prontos: sem aparecer,
-              sem gravar, sem editar. Quando o VI sair, seu canal já está
+              Comece pelo RP de GTA V — cole o link da live e receba os Shorts
+              prontos, sem aparecer. Quando o VI sair, seu canal já está
               andando.
             </p>
 
