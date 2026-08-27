@@ -158,10 +158,16 @@ export default function LandingPage() {
               pequenas". Encurtar a frase é a resposta certa; diminuir a letra
               seria a errada.
             */}
+            {/*
+              "Está começando agora" no lugar de "ainda não existem".
+              A frase anterior constatava uma ausência; esta abre uma porta — e
+              o verbo no presente contínuo diz que o trem está passando, que é
+              a urgência real. Mesmo fato, leitura oposta.
+            */}
             <h1 className="titulo-letreiro titulo-hero mt-6 text-4xl leading-[1.02] sm:text-6xl">
               GTA V fez milionários.
-              <br />
-              Os do VI <span className="acento-rosa">ainda não</span>.
+              <br />O VI está{" "}
+              <span className="acento-rosa">começando agora</span>.
             </h1>
 
             {/*

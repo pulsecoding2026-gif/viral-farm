@@ -79,7 +79,7 @@ export function ComoFunciona() {
                     {p.n}
                   </span>
                 </div>
-                <h3 className="fonte-titulo mt-5 text-lg text-zinc-50 uppercase">
+                <h3 className="fonte-titulo mt-5 text-lg font-semibold tracking-tight text-zinc-50">
                   {p.titulo}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">

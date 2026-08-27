@@ -65,10 +65,16 @@ export function Simbolo({
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <Image
-      src="/logo-gta-viral.png"
+      /*
+       * `-v2` no nome, e não substituir o arquivo anterior: a URL é a chave de
+       * cache do navegador. Trocar o conteúdo mantendo `/logo-gta-viral.png`
+       * faria quem já visitou continuar vendo a arte antiga, e esse é o tipo de
+       * bug que só aparece para os outros — nunca para quem acabou de mexer.
+       */
+      src="/logo-gta-viral-v2.png"
       alt={MARCA}
-      width={2056}
-      height={765}
+      width={1774}
+      height={887}
       priority
       className={"h-auto w-full " + className}
     />

@@ -156,7 +156,7 @@ export function Planos() {
                   </span>
                 )}
 
-                <h3 className="fonte-titulo text-lg text-zinc-50 uppercase">
+                <h3 className="fonte-titulo text-lg font-semibold tracking-tight text-zinc-50">
                   {p.nome}
                 </h3>
                 <p className="mt-1.5 min-h-[2.5rem] text-sm leading-relaxed text-zinc-400">

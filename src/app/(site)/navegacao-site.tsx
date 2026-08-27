@@ -38,11 +38,15 @@ export function NavegacaoSite() {
             aria-label="Viral Farm"
             className="shrink-0 transition-opacity hover:opacity-80"
           >
-            {/* 148px, não 124: a arte nova tem palmeira, skyline e o bloco
-                "gta" dentro do lockup. Na largura antiga — calibrada para uma
-                faixa 7,7:1 sem desenho dentro — esse detalhe todo virava
-                mancha colorida ilegível. */}
-            <Logo className="max-w-[148px]" />
+            {/*
+              A LARGURA É REFÉM DA ALTURA DO CABEÇALHO, e a arte já mudou de
+              proporção duas vezes: 7,7:1 → 2,7:1 → 2:1. A 2:1, cada pixel de
+              largura custa meio de altura, e o cabeçalho tem 77px no total.
+              132px dão 66px de logo — cabe com a folga que impede o lockup de
+              encostar na borda do cartão.
+              Se a arte mudar de novo, é esta conta que precisa ser refeita.
+            */}
+            <Logo className="max-w-[132px]" />
           </Link>
 
           <nav className="hidden flex-1 items-center gap-5 lg:flex">

@@ -426,12 +426,26 @@ section:not(:first-of-type) .titulo-letreiro {
  * largura, e por isso o título precisa ser curto — o que o brandbook já pedia
  * por outro motivo.
  */
+/*
+ * CAIXA MISTA, não caixa alta.
+ *
+ * Tudo em maiúscula era herança de duas leituras minhas do brandbook, e as
+ * duas estavam certas isoladamente e erradas juntas: ele pede caixa alta para
+ * LABELS (`TRAILER 2`, `VICE CITY`) e headline "de leitura extremamente
+ * rápida". Só que caixa alta é o que MAIS atrasa a leitura de uma frase —
+ * some a variação de altura das letras, que é o que o olho usa para
+ * reconhecer a palavra pelo contorno. Em rótulo de duas palavras isso não
+ * custa nada; numa headline, custa.
+ *
+ * O gesto moderno é o oposto: caixa mista, peso alto, tracking levemente
+ * NEGATIVO para fechar a palavra. A caixa alta fica onde ela nasceu — na
+ * classe `.placa`, que é rótulo, número e selo.
+ */
 .titulo-letreiro {
   font-family: var(--fonte-titulo);
-  text-transform: uppercase;
   color: #ffffff;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: -0.02em;
   /*
    * Contorno mais fino: em peso 700 o traço de 2px engorda a letra e desfaz o
    * ar que o tracking abriu. Ele existe para a headline sobreviver por cima da
@@ -449,7 +463,9 @@ section:not(:first-of-type) .titulo-letreiro {
  */
 .titulo-hero {
   font-weight: 700;
-  letter-spacing: 0.01em;
+  /* Mais fechado ainda que o título de seção: em corpo de 60px o espaço entre
+     letras cresce junto, e o que era respiro vira buraco. */
+  letter-spacing: -0.035em;
   -webkit-text-stroke-width: 1.5px;
 }
 
