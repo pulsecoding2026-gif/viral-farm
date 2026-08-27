@@ -173,7 +173,19 @@ export function HeroVideo({ className = "" }: { className?: string }) {
        */
       preload="metadata"
       aria-hidden="true"
-      className={"h-full w-full object-cover object-center " + className}
+      /*
+       * `object-top`, não `object-center`.
+       *
+       * O vídeo é 16:9 e a faixa do hero é bem mais larga que alta. Com
+       * `object-cover`, o navegador escala pela largura e corta o excedente na
+       * ALTURA — e `object-center` tira metade em cima, metade embaixo. Só que
+       * a composição do vídeo tem o letreiro no terço superior: cortar por
+       * cima decapita justamente o elemento que faz a capa ser reconhecível.
+       *
+       * Alinhando pelo topo, o corte inteiro vai para a base, onde há só
+       * reflexo de asfalto — a parte da imagem que ninguém perde.
+       */
+      className={"h-full w-full object-cover object-top " + className}
     >
       {/*
         Sem `<source>` aqui de propósito — ver o efeito acima. Se a fonte
