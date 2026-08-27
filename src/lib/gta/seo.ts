@@ -31,8 +31,33 @@ import { MARCA, DESCRITOR, NAO_AFILIADO } from "./marca";
  * (Vercel → Settings → Environment Variables) antes do primeiro deploy
  * público. Ver `docs/gta/seo.md`.
  */
+/**
+ * A CASCATA, em ordem de confiança:
+ *
+ * 1. `NEXT_PUBLIC_SITE_URL` — o que o dono definiu. Ganha sempre, porque é a
+ *    única que sabe qual domínio é o canônico quando existe mais de um
+ *    (viralfarm.com.br e www.viralfarm.com.br apontam para o mesmo site, e o
+ *    Google precisa que a gente escolha UM).
+ *
+ * 2. `VERCEL_PROJECT_PRODUCTION_URL` — a Vercel injeta isto sozinha no build,
+ *    com o domínio de produção do projeto e SEM protocolo. Foi acrescentada
+ *    depois de o site ir ao ar: sem ela, o primeiro deploy público anunciava
+ *    canonical e og:image apontando para `localhost`, e um site que se declara
+ *    em localhost simplesmente não é indexado. Isto é a rede de proteção para
+ *    o caso de a variável explícita não ter sido configurada.
+ *
+ * 3. `localhost` — desenvolvimento. Denuncia a falta de configuração em vez de
+ *    escondê-la; um domínio bonito chutado aqui seria pior, porque o Google
+ *    obedeceria.
+ */
+const DA_VERCEL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : undefined;
+
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  DA_VERCEL ??
+  "http://localhost:3000"
 ).replace(/\/+$/, "");
 
 /** `metadataBase` do Next e base de toda URL absoluta do JSON-LD. */
