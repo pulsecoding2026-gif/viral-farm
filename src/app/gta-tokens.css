@@ -243,7 +243,9 @@
    * next/font o nome real é gerado no build, e o literal cairia calado no
    * fallback.
    */
-  --fonte-titulo: var(--font-anton), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --fonte-titulo: var(--font-archivo), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* A "gamer": rótulo, número, contador, selo. Sempre em caixa alta. */
+  --fonte-placa:  var(--font-bebas), var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --fonte-corpo:  var(--font-inter), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --fonte-mono:   var(--font-geist-mono), ui-monospace, monospace;
 
@@ -407,6 +409,32 @@ body {
 /* O acento: UMA área rosa por composição, e é esta. */
 .acento-rosa {
   color: var(--acao-500);
+}
+
+/*
+ * PLACA — a letra de rótulo, número e selo.
+ *
+ * Bebas Neue em caixa alta com tracking positivo, que é a receita do brandbook
+ * para labels: `TRAILER 2`, `VICE CITY`, `COMING SOON`. Condensada, ela empilha
+ * caractere sem ficar larga, e é por isso que funciona em contador e em
+ * etiqueta pequena onde Archivo Black não caberia.
+ *
+ * O tracking positivo não é enfeite: Bebas tem contraforma apertadíssima e, sem
+ * abrir o espacejamento, "VICE CITY" em corpo pequeno vira um bloco só.
+ */
+.placa {
+  font-family: var(--fonte-placa);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+
+/* Número grande — contador, métrica, preço. Tracking menor: dígito não
+   precisa da abertura que a palavra precisa, e junto ele lê como painel. */
+.numero-placa {
+  font-family: var(--fonte-placa);
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 /*

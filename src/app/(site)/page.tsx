@@ -70,7 +70,7 @@ export default function LandingPage() {
         */}
         <div className="relative mx-auto max-w-6xl px-5 pt-[17rem] pb-16 sm:px-8 sm:pt-[22rem] sm:pb-20 lg:pt-[26rem] xl:pt-[28rem]">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-400">
+            <p className="placa inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-400">
               <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
               Feito por fãs · não afiliado à Rockstar Games
             </p>
@@ -103,10 +103,25 @@ export default function LandingPage() {
               gradiente, ela se impõe por cima da imagem cinematográfica, e o
               rosa aparece uma vez só, onde está o soco da frase.
             */}
+            {/*
+              DUAS LINHAS, e a frase foi encurtada para caber nelas.
+
+              A versão longa ("O GTA V criou canais milionários. Os do GTA VI
+              ainda não existem.") quebrava em quatro linhas em Archivo Black —
+              que é bem mais larga que a Anton que estava aqui antes — e
+              empurrava o campo de link para fora da primeira tela. Reduzir o
+              corpo resolveria a quebra e mataria o impacto, que é o motivo de
+              existir uma display.
+
+              O brandbook decide o empate: "títulos curtos, poucas palavras,
+              leitura extremamente rápida" e "evitar títulos com 3 ou 4 linhas
+              pequenas". Encurtar a frase é a resposta certa; diminuir a letra
+              seria a errada.
+            */}
             <h1 className="titulo-letreiro mt-6 text-4xl leading-[1.02] sm:text-6xl">
-              O GTA V criou canais milionários.
+              GTA V fez milionários.
               <br />
-              Os do GTA VI <span className="acento-rosa">ainda não existem</span>.
+              Os do VI <span className="acento-rosa">ainda não</span>.
             </h1>
 
             {/*
@@ -169,7 +184,7 @@ export default function LandingPage() {
             {CAPACIDADES.map((c) => (
               <span
                 key={c}
-                className="rounded-full border border-zinc-800 bg-zinc-900/40 px-3 py-1.5 text-[11px] text-zinc-400"
+                className="placa rounded-full border border-zinc-800 bg-zinc-900/40 px-3 py-1.5 text-[11px] text-zinc-400"
               >
                 {c}
               </span>

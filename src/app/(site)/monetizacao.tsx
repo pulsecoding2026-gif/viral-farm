@@ -77,12 +77,15 @@ export function Monetizacao() {
     <section id="monetizacao" className="ceu-miami border-y border-zinc-800/60">
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
         <div className="mx-auto max-w-[50ch] text-center">
-          <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
+          <span className="placa inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-orange-500">
             Monetização
           </span>
-          <h2 className="fonte-titulo mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
+          {/* Sem `italic`: Archivo Black não tem itálico e o navegador
+              simularia inclinando, o que engrossa e suja a letra. A ênfase
+              vem do rosa, que é o acento único da seção. */}
+          <h2 className="titulo-letreiro mt-5 text-3xl leading-[1.05] sm:text-5xl">
             Como um canal de cortes{" "}
-            <span className="text-orange-500 italic">paga as contas</span>
+            <span className="acento-rosa">paga as contas</span>
           </h2>
           {/*
             O gargalo aqui é VOLUME, e é isso que amarra a seção ao produto.

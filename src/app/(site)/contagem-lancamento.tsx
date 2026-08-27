@@ -59,7 +59,7 @@ export function ContagemLancamento() {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <p className="flex items-center gap-2 text-xs tracking-wide text-zinc-400 uppercase">
+      <p className="placa flex items-center gap-2 text-sm text-zinc-300">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500" />
         {contagem?.chegou ? "acontecendo agora" : marco.rotulo}
       </p>
@@ -69,7 +69,7 @@ export function ContagemLancamento() {
           <div key={chave} className="flex flex-col items-center">
             <div className="min-w-[3.5rem] rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2.5 sm:min-w-[4.5rem] sm:px-4 sm:py-3">
               <span
-                className="block text-center font-mono text-2xl leading-none font-semibold text-zinc-50 tabular-nums sm:text-4xl"
+                className="numero-placa block text-center text-3xl leading-none text-zinc-50 sm:text-5xl"
                 /* aria-hidden no número e o texto completo no rodapé: um leitor
                    de tela anunciando quatro números soltos a cada segundo é
                    ruído, não informação. */
@@ -80,7 +80,7 @@ export function ContagemLancamento() {
                   : String(contagem[chave]).padStart(2, "0")}
               </span>
             </div>
-            <span className="mt-1.5 text-[10px] tracking-wide text-zinc-500 uppercase sm:text-xs">
+            <span className="placa mt-1.5 text-[11px] text-zinc-500 sm:text-xs">
               {rotulo}
             </span>
           </div>
