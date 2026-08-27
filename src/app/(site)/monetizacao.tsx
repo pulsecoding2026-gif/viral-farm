@@ -28,30 +28,30 @@ import {
 const CAMINHOS = [
   {
     icone: CurrencyCircleDollar,
-    titulo: "Programa das plataformas",
+    titulo: "Fundo das plataformas",
     texto:
-      "TikTok, YouTube Shorts e Reels pagam criadores por desempenho. Cada um tem regra própria de elegibilidade — e todos exigem volume constante de publicação.",
+      "TikTok, YouTube Shorts e Reels pagam por desempenho. Cada um tem regra própria de elegibilidade, e todos cobram a mesma entrada: publicar sem falhar. Canal de cortes de GTA posta todo dia sem precisar de pauta — o material já existe.",
     cor: "from-emerald-500 to-teal-600",
   },
   {
     icone: Handshake,
-    titulo: "Afiliado e comissão",
+    titulo: "Afiliado de games",
     texto:
-      "Vídeo curto é a vitrine mais barata que existe pra produto de terceiro. Quem publica com frequência testa mais oferta e acha a que converte.",
+      "Gift card, conta de jogo, cadeira, headset, mod. O público de GTA compra o que vê no vídeo, e link de afiliado paga por venda — não por seguidor. Quem publica mais testa mais oferta e acha a que converte.",
     cor: "from-orange-500 to-amber-600",
   },
   {
     icone: Megaphone,
-    titulo: "Publicidade e permuta",
+    titulo: "Servidor de RP e publicidade",
     texto:
-      "Marca não contrata seguidor, contrata alcance previsível. Um perfil que entrega bem toda semana vale mais que um que estourou uma vez.",
+      "Servidor de roleplay vive de gente entrando, e paga por divulgação. Marca de periférico contrata alcance previsível, não pico. Um canal que entrega toda semana vale mais que um que estourou uma vez.",
     cor: "from-violet-500 to-purple-600",
   },
   {
     icone: Package,
-    titulo: "Produto próprio",
+    titulo: "O canal como ativo",
     texto:
-      "Curso, mentoria, serviço, loja. O vídeo curto é o topo do funil mais barato pra levar gente até o que você vende.",
+      "Um canal com audiência é vendável, alugável e vira porta para produto próprio. E o timing importa: público construído antes de 19 de novembro custa muito menos que o construído depois, quando todo mundo estiver postando.",
     cor: "from-sky-500 to-blue-600",
   },
 ];
@@ -78,14 +78,21 @@ export function Monetizacao() {
           <span className="inline-block rounded-full border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-orange-500 uppercase">
             Monetização
           </span>
-          <h2 className="mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
-            Onde o vídeo curto{" "}
-            <span className="text-orange-500 italic">vira dinheiro</span>
+          <h2 className="fonte-titulo mt-5 text-3xl leading-tight font-semibold tracking-tight text-zinc-50 sm:text-5xl">
+            Como um canal de cortes{" "}
+            <span className="text-orange-500 italic">paga as contas</span>
           </h2>
+          {/*
+            O gargalo aqui é VOLUME, e é isso que amarra a seção ao produto.
+            Todo caminho de monetização de curto paga por constância — e quem
+            edita na mão não sustenta uma postagem por dia por três meses. É
+            exatamente o trabalho que a ferramenta tira da frente, então dizer
+            o gargalo em voz alta é vender sem prometer resultado.
+          */}
           <p className="mt-4 text-base leading-relaxed text-zinc-400">
-            Todo caminho de monetização de vídeo curto cobra a mesma coisa
-            antes de pagar: <b className="font-medium text-zinc-200">constância</b>.
-            É exatamente o que trava quem fica sem ideia.
+            Nenhum desses caminhos paga por um vídeo bom. Todos pagam por{" "}
+            <b className="font-medium text-zinc-200">volume constante</b> — e é
+            aí que quem edita na mão desiste no primeiro mês.
           </p>
         </div>
 

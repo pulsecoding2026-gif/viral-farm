@@ -3,7 +3,6 @@ import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { NavegacaoSite } from "./navegacao-site";
 import { HeroVideo } from "./hero-video";
 import { HeroEntrada } from "./hero-entrada";
-import { Metodo } from "./metodo";
 import { DestaqueGrande } from "./destaques";
 import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
@@ -179,9 +178,19 @@ export default function LandingPage() {
         Os componentes continuam existindo no repositório — se um deles fizer
         falta, é uma linha para trazer de volta.
       */}
-      <Metodo />
-      <DestaqueGrande />
+      {/*
+        QUATRO SEÇÕES, e a ordem responde às perguntas na ordem em que elas
+        aparecem na cabeça de quem chegou pelo hero de dinheiro:
+        de onde sai a grana → funciona mesmo → quanto custa → e se der errado.
+
+        O "método" saiu, e ele sozinho era 2.604px dos 9.882 da página. Além do
+        tamanho, as maquetes dele mostravam abas de módulos que a virada tirou
+        do menu e categorias de outro produto ("Curiosidades", "Fitness") —
+        numa página que promete foco em GTA, isso não é só ruído, é
+        desmentido. O componente continua no repositório.
+      */}
       <Monetizacao />
+      <DestaqueGrande />
       <Planos />
       <Perguntas />
 
@@ -190,9 +199,8 @@ export default function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <Logo className="max-w-[126px]" />
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-zinc-600">
-            <a href="#metodo" className="transition hover:text-zinc-400">
-              O método
-            </a>
+            {/* "#metodo" saiu junto com a seção — âncora sem destino rola
+                para lugar nenhum e parece site quebrado. */}
             <a href="#monetizacao" className="transition hover:text-zinc-400">
               Monetização
             </a>

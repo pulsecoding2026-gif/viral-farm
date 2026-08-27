@@ -6,8 +6,9 @@ import { List, X } from "@phosphor-icons/react/dist/ssr";
 import { Logo } from "../logo";
 
 const SECOES = [
-  { href: "#metodo", rotulo: "O método" },
-  { href: "#monetizacao", rotulo: "Monetização" },
+  // "#metodo" saiu quando a seção foi removida da home. Âncora sem destino
+  // não dá erro — só não rola, e o visitante conclui que o site está quebrado.
+  { href: "#monetizacao", rotulo: "Como monetizar" },
   { href: "#planos", rotulo: "Planos" },
   { href: "#perguntas", rotulo: "Perguntas" },
 ];
