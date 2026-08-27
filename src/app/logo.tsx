@@ -75,7 +75,24 @@ export function Logo({ className = "" }: { className?: string }) {
       alt={MARCA}
       width={1774}
       height={887}
-      priority
+      /*
+       * `sizes` é o que impede o desperdício: sem ele o navegador não sabe o
+       * tamanho final na tela e pede a maior variante do conjunto — w=1920 ou
+       * w=3840 — para desenhar um logo de 132px. Medido: 19,1 KB entregues,
+       * contra 4,5 KB com o `sizes` certo.
+       *
+       * 200px cobre o maior uso real (a lateral do painel, 140px) com folga
+       * para telas de alta densidade, onde o navegador escolhe a variante do
+       * dobro.
+       */
+      sizes="200px"
+      /*
+       * `preload`, e não `priority`: a partir do Next 16 o `priority` está
+       * DEPRECADO em favor deste, justamente para deixar claro o que ele faz —
+       * inserir um `<link rel=preload>` no `<head>`. Confirmado em
+       * `node_modules/next/dist/docs/.../components/image.md`.
+       */
+      preload
       className={"h-auto w-full " + className}
     />
   );
