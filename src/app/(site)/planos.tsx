@@ -189,102 +189,134 @@ export function Planos() {
                  * até `zinc-900/40` (ainda translúcido); agora fecha em
                  * `zinc-900` sólido, então o degradê pinta só a parte de cima
                  * do cartão e a base é o mesmo #111111 dos outros dois planos.
+                 *
+                 * `overflow-hidden` NÃO fica aqui — fica só no wrapper interno
+                 * logo abaixo. Se ficasse no cartão inteiro, o selo "Mais
+                 * popular" (que fura -12px pra cima da borda de propósito)
+                 * seria cortado pela própria borda que ele deveria furar.
                  */
                 className={
-                  "relative flex flex-col rounded-2xl border p-6 " +
+                  "group relative flex flex-col rounded-2xl border transition " +
                   (p.destaque
-                    ? "border-orange-900/60 bg-gradient-to-b from-orange-600/10 to-zinc-900 lg:-mt-3 lg:pb-9"
-                    : "border-zinc-800 bg-zinc-900")
+                    ? "border-orange-900/60 bg-gradient-to-b from-orange-600/10 to-zinc-900 lg:-mt-3"
+                    : "border-zinc-800 bg-zinc-900 hover:border-orange-600/30")
                 }
               >
                 {p.destaque && (
                   /* bg-orange-700, não 600: texto branco em 11px sobre
                      acao-600 mede 3,37:1 (reprova); sobre acao-700, 4,85:1. */
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-700 px-3 py-1 text-[11px] font-bold text-white">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 z-10 rounded-full bg-orange-700 px-3 py-1 text-[11px] font-bold text-white">
                     Mais popular
                   </span>
                 )}
 
-                <h3 className="fonte-titulo text-lg font-semibold tracking-tight text-zinc-50">
-                  {p.nome}
-                </h3>
-                <p className="mt-1.5 min-h-[2.5rem] text-sm leading-relaxed text-zinc-400">
-                  {p.resumo}
-                </p>
-
-                <div className="mt-5 flex items-baseline gap-1.5">
-                  {/* O preço em Bebas: é número grande, e é onde a condensada
-                      trabalha melhor — lê como painel de placar. */}
-                  <span className="numero-placa text-5xl leading-none text-zinc-50">
-                    R$ {brl(preco)}
-                  </span>
-                  {/* zinc-500 dava 4,14:1 — abaixo do 4,5:1. zinc-400 dá 7,81:1. */}
-                  <span className="text-sm text-zinc-400">/mês</span>
-                </div>
-                {/* zinc-600 media 2,59:1, bem abaixo do mínimo. zinc-400 dá 7,81:1. */}
-                <p className="mt-1 text-xs text-zinc-400">
-                  {anual ? "cobrado anualmente" : "cancele a qualquer momento"}
-                </p>
-
-                <div
-                  className={
-                    "mt-5 flex items-center gap-2 rounded-xl px-3.5 py-2.5 " +
-                    /*
-                     * `bg-white/[0.06]` no lugar de `bg-zinc-800/60`.
-                     * `zinc-800` foi remapeado pra `--borda`, que já É uma
-                     * cor translúcida (branco a 12%) — pedir mais 40% de
-                     * transparência em cima disso (o "/60") deixava o chip
-                     * quase invisível nos planos Lite e Viral, exatamente o
-                     * chip que mostra o número de análises do plano. O
-                     * `bg-white/[0.06]` é o mesmo truque usado no ícone de
-                     * como-funciona.tsx: opacidade pensada para SER a cor de
-                     * fundo, não emprestada de um token de borda.
-                     */
-                    (p.destaque ? "bg-orange-600/15" : "bg-white/[0.06]")
-                  }
-                >
-                  <Lightning
-                    size={15}
-                    weight="fill"
-                    className={p.destaque ? "text-orange-400" : "text-zinc-400"}
-                  />
-                  <span className="text-sm tabular-nums text-zinc-200">
-                    {p.analises} análises por mês
-                  </span>
-                </div>
-
                 {/*
-                  `bg-orange-700`, mesmo ajuste do botão "Ver os planos" em
-                  monetizacao.tsx: branco sobre acao-600 reprova o texto
-                  normal (3,37:1); sobre acao-700, passa (4,85:1). O glow
-                  também troca de `rgb(255 62 2)` — o laranja da marca
-                  anterior — pro rosa `rgb(199 58 125)` que combina com o
-                  novo fundo do botão.
+                  O WRAPPER QUE RECORTA — profundidade nos três planos, não só
+                  no destaque. `.mancha-cartao` é o mesmo gradiente-assinatura
+                  escurecido do brandbook usado em como-funciona.tsx; aqui a
+                  dose muda por plano: mais viva no "Mais popular" (que já é o
+                  cartão que deve puxar o olho primeiro), mais discreta nos
+                  outros dois — profundidade sem competir com o CTA.
                 */}
-                <Link
-                  href="/cadastro"
-                  className={
-                    "mt-5 rounded-xl px-4 py-3 text-center text-sm font-semibold transition active:scale-[0.98] " +
-                    (p.destaque
-                      ? "bg-orange-700 text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] hover:bg-orange-600"
-                      : "border border-zinc-700 text-zinc-100 hover:border-zinc-600 hover:bg-white/[0.04]")
-                  }
-                >
-                  Começar
-                </Link>
+                <div className="relative flex flex-1 flex-col overflow-hidden rounded-2xl">
+                  <div
+                    aria-hidden="true"
+                    className={
+                      "mancha-cartao pointer-events-none absolute inset-x-0 top-0 h-20 transition-opacity duration-200 " +
+                      (p.destaque
+                        ? "opacity-[0.4] group-hover:opacity-60"
+                        : "opacity-[0.16] group-hover:opacity-30")
+                    }
+                  />
 
-                <ul className="mt-6 space-y-2.5 border-t border-zinc-800 pt-5">
-                  {p.recursos.map((r) => (
-                    <li key={r} className="flex items-start gap-2.5 text-sm">
-                      <Check
-                        size={14}
-                        weight="bold"
-                        className="mt-0.5 shrink-0 text-orange-500"
+                  <div
+                    className={
+                      "relative flex flex-1 flex-col p-6 " +
+                      (p.destaque ? "lg:pb-9" : "")
+                    }
+                  >
+                    <h3 className="fonte-titulo text-lg font-semibold tracking-tight text-zinc-50">
+                      {p.nome}
+                    </h3>
+                    <p className="mt-1.5 min-h-[2.5rem] text-sm leading-relaxed text-zinc-400">
+                      {p.resumo}
+                    </p>
+
+                    <div className="mt-5 flex items-baseline gap-1.5">
+                      {/* O preço em Bebas: é número grande, e é onde a condensada
+                          trabalha melhor — lê como painel de placar. */}
+                      <span className="numero-placa text-5xl leading-none text-zinc-50">
+                        R$ {brl(preco)}
+                      </span>
+                      {/* zinc-500 dava 4,14:1 — abaixo do 4,5:1. zinc-400 dá 7,81:1. */}
+                      <span className="text-sm text-zinc-400">/mês</span>
+                    </div>
+                    {/* zinc-600 media 2,59:1, bem abaixo do mínimo. zinc-400 dá 7,81:1. */}
+                    <p className="mt-1 text-xs text-zinc-400">
+                      {anual ? "cobrado anualmente" : "cancele a qualquer momento"}
+                    </p>
+
+                    <div
+                      className={
+                        "mt-5 flex items-center gap-2 rounded-xl px-3.5 py-2.5 " +
+                        /*
+                         * `bg-white/[0.06]` no lugar de `bg-zinc-800/60`.
+                         * `zinc-800` foi remapeado pra `--borda`, que já É uma
+                         * cor translúcida (branco a 12%) — pedir mais 40% de
+                         * transparência em cima disso (o "/60") deixava o chip
+                         * quase invisível nos planos Lite e Viral, exatamente o
+                         * chip que mostra o número de análises do plano. O
+                         * `bg-white/[0.06]` é o mesmo truque usado no ícone de
+                         * como-funciona.tsx: opacidade pensada para SER a cor de
+                         * fundo, não emprestada de um token de borda.
+                         */
+                        (p.destaque ? "bg-orange-600/15" : "bg-white/[0.06]")
+                      }
+                    >
+                      <Lightning
+                        size={15}
+                        weight="fill"
+                        className={p.destaque ? "text-orange-400" : "text-zinc-400"}
                       />
-                      <span className="text-zinc-300">{r}</span>
-                    </li>
-                  ))}
-                </ul>
+                      <span className="text-sm tabular-nums text-zinc-200">
+                        {p.analises} análises por mês
+                      </span>
+                    </div>
+
+                    {/*
+                      `bg-orange-700`, mesmo ajuste do botão "Ver os planos" em
+                      monetizacao.tsx: branco sobre acao-600 reprova o texto
+                      normal (3,37:1); sobre acao-700, passa (4,85:1). O glow
+                      também troca de `rgb(255 62 2)` — o laranja da marca
+                      anterior — pro rosa `rgb(199 58 125)` que combina com o
+                      novo fundo do botão.
+                    */}
+                    <Link
+                      href="/cadastro"
+                      className={
+                        "mt-5 rounded-xl px-4 py-3 text-center text-sm font-semibold transition active:scale-[0.98] " +
+                        (p.destaque
+                          ? "bg-orange-700 text-white shadow-[0_2px_16px_rgb(199_58_125/0.35)] hover:bg-orange-600"
+                          : "border border-zinc-700 text-zinc-100 hover:border-zinc-600 hover:bg-white/[0.04]")
+                      }
+                    >
+                      Começar
+                    </Link>
+
+                    <ul className="mt-6 space-y-2.5 border-t border-zinc-800 pt-5">
+                      {p.recursos.map((r) => (
+                        <li key={r} className="flex items-start gap-2.5 text-sm">
+                          <Check
+                            size={14}
+                            weight="bold"
+                            className="mt-0.5 shrink-0 text-orange-500"
+                          />
+                          <span className="text-zinc-300">{r}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
             );
           })}
