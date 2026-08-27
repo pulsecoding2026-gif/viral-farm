@@ -5,6 +5,7 @@ import { HeroVideo } from "./hero-video";
 import { HeroEntrada } from "./hero-entrada";
 import { ComoFunciona } from "./como-funciona";
 import { TrailerLancamento } from "./trailer-lancamento";
+import { FaqEstruturado } from "./faq-estruturado";
 import { Monetizacao } from "./monetizacao";
 import { Planos } from "./planos";
 import { Perguntas } from "./perguntas";
@@ -309,6 +310,13 @@ export default function LandingPage() {
       <hr className="horizonte" />
       <Planos />
       <Perguntas />
+      {/*
+        O FAQ em dados estruturados, para buscador e assistente lerem as
+        mesmas perguntas que a pessoa lê. Não desenha nada na tela — é só o
+        JSON-LD, gerado a partir da MESMA lista de `perguntas.tsx`, para os
+        dois nunca divergirem.
+      */}
+      <FaqEstruturado />
 
       {/* ----------------------------------------------------------- rodapé */}
       <footer className="border-t border-zinc-800/60">

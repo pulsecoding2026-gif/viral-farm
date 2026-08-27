@@ -286,14 +286,18 @@ export function PainelBiblioteca({
           Seu acervo está vazio
         </p>
         <p className="mt-1 max-w-[48ch] text-sm leading-relaxed text-zinc-400">
-          É daqui que sai o que você vai planejar e criar. Guarde referências de
-          formato, junte com as análises do seu material, e organize em coleções
-          quando o vídeo começar a tomar forma.
+          É daqui que sai o próximo corte de GTA. Guarde referências de
+          formato do Radar e das Lives, junte com as análises do seu material,
+          e organize em coleções quando o vídeo começar a tomar forma.
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           <Link
             href="/radar-viral"
-            className="flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_rgb(255_62_2/0.35)] transition hover:bg-orange-500 active:scale-[0.98]"
+            // O glow era um rgb() fixo do laranja antigo (#ff3e02) — com a
+            // rampa "orange" apontando pro rosa da marca (ver globals.css),
+            // o botão ficou rosa com um halo laranja por baixo. `--brilho-acao`
+            // já é o glow certo, pronto pros dois temas.
+            className="flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[var(--brilho-acao)] transition hover:bg-orange-500 active:scale-[0.98]"
           >
             <Target size={16} weight="fill" />
             Buscar referências

@@ -15,6 +15,7 @@ import {
   FolderSimplePlus,
 } from "@phosphor-icons/react/dist/ssr";
 import type { ItemSalvo, Colecao } from "@/lib/salvos";
+import { ROTULOS_NICHO } from "@/lib/biblioteca/videos-exemplo";
 
 const PLATAFORMA: Record<string, { rotulo: string; cor: string }> = {
   youtube: { rotulo: "YouTube", cor: "bg-red-600" },
@@ -92,7 +93,7 @@ export function CartaoSalvo({
             </h3>
             {item.tipo === "video" && (
               <span
-                className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white ${PLATAFORMA[item.video.plataforma]?.cor ?? "bg-zinc-700"}`}
+                className={`placa shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white ${PLATAFORMA[item.video.plataforma]?.cor ?? "bg-zinc-700"}`}
               >
                 {PLATAFORMA[item.video.plataforma]?.rotulo ?? item.video.plataforma}
               </span>
@@ -102,14 +103,16 @@ export function CartaoSalvo({
           {item.tipo === "video" ? (
             <>
               <p className="mt-0.5 truncate text-xs text-zinc-400">
-                {item.video.canal} · {item.video.nicho}
+                {item.video.canal} ·{" "}
+                {ROTULOS_NICHO[item.video.nicho as keyof typeof ROTULOS_NICHO] ??
+                  item.video.nicho}
               </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-zinc-400">
-                <span className="flex items-center gap-1">
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-400">
+                <span className="numero-placa flex items-center gap-1">
                   <Eye size={11} />
                   {compacto(item.video.visualizacoes)}
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="numero-placa flex items-center gap-1">
                   <Heart size={11} />
                   {compacto(item.video.curtidas)}
                 </span>
@@ -171,7 +174,7 @@ export function CartaoSalvo({
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-zinc-800 pt-3">
         {mostrarColecao && (
-          <label className="flex items-center gap-1 text-[11px] text-zinc-600">
+          <label className="flex items-center gap-1 text-[11px] text-zinc-400">
             <FolderSimplePlus size={13} />
             <select
               value={item.colecao_id ?? ""}
@@ -217,7 +220,7 @@ export function CartaoSalvo({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Abrir vídeo original"
-                className="rounded-lg border border-zinc-800 p-1 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
+                className="flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-zinc-800 p-1 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200"
               >
                 <ArrowSquareOut size={12} />
               </a>
@@ -237,7 +240,7 @@ export function CartaoSalvo({
           type="button"
           onClick={() => onRemover(item.id)}
           aria-label="Remover da biblioteca"
-          className="ml-auto rounded-lg p-1.5 text-zinc-700 opacity-0 transition group-hover:opacity-100 hover:bg-rose-950/40 hover:text-rose-400 focus-visible:opacity-100"
+          className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg p-1.5 text-zinc-400 opacity-0 transition group-hover:opacity-100 hover:bg-rose-950/40 hover:text-rose-400 focus-visible:opacity-100"
         >
           <Trash size={13} />
         </button>
